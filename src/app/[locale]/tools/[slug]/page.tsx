@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { isLocale, SUPPORTED_LOCALES } from "../../../../i18n/locales";
 import { getToolConfig } from "../../../../lib/tool-config";
 import { toolLoaders, toolSlugs, type ToolSlug } from "../../../tools/tool-registry";
-import { ToolClientRendererWithConfig } from "./ToolClientRenderer";
+import { ToolConfigProvider } from "../../../../components/ToolConfigProvider";
 
 export const dynamic = "force-static";
 
@@ -51,5 +51,10 @@ export default async function ToolPage({ params }: { params: Promise<{ locale: s
 
   const toolSlug = slug as ToolSlug;
   const config = getToolConfig(toolSlug, locale);
-  return <ToolClientRendererWithConfig slug={toolSlug} locale={locale} config={config} />;
+  const ToolClient = (await toolLoaders[toolSlug]()).default;
+  return (
+    <ToolConfigProvider toolSlug={toolSlug} locale={locale} config={config}>
+      <ToolClient />
+    </ToolConfigProvider>
+  );
 }

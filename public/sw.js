@@ -37,13 +37,25 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
+  // Cache API 不支持缓存 206 Partial Content（常见于 Range 请求的音视频/大文件）
+  const hasRange = request.headers.has("range");
+  const isSameOrigin = url.origin === self.location.origin;
+
   event.respondWith(
     fetch(request)
       .then((networkResponse) => {
-        const responseClone = networkResponse.clone();
-        caches
-          .open(CACHE_NAME)
-          .then((cache) => cache.put(request, responseClone));
+        if (
+          !hasRange &&
+          isSameOrigin &&
+          networkResponse &&
+          networkResponse.status === 200
+        ) {
+          const responseClone = networkResponse.clone();
+          caches
+            .open(CACHE_NAME)
+            .then((cache) => cache.put(request, responseClone))
+            .catch(() => {});
+        }
         return networkResponse;
       })
       .catch(() =>

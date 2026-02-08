@@ -6,6 +6,8 @@ const ROOT = process.cwd();
 const TOOLS_DIR = path.join(ROOT, "src", "app", "tools");
 const PUBLIC_TOOLS_DIR = path.join(ROOT, "public", "tools");
 const NAV_DATA_PATH = path.join(ROOT, "src", "app", "tools", "tools-meta.json");
+const PUBLIC_NAV_DATA_PATH = path.join(ROOT, "public", "tools", "tools-meta.json");
+const EXTENSION_NAV_DATA_PATH = path.join(ROOT, "extension", "tools-meta.json");
 const TOOL_REGISTRY_PATH = path.join(ROOT, "src", "app", "tools", "tool-registry.ts");
 
 const SUPPORTED_LOCALES = ["zh-cn", "en-us"];
@@ -205,6 +207,22 @@ function writeNavData(navItems) {
   );
 
   console.log(`[manifest] 已生成工具导航数据 ${NAV_DATA_PATH}`);
+
+  ensureDir(path.dirname(PUBLIC_NAV_DATA_PATH));
+  fs.writeFileSync(
+    PUBLIC_NAV_DATA_PATH,
+    `${JSON.stringify(sorted, null, 2)}\n`,
+    "utf8",
+  );
+  console.log(`[manifest] 已生成工具导航数据 ${PUBLIC_NAV_DATA_PATH}`);
+
+  ensureDir(path.dirname(EXTENSION_NAV_DATA_PATH));
+  fs.writeFileSync(
+    EXTENSION_NAV_DATA_PATH,
+    `${JSON.stringify(sorted, null, 2)}\n`,
+    "utf8",
+  );
+  console.log(`[manifest] 已生成工具导航数据 ${EXTENSION_NAV_DATA_PATH}`);
 }
 
 function writeNavDataForLocale(locale, navItems) {
@@ -216,6 +234,16 @@ function writeNavDataForLocale(locale, navItems) {
   ensureDir(path.dirname(filePath));
   fs.writeFileSync(filePath, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
   console.log(`[manifest] 已生成工具导航数据 ${filePath}`);
+
+  const publicFilePath = path.join(ROOT, "public", "tools", `tools-meta.${locale}.json`);
+  ensureDir(path.dirname(publicFilePath));
+  fs.writeFileSync(publicFilePath, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
+  console.log(`[manifest] 已生成工具导航数据 ${publicFilePath}`);
+
+  const extensionFilePath = path.join(ROOT, "extension", `tools-meta.${locale}.json`);
+  ensureDir(path.dirname(extensionFilePath));
+  fs.writeFileSync(extensionFilePath, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
+  console.log(`[manifest] 已生成工具导航数据 ${extensionFilePath}`);
 }
 
 function writeToolRegistry(toolEntries) {

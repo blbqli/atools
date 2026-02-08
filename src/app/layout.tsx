@@ -3,6 +3,23 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegister } from "./sw-register";
 
+function getMetadataBase(): URL {
+  const fallback = "http://www.atools.live";
+  const raw = String(process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").trim();
+  const candidate = raw || fallback;
+  try {
+    return new URL(candidate);
+  } catch {
+    try {
+      return new URL(`http://${candidate}`);
+    } catch {
+      return new URL(fallback);
+    }
+  }
+}
+
+const metadataBase = getMetadataBase();
+
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -14,6 +31,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
+  metadataBase,
   title: "纯粹工具站",
   description: "纯前端 SSR 工具集合示例站点",
   applicationName: "纯粹工具站",

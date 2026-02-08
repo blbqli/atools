@@ -215,8 +215,9 @@ Required env:
 Optional env:
   QINIU_KEY_PREFIX        (default: derived from NEXT_PUBLIC_BASE_PATH)
   QINIU_THREAD_COUNT      (default: 8)   # concurrency
-  QINIU_ZONE              (default: auto) # z0/z1/z2/na0/as0
+  QINIU_ZONE              (default: auto) # region id: z0/z1/z2/na0/as0/cn-east-2...
   QINIU_USE_HTTPS_DOMAIN  (default: 0)
+  QINIU_UPLOAD_CLEAN_URLS (default: 1)   # upload /path + /path/ + /path/index.html aliases for *.html routes
   QINIU_FORCE_UPLOAD      (default: 0)   # upload even if hash matches
   QINIU_DRY_RUN           (default: 0)   # do not upload, only print plan
 
@@ -227,23 +228,11 @@ Example:
 `);
 }
 
-function getZoneFromEnv() {
+function getRegionsProviderFromEnv(config) {
   const raw = String(process.env.QINIU_ZONE || "").trim().toLowerCase();
   if (!raw || raw === "auto") return null;
-  switch (raw) {
-    case "z0":
-      return qiniu.zone.Zone_z0;
-    case "z1":
-      return qiniu.zone.Zone_z1;
-    case "z2":
-      return qiniu.zone.Zone_z2;
-    case "na0":
-      return qiniu.zone.Zone_na0;
-    case "as0":
-      return qiniu.zone.Zone_as0;
-    default:
-      throw new Error(`Unknown QINIU_ZONE: ${raw}`);
-  }
+  const preferredScheme = config.useHttpsDomain ? "https" : "http";
+  return qiniu.httpc.Region.fromRegionId(raw, { preferredScheme });
 }
 
 async function warmupRegionsProvider(config, accessKey, bucket) {
@@ -333,6 +322,13 @@ async function buildRemoteIndex(bucketManager, bucket, prefix) {
   return index;
 }
 
+function isNextRouteHtmlFile(filePath) {
+  if (path.extname(filePath).toLowerCase() !== ".html") return false;
+  if (path.basename(filePath).toLowerCase() === "index.html") return false;
+  const siblingTxt = filePath.slice(0, -".html".length) + ".txt";
+  return fs.existsSync(siblingTxt);
+}
+
 async function main() {
   const arg = process.argv[2];
   if (arg === "-h" || arg === "--help") {
@@ -358,27 +354,61 @@ async function main() {
     1,
     Number.parseInt(String(process.env.QINIU_THREAD_COUNT || "8"), 10) || 8,
   );
+  const uploadCleanUrls = envFlag("QINIU_UPLOAD_CLEAN_URLS", true);
   const forceUpload = envFlag("QINIU_FORCE_UPLOAD");
   const dryRun = envFlag("QINIU_DRY_RUN");
 
   const config = new qiniu.conf.Config();
   config.useHttpsDomain = envFlag("QINIU_USE_HTTPS_DOMAIN");
-  config.zone = getZoneFromEnv();
-  await warmupRegionsProvider(config, accessKey, bucket);
+  const explicitRegionsProvider = getRegionsProviderFromEnv(config);
+  if (explicitRegionsProvider) {
+    config.regionsProvider = explicitRegionsProvider;
+  } else {
+    await warmupRegionsProvider(config, accessKey, bucket);
+  }
 
   const mac = new qiniu.auth.digest.Mac(accessKey, secretKey);
   const bucketManager = new qiniu.rs.BucketManager(mac, config);
   const formUploader = new qiniu.form_up.FormUploader(config);
 
   const files = await listFilesRecursively(outDir);
-  const total = files.length;
-  if (total === 0) {
+  if (files.length === 0) {
     console.log("No files found in out/. Nothing to upload.");
     return;
   }
 
+  const uploadEntries = files.flatMap((filePath) => {
+    const rel = toPosixPath(path.relative(outDir, filePath));
+    const mimeType = guessMimeType(filePath);
+    /** @type {{key: string, filePath: string, mimeType: string}[]} */
+    const entries = [{ key: `${keyPrefix}${rel}`, filePath, mimeType }];
+
+    if (uploadCleanUrls && isNextRouteHtmlFile(filePath)) {
+      const cleanRel = rel.slice(0, -".html".length);
+      const cleanMimeType = "text/html; charset=utf-8";
+      entries.push({
+        key: `${keyPrefix}${cleanRel}`,
+        filePath,
+        mimeType: cleanMimeType,
+      });
+      entries.push({
+        key: `${keyPrefix}${cleanRel}/`,
+        filePath,
+        mimeType: cleanMimeType,
+      });
+      entries.push({
+        key: `${keyPrefix}${cleanRel}/index.html`,
+        filePath,
+        mimeType: cleanMimeType,
+      });
+    }
+
+    return entries;
+  });
+
+  const total = uploadEntries.length;
   console.log(
-    `[qiniu] bucket=${bucket} prefix=${keyPrefix || "(none)"} files=${total} concurrency=${concurrency}`,
+    `[qiniu] bucket=${bucket} prefix=${keyPrefix || "(none)"} files=${files.length} uploads=${total} concurrency=${concurrency}`,
   );
   if (dryRun) console.log("[qiniu] DRY RUN enabled: no uploads will be performed.");
 
@@ -394,13 +424,18 @@ async function main() {
       : null;
   if (remoteIndex) console.log(`[qiniu] remote index loaded: ${remoteIndex.size} objects`);
 
-  const tasks = files.map((filePath, index) =>
+  const qetagCache = new Map();
+  const getCachedQetag = async (filePath) => {
+    if (qetagCache.has(filePath)) return qetagCache.get(filePath);
+    const promise = computeQetag(filePath);
+    qetagCache.set(filePath, promise);
+    return promise;
+  };
+
+  const tasks = uploadEntries.map(({ key, filePath, mimeType }, index) =>
     limit(async () => {
-      const rel = toPosixPath(path.relative(outDir, filePath));
-      const key = `${keyPrefix}${rel}`;
       const stat = await fsp.stat(filePath);
       const size = stat.size;
-      const mimeType = guessMimeType(filePath);
 
       const shouldUpload = await withRetries(
         async () => {
@@ -422,7 +457,7 @@ async function main() {
           const remoteHash = remote.hash;
           const remoteSize = remote.fsize;
           if (!Number.isFinite(remoteSize) || remoteSize !== size) return true;
-          const localHash = await computeQetag(filePath);
+          const localHash = await getCachedQetag(filePath);
           return remoteHash !== localHash;
         },
         { retries: 2, baseDelayMs: 300 },
@@ -455,8 +490,6 @@ async function main() {
         );
     }).catch((e) => {
       failed += 1;
-      const rel = toPosixPath(path.relative(outDir, filePath));
-      const key = `${keyPrefix}${rel}`;
       console.error(`[qiniu] failed ${key}:`, e instanceof Error ? e.message : e);
     }),
   );

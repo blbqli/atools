@@ -2,7 +2,7 @@
 
 import type { ChangeEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Canvas, FabricImage, Line, Rect, Textbox } from "fabric";
+import type { Canvas } from "fabric";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 
 type ToolMode = "select" | "pen" | "rect" | "arrow" | "text";
@@ -56,6 +56,8 @@ const dataUrlToBlob = async (dataUrl: string) => {
   return res.blob();
 };
 
+type FabricModule = typeof import("fabric");
+
 function clampInt(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, Math.trunc(value)));
 }
@@ -72,6 +74,8 @@ function Inner({ ui }: { ui: Ui }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const canvasElRef = useRef<HTMLCanvasElement | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
+  const fabricModuleRef = useRef<FabricModule | null>(null);
+  const [canvasReady, setCanvasReady] = useState(false);
 
   const [mode, setMode] = useState<ToolMode>("select");
   const [stroke, setStroke] = useState("#ef4444");
@@ -112,16 +116,25 @@ function Inner({ ui }: { ui: Ui }) {
     syncHistoryFlags();
   };
 
-  const initCanvas = () => {
+  const loadFabric = async () => {
+    if (fabricModuleRef.current) return fabricModuleRef.current;
+    const mod = (await import("fabric")) as FabricModule;
+    fabricModuleRef.current = mod;
+    return mod;
+  };
+
+  const initCanvas = async () => {
     if (!canvasElRef.current) return;
     if (fabricRef.current) return;
 
-    const canvas = new Canvas(canvasElRef.current, {
+    const { Canvas: FabricCanvas } = await loadFabric();
+    const canvas = new FabricCanvas(canvasElRef.current, {
       preserveObjectStacking: true,
       selection: true,
       backgroundColor: "#ffffff",
     });
     fabricRef.current = canvas;
+    setCanvasReady(true);
 
     const onMutate = () => {
       const json = JSON.stringify(canvas.toJSON());
@@ -135,15 +148,17 @@ function Inner({ ui }: { ui: Ui }) {
   };
 
   useEffect(() => {
-    initCanvas();
+    void initCanvas();
     return () => {
       fabricRef.current?.dispose();
       fabricRef.current = null;
+      setCanvasReady(false);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const applyMode = useMemo(() => {
+    if (!canvasReady) return null;
     const canvas = fabricRef.current;
     if (!canvas) return null;
     canvas.isDrawingMode = mode === "pen";
@@ -151,7 +166,7 @@ function Inner({ ui }: { ui: Ui }) {
     canvas.forEachObject((obj) => obj.set({ selectable: mode === "select" }));
     canvas.renderAll();
     return true;
-  }, [mode]);
+  }, [canvasReady, mode]);
 
   useEffect(() => {
     void applyMode;
@@ -159,11 +174,12 @@ function Inner({ ui }: { ui: Ui }) {
 
   useEffect(() => {
     const canvas = fabricRef.current;
+    if (!canvasReady) return;
     if (!canvas) return;
     if (!canvas.freeDrawingBrush) return;
     canvas.freeDrawingBrush.color = stroke;
     canvas.freeDrawingBrush.width = clampInt(strokeWidth, 1, 40);
-  }, [stroke, strokeWidth]);
+  }, [canvasReady, stroke, strokeWidth]);
 
   const clear = () => {
     const canvas = fabricRef.current;
@@ -178,6 +194,7 @@ function Inner({ ui }: { ui: Ui }) {
     const canvas = fabricRef.current;
     if (!canvas) return;
 
+    const { FabricImage } = await loadFabric();
     const url = URL.createObjectURL(file);
     try {
       const img = await FabricImage.fromURL(url, { crossOrigin: "anonymous" });
@@ -208,11 +225,12 @@ function Inner({ ui }: { ui: Ui }) {
   };
 
   useEffect(() => {
+    if (!canvasReady) return;
     const canvas = fabricRef.current;
     if (!canvas) return;
 
     let start: { x: number; y: number } | null = null;
-    let temp: Rect | Line | null = null;
+    let temp: { type: "rect"; value: unknown } | { type: "line"; value: unknown } | null = null;
 
     const onDown = (opt: { e: MouseEvent | TouchEvent }) => {
       if (mode === "rect" || mode === "arrow") {
@@ -220,6 +238,9 @@ function Inner({ ui }: { ui: Ui }) {
         start = { x: p.x, y: p.y };
       }
       if (mode === "text") {
+        const fabric = fabricModuleRef.current;
+        if (!fabric) return;
+        const { Textbox } = fabric;
         const p = canvas.getPointer(opt.e);
         const textbox = new Textbox("", {
           left: p.x,
@@ -238,6 +259,9 @@ function Inner({ ui }: { ui: Ui }) {
     const onMove = (opt: { e: MouseEvent | TouchEvent }) => {
       if (!start) return;
       const p = canvas.getPointer(opt.e);
+      const fabric = fabricModuleRef.current;
+      if (!fabric) return;
+      const { Rect, Line } = fabric;
 
       if (mode === "rect") {
         const left = Math.min(start.x, p.x);
@@ -245,7 +269,7 @@ function Inner({ ui }: { ui: Ui }) {
         const width = Math.abs(p.x - start.x);
         const height = Math.abs(p.y - start.y);
         if (!temp) {
-          temp = new Rect({
+          const rect = new Rect({
             left,
             top,
             width,
@@ -256,9 +280,11 @@ function Inner({ ui }: { ui: Ui }) {
             selectable: false,
             evented: false,
           });
-          canvas.add(temp);
+          temp = { type: "rect", value: rect };
+          canvas.add(rect);
         } else {
-          temp.set({ left, top, width, height });
+          if (temp.type !== "rect") return;
+          (temp.value as { set: (props: unknown) => void }).set({ left, top, width, height });
           canvas.renderAll();
         }
       }
@@ -271,10 +297,10 @@ function Inner({ ui }: { ui: Ui }) {
             selectable: false,
             evented: false,
           });
-          temp = line;
-          canvas.add(temp);
-        } else if (temp instanceof Line) {
-          temp.set({ x2: p.x, y2: p.y });
+          temp = { type: "line", value: line };
+          canvas.add(line);
+        } else if (temp.type === "line") {
+          (temp.value as { set: (props: unknown) => void }).set({ x2: p.x, y2: p.y });
           canvas.renderAll();
         }
       }
@@ -293,7 +319,7 @@ function Inner({ ui }: { ui: Ui }) {
       canvas.off("mouse:move", onMove);
       canvas.off("mouse:up", onUp);
     };
-  }, [fill, fontSize, mode, stroke, strokeWidth, ui.errPickImage]);
+  }, [canvasReady, fill, fontSize, mode, stroke, strokeWidth, ui.errPickImage]);
 
   const undo = async () => {
     const idx = historyIndexRef.current;

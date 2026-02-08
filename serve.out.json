@@ -1,0 +1,86 @@
+{
+  "headers": [
+    {
+      "source": "**/__next*.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/x-component; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "_not-found.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/x-component; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "index.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/x-component; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "zh-cn.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/x-component; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "en-us.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/x-component; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "zh-cn/tools/*.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/x-component; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "en-us/tools/*.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/x-component; charset=utf-8"
+        }
+      ]
+    },
+    {
+      "source": "tools/*.txt",
+      "headers": [
+        {
+          "key": "Content-Type",
+          "value": "text/x-component; charset=utf-8"
+        }
+      ]
+    }
+  ],
+  "rewrites": [
+    { "source": "/:locale/__next.:rest", "destination": "/__next.:rest" },
+    { "source": "/:locale/_not-found.txt", "destination": "/_not-found.txt" },
+    { "source": "/:locale/index.txt", "destination": "/index.txt" },
+    { "source": "/zh-cn", "destination": "/zh-cn.html" },
+    { "source": "/en-us", "destination": "/en-us.html" },
+    { "source": "/zh-cn/tools/:slug", "destination": "/zh-cn/tools/:slug.html" },
+    { "source": "/en-us/tools/:slug", "destination": "/en-us/tools/:slug.html" },
+    { "source": "/tools/:slug", "destination": "/tools/:slug.html" }
+  ]
+}
