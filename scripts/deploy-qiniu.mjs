@@ -6,6 +6,78 @@ import qiniu from "qiniu";
 
 const BLOCK_SIZE = 4 * 1024 * 1024;
 
+function isBlankEnvValue(value) {
+  return value == null || !String(value).trim();
+}
+
+function unquoteDotEnvValue(raw) {
+  const value = String(raw ?? "");
+  if (value.length < 2) return value;
+  const first = value[0];
+  const last = value[value.length - 1];
+  if ((first === '"' && last === '"') || (first === "'" && last === "'")) {
+    const inner = value.slice(1, -1);
+    if (first === "'") return inner;
+    return inner
+      .replace(/\\n/g, "\n")
+      .replace(/\\r/g, "\r")
+      .replace(/\\t/g, "\t")
+      .replace(/\\\\/g, "\\")
+      .replace(/\\"/g, '"');
+  }
+  return value;
+}
+
+function parseDotEnv(content) {
+  /** @type {Record<string, string>} */
+  const result = {};
+  const lines = String(content ?? "").split(/\r?\n/);
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+    const match = trimmed.match(/^(?:export\s+)?([A-Za-z_][A-Za-z0-9_]*)\s*=\s*(.*)$/);
+    if (!match) continue;
+    const name = match[1];
+    const rest = match[2] ?? "";
+
+    let value = rest;
+    const startsQuoted = value.startsWith('"') || value.startsWith("'");
+    if (!startsQuoted) {
+      const commentIndex = value.search(/\s+#/);
+      if (commentIndex >= 0) value = value.slice(0, commentIndex);
+    }
+
+    result[name] = unquoteDotEnvValue(value.trim());
+  }
+  return result;
+}
+
+function loadDotEnvFiles(cwd = process.cwd()) {
+  const loadedKeys = new Set();
+  const nodeEnv = String(process.env.NODE_ENV ?? "").trim().toLowerCase();
+  const candidates = [
+    ".env",
+    nodeEnv ? `.env.${nodeEnv}` : null,
+    ".env.local",
+    nodeEnv ? `.env.${nodeEnv}.local` : null,
+  ].filter(Boolean);
+
+  for (const rel of candidates) {
+    const filePath = path.join(cwd, rel);
+    if (!fs.existsSync(filePath)) continue;
+    const content = fs.readFileSync(filePath, "utf8");
+    const vars = parseDotEnv(content);
+    for (const [name, value] of Object.entries(vars)) {
+      const alreadySetExternally =
+        !isBlankEnvValue(process.env[name]) && !loadedKeys.has(name);
+      if (alreadySetExternally) continue;
+      if (process.env[name] === value) continue;
+      process.env[name] = value;
+      loadedKeys.add(name);
+    }
+  }
+}
+
 function normalizePrefix(raw) {
   const value = String(raw ?? "").trim();
   if (!value || value === "/") return "";
@@ -88,6 +160,31 @@ function guessMimeType(filePath) {
     default:
       return "application/octet-stream";
   }
+}
+
+function isNextRscTxtKey(key) {
+  const normalized = String(key ?? "").replace(/^\/+/, "");
+  const base = path.posix.basename(normalized);
+  if (!base.endsWith(".txt")) return false;
+  if (base === "robots.txt") return false;
+
+  if (base.startsWith("__next.")) return true;
+  if (base === "_not-found.txt") return true;
+  if (base === "index.txt") return true;
+  if (base === "zh-cn.txt" || base === "en-us.txt") return true;
+
+  if (normalized.startsWith("zh-cn/tools/")) return true;
+  if (normalized.startsWith("en-us/tools/")) return true;
+  if (normalized.startsWith("tools/")) return true;
+
+  return false;
+}
+
+function resolveMimeTypeForUpload({ filePath, key }) {
+  if (isNextRscTxtKey(key)) {
+    return "text/x-component; charset=utf-8";
+  }
+  return guessMimeType(filePath);
 }
 
 function urlsafeBase64(input) {
@@ -206,6 +303,9 @@ async function listFilesRecursively(rootDir) {
 
 function printHelp() {
   console.log(`Deploy static out/ to Qiniu Kodo via Qiniu Node.js SDK.
+
+Env loading:
+  This script auto-loads .env / .env.local (and .env.$NODE_ENV*) if present.
 
 Required env:
   QINIU_ACCESS_KEY
@@ -330,6 +430,8 @@ function isNextRouteHtmlFile(filePath) {
 }
 
 async function main() {
+  loadDotEnvFiles();
+
   const arg = process.argv[2];
   if (arg === "-h" || arg === "--help") {
     printHelp();
@@ -379,9 +481,10 @@ async function main() {
 
   const uploadEntries = files.flatMap((filePath) => {
     const rel = toPosixPath(path.relative(outDir, filePath));
-    const mimeType = guessMimeType(filePath);
+    const primaryKey = `${keyPrefix}${rel}`;
+    const mimeType = resolveMimeTypeForUpload({ filePath, key: primaryKey });
     /** @type {{key: string, filePath: string, mimeType: string}[]} */
-    const entries = [{ key: `${keyPrefix}${rel}`, filePath, mimeType }];
+    const entries = [{ key: primaryKey, filePath, mimeType }];
 
     if (uploadCleanUrls && isNextRouteHtmlFile(filePath)) {
       const cleanRel = rel.slice(0, -".html".length);

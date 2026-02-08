@@ -21,6 +21,46 @@ function readPackageVersion() {
   return "0.0.0";
 }
 
+function readBuildFingerprint() {
+  const candidates = [
+    process.env.GITHUB_SHA,
+    process.env.CF_PAGES_COMMIT_SHA,
+    process.env.VERCEL_GIT_COMMIT_SHA,
+    process.env.GIT_COMMIT,
+    process.env.BUILD_ID,
+  ]
+    .map((v) => String(v ?? "").trim())
+    .filter(Boolean);
+
+  if (candidates.length) {
+    return candidates[0].slice(0, 12);
+  }
+
+  // Fallback to git HEAD when env isn't available (stable per commit).
+  try {
+    const headPath = path.join(ROOT, ".git", "HEAD");
+    if (fs.existsSync(headPath)) {
+      const head = String(fs.readFileSync(headPath, "utf8") ?? "").trim();
+      const refPrefix = "ref:";
+      if (head.startsWith(refPrefix)) {
+        const ref = head.slice(refPrefix.length).trim();
+        const refPath = path.join(ROOT, ".git", ref);
+        if (fs.existsSync(refPath)) {
+          const hash = String(fs.readFileSync(refPath, "utf8") ?? "").trim();
+          if (hash) return hash.slice(0, 12);
+        }
+      } else if (head) {
+        return head.slice(0, 12);
+      }
+    }
+  } catch {
+    // ignore
+  }
+
+  // Last resort: change per build to avoid being stuck with an outdated SW.
+  return new Date().toISOString().replace(/[^0-9]/g, "").slice(0, 14);
+}
+
 function ensurePublicDir() {
   if (!fs.existsSync(PUBLIC_DIR)) {
     fs.mkdirSync(PUBLIC_DIR, { recursive: true });
@@ -29,7 +69,8 @@ function ensurePublicDir() {
 
 function generateServiceWorker() {
   const version = readPackageVersion();
-  const cacheName = `tools-pwa-v${version}`;
+  const fingerprint = readBuildFingerprint();
+  const cacheName = `tools-pwa-v${version}-${fingerprint}`;
 
   const offlineUrls = [
     "/",
@@ -43,21 +84,48 @@ const OFFLINE_URLS = ${JSON.stringify(offlineUrls, null, 2)};
 
 self.addEventListener("install", (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(OFFLINE_URLS)),
+    (async () => {
+      self.skipWaiting();
+      const cache = await caches.open(CACHE_NAME);
+      await Promise.all(
+        OFFLINE_URLS.map((url) => cache.add(new Request(url, { cache: "reload" }))),
+      );
+    })(),
   );
 });
 
 self.addEventListener("activate", (event) => {
   event.waitUntil(
-    caches.keys().then((keys) =>
-      Promise.all(
+    (async () => {
+      const keys = await caches.keys();
+      await Promise.all(
         keys
           .filter((key) => key !== CACHE_NAME)
           .map((key) => caches.delete(key)),
-      ),
-    ),
+      );
+      await self.clients.claim();
+    })(),
   );
 });
+
+function isHtmlNavigation(request) {
+  if (request.mode === "navigate") return true;
+  if (request.destination === "document") return true;
+  const accept = request.headers.get("accept") || "";
+  return accept.includes("text/html");
+}
+
+function isLikelyNextRsc(pathname) {
+  if (!pathname.endsWith(".txt")) return false;
+  if (pathname === "/index.txt") return true;
+  if (pathname === "/_not-found.txt") return true;
+  if (pathname === "/zh-cn.txt" || pathname === "/en-us.txt") return true;
+  if (pathname.includes("/__next.")) return true;
+  if (pathname.startsWith("/zh-cn/tools/")) return true;
+  if (pathname.startsWith("/en-us/tools/")) return true;
+  if (pathname.startsWith("/tools/")) return true;
+  return false;
+}
 
 self.addEventListener("fetch", (event) => {
   const request = event.request;
@@ -74,15 +142,24 @@ self.addEventListener("fetch", (event) => {
   // Cache API 不支持缓存 206 Partial Content（常见于 Range 请求的音视频/大文件）
   const hasRange = request.headers.has("range");
   const isSameOrigin = url.origin === self.location.origin;
+  const pathname = url.pathname;
+  const isHtml = isHtmlNavigation(request);
+  const isNextRsc = isLikelyNextRsc(pathname);
+
+  // Avoid being stuck with long-lived HTTP caches on HTML/RSC after a deployment.
+  const fetchRequest =
+    isHtml || isNextRsc ? new Request(request, { cache: "reload" }) : request;
 
   event.respondWith(
-    fetch(request)
+    fetch(fetchRequest)
       .then((networkResponse) => {
         if (
           !hasRange &&
           isSameOrigin &&
           networkResponse &&
-          networkResponse.status === 200
+          networkResponse.status === 200 &&
+          !isHtml &&
+          !isNextRsc
         ) {
           const responseClone = networkResponse.clone();
           caches
@@ -95,7 +172,12 @@ self.addEventListener("fetch", (event) => {
       .catch(() =>
         caches
           .match(request)
-          .then((cachedResponse) => cachedResponse || caches.match("/${DEFAULT_LOCALE}")),
+          .then((cachedResponse) => {
+            if (cachedResponse) return cachedResponse;
+            if (isHtml) return caches.match("/${DEFAULT_LOCALE}");
+            return null;
+          })
+          .then((fallback) => fallback || Response.error()),
       ),
   );
 });

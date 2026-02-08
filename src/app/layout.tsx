@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ServiceWorkerRegister } from "./sw-register";
+import RouteProgressBar from "../components/RouteProgressBar";
 
 function getMetadataBase(): URL {
   const fallback = "http://www.atools.live";
@@ -56,6 +57,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--background)] text-[var(--foreground)] selection:bg-blue-500/20 selection:text-blue-600`}
       >
+        <RouteProgressBar />
         <ServiceWorkerRegister />
         {children}
       </body>

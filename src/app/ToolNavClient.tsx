@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, Sparkles, ArrowRight, Command } from "lucide-react";
 import toolsMetaZh from "./tools/tools-meta.zh-cn.json";
@@ -26,6 +27,7 @@ const normalizeText = (value: string): string =>
   value.toLowerCase().normalize("NFKC");
 
 export default function ToolNavClient() {
+  const router = useRouter();
   const i18n = useOptionalI18n();
   const locale = i18n?.locale ?? "zh-cn";
   const messages = i18n?.messages ?? getMessages("zh-cn");
@@ -297,12 +299,17 @@ export default function ToolNavClient() {
 
       {/* Tools Grid */}
       <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-	        {filteredTools.map((tool) => (
-	          <Link
-	            key={tool.slug}
-	            href={`/${locale}${tool.path}`}
-	            className="group relative flex h-full flex-col overflow-hidden rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50 hover:ring-slate-300"
-	          >
+	        {filteredTools.map((tool) => {
+            const href = `/${locale}${tool.path}`;
+            return (
+            <Link
+              key={tool.slug}
+              href={href}
+              onMouseEnter={() => router.prefetch(href)}
+              onFocus={() => router.prefetch(href)}
+              onTouchStart={() => router.prefetch(href)}
+              className="group relative flex h-full flex-col overflow-hidden rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50 hover:ring-slate-300"
+            >
             <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-50 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
             
             <div className="relative z-10 flex h-full flex-col">
@@ -341,7 +348,8 @@ export default function ToolNavClient() {
               </div>
             </div>
           </Link>
-        ))}
+            );
+          })}
 
         {/* More Tools Placeholder */}
         <a

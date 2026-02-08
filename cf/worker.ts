@@ -6,20 +6,75 @@ type Env = {
   ASSETS: Fetcher;
 };
 
+import responseHeaders from "./response-headers.json";
+
 function hasFileExtension(pathname: string) {
   const lastSegment = pathname.split("/").pop() ?? "";
   return lastSegment.includes(".");
+}
+
+function isNextRscTxtPath(pathname: string) {
+  if (!pathname.endsWith(".txt")) return false;
+  const last = pathname.split("/").pop() ?? "";
+  if (last === "robots.txt") return false;
+  if (last.startsWith("__next.")) return true;
+  if (last === "_not-found.txt") return true;
+  if (last === "index.txt") return true;
+  if (last === "zh-cn.txt" || last === "en-us.txt") return true;
+  if (pathname.startsWith("/zh-cn/tools/")) return true;
+  if (pathname.startsWith("/en-us/tools/")) return true;
+  if (pathname.startsWith("/tools/")) return true;
+  return false;
 }
 
 async function fetchAsset(request: Request, env: Env) {
   return env.ASSETS.fetch(request);
 }
 
+function withCrossOriginIsolationHeaders(response: Response) {
+  const contentType = response.headers.get("content-type") || "";
+  const isHtml = contentType.includes("text/html");
+  if (!isHtml) return response;
+
+  const headers = new Headers(response.headers);
+  const htmlHeaders = responseHeaders?.html ?? {};
+  for (const [key, value] of Object.entries(htmlHeaders)) {
+    if (typeof key === "string" && typeof value === "string" && key && value) {
+      headers.set(key, value);
+    }
+  }
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
+function withNextRscHeaders(request: Request, response: Response) {
+  if (response.status !== 200) return response;
+  const pathname = new URL(request.url).pathname;
+  if (!isNextRscTxtPath(pathname)) return response;
+
+  const headers = new Headers(response.headers);
+  const contentType = headers.get("content-type") || "";
+  if (!contentType || contentType.includes("text/plain")) {
+    headers.set("Content-Type", "text/x-component; charset=utf-8");
+  }
+
+  return new Response(response.body, {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
+}
+
 const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
     const originalResponse = await fetchAsset(request, env);
-    if (originalResponse.status !== 404) return originalResponse;
+    if (originalResponse.status !== 404) {
+      return withCrossOriginIsolationHeaders(withNextRscHeaders(request, originalResponse));
+    }
 
     if (request.method !== "GET" && request.method !== "HEAD") return originalResponse;
     if (hasFileExtension(url.pathname)) return originalResponse;
@@ -32,12 +87,16 @@ const worker = {
     // - /route.html
     const tryIndexHtmlUrl = new URL(pathname.replace(/\/?$/, "/index.html"), url);
     const tryIndexHtml = await fetchAsset(new Request(tryIndexHtmlUrl, request), env);
-    if (tryIndexHtml.status !== 404) return tryIndexHtml;
+    if (tryIndexHtml.status !== 404) {
+      return withCrossOriginIsolationHeaders(withNextRscHeaders(request, tryIndexHtml));
+    }
 
     if (pathname !== "/") {
       const tryHtmlUrl = new URL(`${pathname}.html`, url);
       const tryHtml = await fetchAsset(new Request(tryHtmlUrl, request), env);
-      if (tryHtml.status !== 404) return tryHtml;
+      if (tryHtml.status !== 404) {
+        return withCrossOriginIsolationHeaders(withNextRscHeaders(request, tryHtml));
+      }
     }
 
     return originalResponse;
