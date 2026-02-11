@@ -62,15 +62,6 @@
           "value": "text/x-component; charset=utf-8"
         }
       ]
-    },
-    {
-      "source": "tools/*.txt",
-      "headers": [
-        {
-          "key": "Content-Type",
-          "value": "text/x-component; charset=utf-8"
-        }
-      ]
     }
   ],
   "rewrites": [
@@ -80,7 +71,6 @@
     { "source": "/zh-cn", "destination": "/zh-cn.html" },
     { "source": "/en-us", "destination": "/en-us.html" },
     { "source": "/zh-cn/tools/:slug", "destination": "/zh-cn/tools/:slug.html" },
-    { "source": "/en-us/tools/:slug", "destination": "/en-us/tools/:slug.html" },
-    { "source": "/tools/:slug", "destination": "/tools/:slug.html" }
+    { "source": "/en-us/tools/:slug", "destination": "/en-us/tools/:slug.html" }
   ]
 }

@@ -29,20 +29,93 @@ const formatResolution = (
   return `${width} × ${height}`;
 };
 
+const isSvgFile = (file: File): boolean =>
+  file.type === "image/svg+xml" || file.name.toLowerCase().endsWith(".svg");
+
+const parseSvgNumber = (value: string | null): number | null => {
+  if (!value) return null;
+  const trimmed = value.trim();
+  if (!trimmed) return null;
+  const match = trimmed.match(/^([0-9.]+)(?:px)?$/i);
+  const num = Number(match ? match[1] : trimmed);
+  return Number.isFinite(num) && num > 0 ? num : null;
+};
+
+const getSvgDimensions = (svgContent: string): { width: number; height: number } => {
+  try {
+    const doc = new DOMParser().parseFromString(svgContent, "image/svg+xml");
+    const svg = doc.querySelector("svg");
+    if (!svg) return { width: 512, height: 512 };
+
+    const widthAttr = parseSvgNumber(svg.getAttribute("width"));
+    const heightAttr = parseSvgNumber(svg.getAttribute("height"));
+    if (widthAttr && heightAttr) return { width: Math.round(widthAttr), height: Math.round(heightAttr) };
+
+    const viewBox = svg.getAttribute("viewBox");
+    if (viewBox) {
+      const parts = viewBox.trim().split(/[\s,]+/).map((v) => Number(v));
+      if (parts.length === 4 && parts.every((v) => Number.isFinite(v))) {
+        const width = parts[2]!;
+        const height = parts[3]!;
+        if (width > 0 && height > 0) return { width: Math.round(width), height: Math.round(height) };
+      }
+    }
+  } catch {
+    // ignore
+  }
+  return { width: 512, height: 512 };
+};
+
+const loadSvgImage = async (svgContent: string): Promise<HTMLImageElement> => {
+  const svgBlob = new Blob([svgContent], { type: "image/svg+xml;charset=utf-8" });
+  const svgUrl = URL.createObjectURL(svgBlob);
+
+  try {
+    const img = new window.Image();
+    img.decoding = "async";
+    await new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("SVG 加载失败"));
+      img.src = svgUrl;
+    });
+    return img;
+  } finally {
+    URL.revokeObjectURL(svgUrl);
+  }
+};
+
 async function convertImage(
   file: File,
   format: TargetFormat,
 ): Promise<Blob> {
-  const imageBitmap = await createImageBitmap(file);
   const canvas = document.createElement("canvas");
-  canvas.width = imageBitmap.width;
-  canvas.height = imageBitmap.height;
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     throw new Error("无法创建画布上下文");
   }
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
-  ctx.drawImage(imageBitmap, 0, 0);
+
+  if (isSvgFile(file)) {
+    const svgContent = await file.text();
+    const { width, height } = getSvgDimensions(svgContent);
+    canvas.width = width;
+    canvas.height = height;
+
+    if (format === "jpg") {
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+    } else {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    const img = await loadSvgImage(svgContent);
+    ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+  } else {
+    const imageBitmap = await createImageBitmap(file);
+    canvas.width = imageBitmap.width;
+    canvas.height = imageBitmap.height;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(imageBitmap, 0, 0);
+  }
 
   const mimeType = MIME_MAP[format];
 
@@ -110,6 +183,14 @@ const ImageConverterClient: FC = () => {
   };
 
   const computeDimensions = async (selected: File) => {
+    if (isSvgFile(selected)) {
+      const svgContent = await selected.text();
+      const { width, height } = getSvgDimensions(svgContent);
+      setOriginalWidth(width);
+      setOriginalHeight(height);
+      return;
+    }
+
     const imageBitmap = await createImageBitmap(selected);
     setOriginalWidth(imageBitmap.width);
     setOriginalHeight(imageBitmap.height);
@@ -128,7 +209,13 @@ const ImageConverterClient: FC = () => {
     setOriginalUrl(url);
     setConvertedUrl(null);
     setConvertedSize(null);
-    await computeDimensions(selected);
+    try {
+      await computeDimensions(selected);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "无法读取图片尺寸");
+      setOriginalWidth(null);
+      setOriginalHeight(null);
+    }
   };
 
   const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {

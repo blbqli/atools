@@ -6,19 +6,19 @@
   "scripts": {
     "dev": "next dev -p 3100",
     "prepare:ffmpeg": "node scripts/copy-ffmpeg-core.mjs",
-    "predev": "node scripts/copy-ffmpeg-core.mjs && node scripts/generate-tool-manifests.mjs",
+    "predev": "node scripts/copy-ffmpeg-core.mjs && node scripts/check-realcugan-assets.mjs && node scripts/generate-tool-manifests.mjs",
     "build": "next build --webpack",
     "build:turbo": "next build",
     "start": "next start -p 3100",
-    "preview:out": "node scripts/generate-sw.mjs && node scripts/sync-public-assets-to-out.mjs && node scripts/fix-export-rsc-flat-files.mjs && cd out && npx --yes serve -l 3200 . -c ../serve.out.json",
+    "preview:out": "node scripts/generate-sw.mjs && node scripts/sync-public-assets-to-out.mjs && node scripts/remove-non-locale-tools-out.mjs && node scripts/fix-export-rsc-flat-files.mjs && cd out && npx --yes serve -l 3200 . -c ../serve.out.json",
     "lint": "eslint",
     "deploy:qiniu": "node scripts/deploy-qiniu.mjs",
     "generate:manifests": "node scripts/generate-tool-manifests.mjs",
     "generate:sw": "node scripts/generate-sw.mjs",
     "push:search": "node scripts/push-search.mjs",
-    "prebuild": "node scripts/copy-ffmpeg-core.mjs && node scripts/generate-tool-manifests.mjs && node scripts/generate-sw.mjs",
-    "prebuild:turbo": "node scripts/copy-ffmpeg-core.mjs && node scripts/generate-tool-manifests.mjs && node scripts/generate-sw.mjs",
-    "postbuild": "node scripts/fix-export-rsc-flat-files.mjs && node scripts/push-search.mjs"
+    "prebuild": "node scripts/copy-ffmpeg-core.mjs && node scripts/check-realcugan-assets.mjs && node scripts/generate-tool-manifests.mjs && node scripts/generate-sw.mjs",
+    "prebuild:turbo": "node scripts/copy-ffmpeg-core.mjs && node scripts/check-realcugan-assets.mjs && node scripts/generate-tool-manifests.mjs && node scripts/generate-sw.mjs",
+    "postbuild": "node scripts/remove-non-locale-tools-out.mjs && node scripts/fix-export-rsc-flat-files.mjs && node scripts/push-search.mjs"
   },
   "dependencies": {
     "@ffmpeg/core": "0.12.6",
@@ -55,6 +55,7 @@
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/turndown": "^5.0.6",
+    "baseline-browser-mapping": "^2.9.19",
     "eslint": "^9",
     "eslint-config-next": "16.0.8",
     "tailwindcss": "^4",

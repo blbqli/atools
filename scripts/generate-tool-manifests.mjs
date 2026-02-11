@@ -4,14 +4,15 @@ import { execSync } from "node:child_process";
 
 const ROOT = process.cwd();
 const TOOLS_DIR = path.join(ROOT, "src", "app", "tools");
-const PUBLIC_TOOLS_DIR = path.join(ROOT, "public", "tools");
 const NAV_DATA_PATH = path.join(ROOT, "src", "app", "tools", "tools-meta.json");
-const PUBLIC_NAV_DATA_PATH = path.join(ROOT, "public", "tools", "tools-meta.json");
 const EXTENSION_NAV_DATA_PATH = path.join(ROOT, "extension", "tools-meta.json");
 const TOOL_REGISTRY_PATH = path.join(ROOT, "src", "app", "tools", "tool-registry.ts");
 
 const SUPPORTED_LOCALES = ["zh-cn", "en-us"];
 const DEFAULT_LOCALE = "zh-cn";
+const PUBLIC_DIR = path.join(ROOT, "public");
+const LEGACY_PUBLIC_TOOLS_DIR = path.join(PUBLIC_DIR, "tools");
+const publicToolsDirForLocale = (locale) => path.join(PUBLIC_DIR, locale, "tools");
 
 /**
  * @typedef {import("../src/types/tools").ToolConfig} ToolConfig
@@ -25,6 +26,14 @@ function readJson(filePath) {
 function ensureDir(dir) {
   if (!fs.existsSync(dir)) {
     fs.mkdirSync(dir, { recursive: true });
+  }
+}
+
+function removeDirIfExists(dir) {
+  try {
+    fs.rmSync(dir, { recursive: true, force: true });
+  } catch {
+    // ignore
   }
 }
 
@@ -99,7 +108,7 @@ function mergeToolConfig(baseConfig, overrideConfig) {
   return merged;
 }
 
-function generateManifestForTool(slug, config, navItems) {
+function generateManifestForTool(slug, config, navItems, locale) {
   /** @type {ToolConfig} */
   const tool = config;
 
@@ -111,10 +120,21 @@ function generateManifestForTool(slug, config, navItems) {
   }
 
   const basePath = `/tools/${slug}`;
-  const localizedBasePath = `/${DEFAULT_LOCALE}${basePath}`;
+  const localizedBasePath = `/${locale}${basePath}`;
 
-  const startUrl = tool.startUrl || localizedBasePath;
-  const scope = tool.scope || localizedBasePath;
+  const configuredStartUrl =
+    typeof tool.startUrl === "string" && tool.startUrl.trim() ? tool.startUrl.trim() : "";
+  const configuredScope =
+    typeof tool.scope === "string" && tool.scope.trim() ? tool.scope.trim() : "";
+
+  const startUrl =
+    configuredStartUrl && configuredStartUrl.startsWith(`/${locale}/`)
+      ? configuredStartUrl
+      : localizedBasePath;
+  const scope =
+    configuredScope && configuredScope.startsWith(`/${locale}/`)
+      ? configuredScope
+      : localizedBasePath;
   const lang = tool.lang || "zh-CN";
   const backgroundColor = tool.backgroundColor || "#0f172a";
   const themeColor = tool.themeColor || "#0f172a";
@@ -161,7 +181,7 @@ function generateManifestForTool(slug, config, navItems) {
     ],
   };
 
-  const outDir = path.join(PUBLIC_TOOLS_DIR, slug);
+  const outDir = path.join(publicToolsDirForLocale(locale), slug);
   ensureDir(outDir);
 
   const toolJsonOutPath = path.join(outDir, "tool.json");
@@ -182,16 +202,18 @@ function generateManifestForTool(slug, config, navItems) {
     ? tool.keywords.map((keyword) => String(keyword))
     : [];
 
-  navItems.push({
-    slug,
-    path: basePath,
-    name: tool.name,
-    shortName: tool.shortName || tool.name,
-    description: tool.description,
-    category,
-    icon: iconSrc,
-    keywords,
-  });
+  if (Array.isArray(navItems)) {
+    navItems.push({
+      slug,
+      path: basePath,
+      name: tool.name,
+      shortName: tool.shortName || tool.name,
+      description: tool.description,
+      category,
+      icon: iconSrc,
+      keywords,
+    });
+  }
 }
 
 function writeNavData(navItems) {
@@ -207,14 +229,6 @@ function writeNavData(navItems) {
   );
 
   console.log(`[manifest] 已生成工具导航数据 ${NAV_DATA_PATH}`);
-
-  ensureDir(path.dirname(PUBLIC_NAV_DATA_PATH));
-  fs.writeFileSync(
-    PUBLIC_NAV_DATA_PATH,
-    `${JSON.stringify(sorted, null, 2)}\n`,
-    "utf8",
-  );
-  console.log(`[manifest] 已生成工具导航数据 ${PUBLIC_NAV_DATA_PATH}`);
 
   ensureDir(path.dirname(EXTENSION_NAV_DATA_PATH));
   fs.writeFileSync(
@@ -235,7 +249,7 @@ function writeNavDataForLocale(locale, navItems) {
   fs.writeFileSync(filePath, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
   console.log(`[manifest] 已生成工具导航数据 ${filePath}`);
 
-  const publicFilePath = path.join(ROOT, "public", "tools", `tools-meta.${locale}.json`);
+  const publicFilePath = path.join(publicToolsDirForLocale(locale), "tools-meta.json");
   ensureDir(path.dirname(publicFilePath));
   fs.writeFileSync(publicFilePath, `${JSON.stringify(sorted, null, 2)}\n`, "utf8");
   console.log(`[manifest] 已生成工具导航数据 ${publicFilePath}`);
@@ -273,7 +287,12 @@ function main() {
     return;
   }
 
-  ensureDir(PUBLIC_TOOLS_DIR);
+  // Clean legacy & locale tool outputs to avoid leaking non-locale `/tools/*` paths.
+  removeDirIfExists(LEGACY_PUBLIC_TOOLS_DIR);
+  for (const locale of SUPPORTED_LOCALES) {
+    removeDirIfExists(publicToolsDirForLocale(locale));
+    ensureDir(publicToolsDirForLocale(locale));
+  }
 
   const slugs = listToolSlugs();
   const navItems = [];
@@ -293,9 +312,6 @@ function main() {
 
     try {
       const baseConfig = readJson(toolJsonPath);
-      generateManifestForTool(slug, baseConfig, navItems);
-
-      const outDir = path.join(PUBLIC_TOOLS_DIR, slug);
       for (const locale of SUPPORTED_LOCALES) {
         const overridePath = path.join(TOOLS_DIR, slug, `tool.${locale}.json`);
         const overrideConfig = readOptionalJson(overridePath);
@@ -310,8 +326,7 @@ function main() {
           localizedConfig.icon = `/${localizedConfig.icon}`;
         }
 
-        const localizedOutPath = path.join(outDir, `tool.${locale}.json`);
-        fs.writeFileSync(localizedOutPath, `${JSON.stringify(localizedConfig, null, 2)}\n`, "utf8");
+        generateManifestForTool(slug, localizedConfig, locale === DEFAULT_LOCALE ? navItems : null, locale);
 
         const category =
           typeof localizedConfig.category === "string" && localizedConfig.category.trim()

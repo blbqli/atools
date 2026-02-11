@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useOptionalToolConfig } from "../components/ToolConfigProvider";
+import { DEFAULT_LOCALE } from "../i18n/locales";
 import type { ToolConfig } from "../types/tools";
 
 export function useToolConfig(toolSlug: string, locale?: string) {
@@ -22,9 +23,8 @@ export function useToolConfig(toolSlug: string, locale?: string) {
       setLoading(true);
       setError(null);
       try {
-        const urls = locale
-          ? [`/tools/${toolSlug}/tool.${locale}.json`, `/tools/${toolSlug}/tool.json`]
-          : [`/tools/${toolSlug}/tool.json`];
+        const effectiveLocale = locale ?? DEFAULT_LOCALE;
+        const urls = [`/${effectiveLocale}/tools/${toolSlug}/tool.json`];
 
         for (const url of urls) {
           const response = await fetch(url, { cache: "no-store" });

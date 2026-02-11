@@ -216,6 +216,7 @@ const SVG_EXAMPLES = [
 export default function SvgConverterClient() {
   const [svgContent, setSvgContent] = useState("");
   const [svgPreview, setSvgPreview] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
   const [options, setOptions] = useState<ConversionOptions>({
     format: 'png',
     width: 512,
@@ -240,32 +241,64 @@ export default function SvgConverterClient() {
     };
   }, [downloadUrl]);
 
-  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file && file.type === 'image/svg+xml') {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        setSvgContent(content);
-        setSvgPreview(content);
-        setFileInfo({ name: file.name, size: file.size });
+  const loadSvgContentFromFile = (file: File) => {
+    if (file.type !== "image/svg+xml" && !file.name.toLowerCase().endsWith(".svg")) {
+      setValidation({ isValid: false, error: "请选择SVG文件" });
+      return;
+    }
 
-        // 自动设置默认尺寸
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      setSvgContent(content);
+      setSvgPreview(content);
+      setFileInfo({ name: file.name, size: file.size });
+
+      const result = SvgConverter.validateSvg(content);
+      setValidation(result);
+
+      if (result.isValid) {
         const dimensions = SvgConverter.getDefaultSize(content);
-        setOptions(prev => ({
+        setOptions((prev) => ({
           ...prev,
           width: Math.min(dimensions.width * 2, 1024),
-          height: Math.min(dimensions.height * 2, 1024)
+          height: Math.min(dimensions.height * 2, 1024),
         }));
+      }
+    };
+    reader.readAsText(file);
+  };
 
-        // 验证SVG
-        const result = SvgConverter.validateSvg(content);
-        setValidation(result);
-      };
-      reader.readAsText(file);
-    } else {
-      setValidation({ isValid: false, error: '请选择SVG文件' });
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    loadSvgContentFromFile(file);
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+
+    const file = event.dataTransfer.files?.[0];
+    if (file) {
+      loadSvgContentFromFile(file);
+      return;
     }
+
+    const text = event.dataTransfer.getData("text/plain");
+    if (text && text.includes("<svg")) {
+      handleSvgContentChange(text);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const handleSvgContentChange = (content: string) => {
@@ -395,12 +428,31 @@ export default function SvgConverterClient() {
                     onChange={handleFileSelect}
                     className="hidden"
                   />
-                  <button
+                  <div
+                    className={`rounded-lg border-2 border-dashed p-4 transition ${
+                      isDragging
+                        ? "border-blue-500 bg-blue-50/50"
+                        : "border-slate-200 bg-white hover:bg-slate-50"
+                    }`}
+                    onDrop={handleDrop}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
                     onClick={() => fileInputRef.current?.click()}
-                    className="w-full px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
+                    role="button"
+                    tabIndex={0}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
+                    }}
                   >
-                    选择SVG文件
-                  </button>
+                    <div className="text-center">
+                      <p className="text-sm font-medium text-slate-700">
+                        点击选择或拖拽 SVG 到此处
+                      </p>
+                      <p className="mt-1 text-xs text-slate-500">
+                        支持 .svg / image/svg+xml，也支持拖拽 SVG 代码片段
+                      </p>
+                    </div>
+                  </div>
                   {fileInfo && (
                     <p className="mt-2 text-xs text-slate-600">
                       已选择: {fileInfo.name} ({Math.round(fileInfo.size / 1024)}KB)

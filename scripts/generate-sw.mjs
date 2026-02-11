@@ -123,7 +123,6 @@ function isLikelyNextRsc(pathname) {
   if (pathname.includes("/__next.")) return true;
   if (pathname.startsWith("/zh-cn/tools/")) return true;
   if (pathname.startsWith("/en-us/tools/")) return true;
-  if (pathname.startsWith("/tools/")) return true;
   return false;
 }
 

@@ -9,7 +9,7 @@ export function generateToolMetadata(toolSlug: string): Metadata {
     title: config.name,
     description: config.seoDescription || config.description,
     keywords: config.keywords?.join(",") || "",
-    manifest: `/tools/${toolSlug}/manifest.webmanifest`,
+    manifest: `/${DEFAULT_LOCALE}/tools/${toolSlug}/manifest.webmanifest`,
     openGraph: {
       title: config.name,
       description: config.description,

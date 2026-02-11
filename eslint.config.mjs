@@ -13,6 +13,9 @@ const eslintConfig = defineConfig([
     "build/**",
     "next-env.d.ts",
     "public/vendor/**",
+    // Extension build output:
+    "extension/dist/**",
+    "extension/node_modules/**",
     // Local assistant/workspace metadata:
     ".claude/**",
     ".serena/**",

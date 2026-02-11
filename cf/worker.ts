@@ -8,6 +8,8 @@ type Env = {
 
 import responseHeaders from "./response-headers.json";
 
+const DEFAULT_LOCALE = "zh-cn";
+
 function hasFileExtension(pathname: string) {
   const lastSegment = pathname.split("/").pop() ?? "";
   return lastSegment.includes(".");
@@ -23,7 +25,6 @@ function isNextRscTxtPath(pathname: string) {
   if (last === "zh-cn.txt" || last === "en-us.txt") return true;
   if (pathname.startsWith("/zh-cn/tools/")) return true;
   if (pathname.startsWith("/en-us/tools/")) return true;
-  if (pathname.startsWith("/tools/")) return true;
   return false;
 }
 
@@ -71,6 +72,16 @@ function withNextRscHeaders(request: Request, response: Response) {
 const worker = {
   async fetch(request: Request, env: Env): Promise<Response> {
     const url = new URL(request.url);
+
+    if (url.pathname === "/tools" || url.pathname === "/tools/") {
+      url.pathname = `/${DEFAULT_LOCALE}`;
+      return Response.redirect(url.toString(), 308);
+    }
+    if (url.pathname.startsWith("/tools/")) {
+      url.pathname = `/${DEFAULT_LOCALE}${url.pathname}`;
+      return Response.redirect(url.toString(), 308);
+    }
+
     const originalResponse = await fetchAsset(request, env);
     if (originalResponse.status !== 404) {
       return withCrossOriginIsolationHeaders(withNextRscHeaders(request, originalResponse));

@@ -27,7 +27,7 @@ export async function generateMetadata({
     title: config.name,
     description: config.seoDescription || config.description,
     keywords: config.keywords?.join(",") || "",
-    manifest: `/tools/${slug}/manifest.webmanifest`,
+    manifest: `/${locale}/tools/${slug}/manifest.webmanifest`,
     openGraph: {
       title: config.name,
       description: config.seoDescription || config.description,

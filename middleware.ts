@@ -8,14 +8,20 @@ const DEFAULT_LOCALE: Locale = "zh-cn";
 const isLocale = (value: string): value is Locale =>
   (SUPPORTED_LOCALES as readonly string[]).includes(value);
 
-const isPublicToolAsset = (pathname: string) =>
-  pathname.startsWith("/tools/") &&
-  (pathname.endsWith("/tool.json") ||
-    pathname.includes("/tool.") ||
-    pathname.endsWith("/manifest.webmanifest"));
-
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  if (pathname === "/tools" || pathname === "/tools/") {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${DEFAULT_LOCALE}`;
+    return NextResponse.redirect(url);
+  }
+
+  if (pathname.startsWith("/tools/")) {
+    const url = request.nextUrl.clone();
+    url.pathname = `/${DEFAULT_LOCALE}${pathname}`;
+    return NextResponse.redirect(url);
+  }
 
   if (
     pathname.startsWith("/_next") ||
@@ -31,8 +37,7 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/public/") ||
     pathname.startsWith("/assets/") ||
     pathname.startsWith("/images/") ||
-    pathname.includes(".") ||
-    isPublicToolAsset(pathname)
+    pathname.includes(".")
   ) {
     return NextResponse.next();
   }
@@ -50,4 +55,3 @@ export function middleware(request: NextRequest) {
 export const config = {
   matcher: ["/:path*"],
 };
-

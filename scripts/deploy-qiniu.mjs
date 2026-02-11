@@ -175,7 +175,6 @@ function isNextRscTxtKey(key) {
 
   if (normalized.startsWith("zh-cn/tools/")) return true;
   if (normalized.startsWith("en-us/tools/")) return true;
-  if (normalized.startsWith("tools/")) return true;
 
   return false;
 }

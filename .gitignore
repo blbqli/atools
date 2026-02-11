@@ -2,6 +2,7 @@
 
 # dependencies
 /node_modules
+extension/node_modules/
 /.pnp
 .pnp.*
 .yarn/*
@@ -20,6 +21,12 @@
 /public/tools/*/manifest.webmanifest
 /public/tools/*/tool.json
 /public/tools/*/tool.*.json
+/public/zh-cn/tools/*/manifest.webmanifest
+/public/zh-cn/tools/*/tool.json
+/public/zh-cn/tools/tools-meta.json
+/public/en-us/tools/*/manifest.webmanifest
+/public/en-us/tools/*/tool.json
+/public/en-us/tools/tools-meta.json
 /public/vendor/ffmpeg/**
 /public/vendor/realcugan/**
 
@@ -28,6 +35,9 @@
 
 # production
 /build
+extension/dist/
+extension/.vite/
+extension/tools-meta*.json
 
 # misc
 .DS_Store
