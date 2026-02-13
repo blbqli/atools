@@ -62,6 +62,19 @@ function clampInt(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, Math.trunc(value)));
 }
 
+function calcFitSize(imageWidth: number, imageHeight: number, areaWidth: number, areaHeight: number) {
+  const safeImageWidth = Math.max(1, imageWidth);
+  const safeImageHeight = Math.max(1, imageHeight);
+  const safeAreaWidth = Math.max(1, areaWidth);
+  const safeAreaHeight = Math.max(1, areaHeight);
+  const scale = Math.min(safeAreaWidth / safeImageWidth, safeAreaHeight / safeImageHeight, 1);
+  return {
+    width: Math.max(1, Math.round(safeImageWidth * scale)),
+    height: Math.max(1, Math.round(safeImageHeight * scale)),
+    scale,
+  };
+}
+
 export default function ScreenshotAnnotatorClient() {
   return (
     <ToolPageLayout toolSlug="screenshot-annotator" maxWidthClassName="max-w-6xl">
@@ -73,6 +86,7 @@ export default function ScreenshotAnnotatorClient() {
 function Inner({ ui }: { ui: Ui }) {
   const inputRef = useRef<HTMLInputElement>(null);
   const canvasElRef = useRef<HTMLCanvasElement | null>(null);
+  const canvasViewportRef = useRef<HTMLDivElement | null>(null);
   const fabricRef = useRef<Canvas | null>(null);
   const fabricModuleRef = useRef<FabricModule | null>(null);
   const [canvasReady, setCanvasReady] = useState(false);
@@ -201,9 +215,12 @@ function Inner({ ui }: { ui: Ui }) {
 
       const w = img.width ?? 1;
       const h = img.height ?? 1;
-      canvas.setWidth(w);
-      canvas.setHeight(h);
+      const viewRect = canvasViewportRef.current?.getBoundingClientRect();
+      const fit = calcFitSize(w, h, viewRect?.width ?? w, viewRect?.height ?? h);
+      canvas.setWidth(fit.width);
+      canvas.setHeight(fit.height);
       img.set({ originX: "left", originY: "top", left: 0, top: 0, selectable: false, evented: false });
+      img.scale(fit.scale);
       canvas.backgroundImage = img;
       canvas.renderAll();
 
@@ -388,8 +405,10 @@ function Inner({ ui }: { ui: Ui }) {
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">
-          <div className="overflow-auto rounded-2xl bg-white p-3 ring-1 ring-slate-200">
-            <canvas ref={canvasElRef} className="block max-w-full" />
+          <div className="rounded-2xl bg-white p-3 ring-1 ring-slate-200">
+            <div ref={canvasViewportRef} className="flex h-[65vh] min-h-[320px] max-h-[760px] items-center justify-center overflow-auto">
+              <canvas ref={canvasElRef} className="block max-w-full" />
+            </div>
           </div>
 
           <div className="grid gap-3 rounded-2xl bg-white p-4 ring-1 ring-slate-200">
