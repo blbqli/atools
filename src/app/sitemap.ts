@@ -11,6 +11,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   const routes = [
     "/",
     ...SUPPORTED_LOCALES.map((locale) => `/${locale}`),
+    ...SUPPORTED_LOCALES.map((locale) => `/${locale}/privacy-policy`),
     ...SUPPORTED_LOCALES.flatMap((locale) =>
       toolSlugs.map((slug) => `/${locale}/tools/${slug}`),
     ),

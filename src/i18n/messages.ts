@@ -4,6 +4,7 @@ export type Messages = {
   siteName: string;
   navTools: string;
   navSitemap: string;
+  navPrivacy: string;
   navGithub: string;
   navReportIssue: string;
   footerTagline: string;
@@ -33,6 +34,7 @@ const zhCN: Messages = {
   siteName: "纯粹工具站",
   navTools: "工具导航",
   navSitemap: "站点地图",
+  navPrivacy: "隐私政策",
   navReportIssue: "提交缺陷",
   navGithub: "GitHub",
   footerTagline: "Crafted with precision.",
@@ -63,6 +65,7 @@ const enUS: Messages = {
   siteName: "Pure Tools",
   navTools: "Tools",
   navSitemap: "Sitemap",
+  navPrivacy: "Privacy",
   navReportIssue: "Report Issue",
   navGithub: "GitHub",
   footerTagline: "Crafted with precision.",

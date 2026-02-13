@@ -76,6 +76,11 @@ export default async function LocaleLayout({
             <p>
               © {new Date().getFullYear()} {messages.siteName}. {messages.footerTagline}
             </p>
+            <p className="mt-2">
+              <Link href={`/${locale}/privacy-policy`} className="transition-colors hover:text-slate-700">
+                {messages.navPrivacy}
+              </Link>
+            </p>
           </div>
         </footer>
       </div>

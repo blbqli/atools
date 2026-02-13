@@ -1,16 +1,36 @@
 {
-  "name": "Free Online CSR Generator - Pure Tools",
+  "name": "Free Online CSR Generator (Apple Developer CSR) - Pure Tools",
   "shortName": "CSR Generator",
-  "description": "Free online CSR generator: create RSA/EC key pairs locally and generate PKCS#10 CSRs with SAN/KeyUsage/EKU options.",
-  "seoDescription": "Free online CSR (Certificate Signing Request) generator that runs fully in your browser using WebCrypto. Generate RSA or EC (P-256/P-384/P-521) key pairs and PKCS#10 CSRs with Subject, optional SAN, KeyUsage and ExtendedKeyUsage. Choose signature hash, optionally auto-fill SAN from CN, copy/download CSR/private/public keys, and download everything as a ZIP. No private key uploads.",
+  "description": "Free online CSR generator with Apple Developer CSR mode (email + common name) and an advanced mode for RSA/EC PKCS#10 CSRs with SAN/KeyUsage/EKU options.",
+  "seoDescription": "Free online CSR generator with Apple Developer CSR mode. Enter email + common name to generate an RSA 2048 key pair locally (WebCrypto) and output a PKCS#10 CSR for iOS certificates. Advanced mode supports RSA/EC (P-256/P-384/P-521) with optional SAN/KeyUsage/EKU. No private key uploads.",
   "category": "Developer Tools",
   "lang": "en-US",
   "ui": {
     "title": "CSR / Certificate Request Generator",
+    "modeApple": "Apple Developer CSR",
+    "modeAdvanced": "Advanced",
     "generateButton": "Generate CSR",
     "generating": "Generating…",
     "resetButton": "Reset",
     "description": "This tool uses browser WebCrypto to generate keys and a PKCS#10 CSR. Runs completely locally and never uploads your private key/CSR.",
+    "appleModeDescription": "Apple Developer CSR mode: enter email + common name to generate a PKCS#10 CSR with a local RSA 2048 private key (SHA-256).",
+    "appleEmailLabel": "Email",
+    "appleCommonNameLabel": "Common Name",
+    "appleEmailPlaceholder": "name@example.com",
+    "appleCommonNamePlaceholder": "Your Name / Company",
+    "appleTutorialTitle": "Tutorial: Apply for an Apple Developer Certificate with a CSR",
+    "appleTutorialSteps": [
+      "Enter email + common name, click “Generate CSR”, then download and securely store both the CSR and the private key (critical).",
+      "In Apple Developer → Certificates → “+”, choose a certificate type (iOS App Development / Apple Distribution, etc.) and upload the CSR generated here.",
+      "Download the issued `.cer` certificate file.",
+      "To use it in Xcode/CI, the certificate must pair with the private key. You can package `.cer + private key` into a `.p12` using the commands below, then import it into Keychain or use it for signing."
+    ],
+    "appleTutorialCommandsTitle": "(Optional) Package as .p12 (recommended)",
+    "appleTutorialCommands": [
+      "openssl x509 -inform DER -in ios_development.cer -out ios_development.pem",
+      "openssl pkcs12 -export -inkey private.key.pem -in ios_development.pem -out ios_development.p12"
+    ],
+    "appleTutorialNotes": "Tip: exporting a `.p12` will ask you to set a password. Never upload your private key or `.p12` to untrusted sites.",
     "commonNameLabel": "CN (Domain/Name)",
     "countryLabel": "C (Country)",
     "stateLabel": "ST (State/Province)",
@@ -49,6 +69,8 @@
     "outputPlaceholder": "Output appears after clicking “Generate CSR”…",
     "emptySubject": "-",
     "cnEmptyError": "CN (Common Name) cannot be empty.",
+    "emailEmptyError": "Email cannot be empty.",
+    "invalidEmailError": "Invalid email address.",
     "countryLengthError": "C (Country) should be a 2-letter country code, e.g. CN/US.",
     "invalidDnsError": "Invalid DNS SAN: ",
     "invalidIpError": "Invalid IP SAN: ",
@@ -61,5 +83,26 @@
     "ipPlaceholder": "192.168.1.1\n2001:db8::1",
     "copiedToast": "Copied to clipboard"
   },
-  "keywords": ["CSR generator", "Certificate Signing Request", "PKCS#10", "SAN", "RSA", "ECDSA", "P-256", "SSL certificate"]
+  "keywords": [
+    "free",
+    "online",
+    "free online",
+    "free CSR generator",
+    "free online CSR generator",
+    "online CSR generator",
+    "Apple Developer CSR",
+    "iOS development CSR",
+    "iOS distribution CSR",
+    "Apple certificate CSR",
+    "CSR generator",
+    "Certificate Signing Request",
+    "PKCS#10",
+    "RSA 2048",
+    "WebCrypto",
+    "SAN",
+    "RSA",
+    "ECDSA",
+    "P-256",
+    "SSL certificate"
+  ]
 }
