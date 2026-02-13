@@ -2,6 +2,7 @@
 
 import {
   forwardRef,
+  type ReactNode,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -10,22 +11,34 @@ import {
   useRef,
   useState,
 } from "react";
-
-type TopicNode = {
-  title?: string;
-  labels?: string[];
-  children?: {
-    attached?: TopicNode[];
-    detached?: TopicNode[];
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
-};
+import type { MindMapLayoutMode, MindMapNode, MindMapTheme } from "./types";
 
 export type XmindMindMapCanvasHandle = {
   fitToView: () => void;
   resetView: () => void;
+  getViewState: () => ViewState;
+  setViewState: (viewState: ViewState) => void;
+  getViewStateBundle: () => ViewStateBundle;
+  setViewStateBundle: (bundle: ViewStateBundle) => void;
+  exportAsPng: (options?: { scale?: number; padding?: number }) => Promise<Blob>;
+  exportAsSvg: (options?: { padding?: number }) => string;
 };
+
+type Props = {
+  rootTopic: MindMapNode | null;
+  layoutMode: MindMapLayoutMode;
+  theme: MindMapTheme;
+  selectedNodeId: string | null;
+  onSelectNode: (nodeId: string | null) => void;
+  onToggleCollapse: (nodeId: string) => void;
+  onMoveNode: (draggedNodeId: string, targetNodeId: string, placement: "before" | "after" | "child") => void;
+  viewResetKey?: number;
+  fullscreenSidebar?: ReactNode;
+};
+
+export type ViewState = { scale: number; offsetX: number; offsetY: number };
+
+export type ViewStateBundle = { normal: ViewState; fullscreen: ViewState };
 
 type LayoutNode = {
   id: string;
@@ -35,6 +48,9 @@ type LayoutNode = {
   width: number;
   height: number;
   parentId: string | null;
+  hasChildren: boolean;
+  collapsed: boolean;
+  direction: -1 | 1;
 };
 
 type Layout = {
@@ -42,27 +58,48 @@ type Layout = {
   bounds: { minX: number; maxX: number; minY: number; maxY: number };
 };
 
-type Props = {
-  rootTopic: TopicNode | null;
+type InternalNode = {
+  id: string;
+  title: string;
+  width: number;
+  height: number;
+  children: InternalNode[];
+  subtreeHeight: number;
+  subtreeWidth: number;
+  hasChildren: boolean;
+  collapsed: boolean;
 };
 
 const NODE_HEIGHT = 34;
 const NODE_PADDING_X = 14;
 const NODE_RADIUS = 12;
-const LEVEL_GAP_X = 240;
+const LEVEL_GAP_X = 220;
 const SIBLING_GAP_Y = 18;
+const LEVEL_GAP_Y = 130;
+const SIBLING_GAP_X = 32;
+const COLLAPSE_MARKER_RADIUS = 8;
+const COMPACT_LEVEL_GAP_Y = 20;
+const COMPACT_INDENT_X = 180;
+const COMPACT2_BRANCH_GAP_X = 80;
 
-const getTitle = (topic: TopicNode): string => (topic.title ?? "").trim() || "(无标题)";
-
-const getChildren = (topic: TopicNode): TopicNode[] => {
-  const children = topic.children?.attached;
-  const detached = topic.children?.detached;
-  const attachedList = Array.isArray(children) ? children : [];
-  const detachedList = Array.isArray(detached) ? detached : [];
-  return [...attachedList, ...detachedList];
-};
+const defaultView: ViewState = { scale: 1, offsetX: 0, offsetY: 0 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(max, Math.max(min, value));
+
+const worldToScreen = (x: number, y: number, view: ViewState) => ({
+  x: x * view.scale + view.offsetX,
+  y: y * view.scale + view.offsetY,
+});
+
+const escapeXml = (value: string) =>
+  value
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll("\"", "&quot;")
+    .replaceAll("'", "&apos;");
+
+const withDefault = <T,>(value: T | undefined, fallback: T): T => (value === undefined ? fallback : value);
 
 const createMeasureContext = (): CanvasRenderingContext2D | null => {
   if (typeof document === "undefined") return null;
@@ -93,22 +130,36 @@ const truncateText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: num
   return text.slice(0, Math.max(0, lo - 1)) + suffix;
 };
 
-type InternalNode = {
-  id: string;
-  title: string;
-  width: number;
-  height: number;
-  children: InternalNode[];
-  subtreeHeight: number;
+const drawRoundedRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
+  const radius = Math.min(r, w / 2, h / 2);
+  ctx.beginPath();
+  ctx.moveTo(x + radius, y);
+  ctx.arcTo(x + w, y, x + w, y + h, radius);
+  ctx.arcTo(x + w, y + h, x, y + h, radius);
+  ctx.arcTo(x, y + h, x, y, radius);
+  ctx.arcTo(x, y, x + w, y, radius);
+  ctx.closePath();
 };
 
-const buildInternalTree = (topic: TopicNode, ctx: CanvasRenderingContext2D, idPrefix: string): InternalNode => {
-  const title = getTitle(topic);
+const buildInternalTree = (topic: MindMapNode, ctx: CanvasRenderingContext2D): InternalNode => {
+  const title = topic.title.trim() || "(无标题)";
   const width = measureNodeWidth(ctx, title);
-  const children = getChildren(topic).map((child, index) =>
-    buildInternalTree(child, ctx, `${idPrefix}.${index + 1}`),
-  );
-  return { id: idPrefix, title, width, height: NODE_HEIGHT, children, subtreeHeight: NODE_HEIGHT };
+  const children = Array.isArray(topic.children) ? topic.children : [];
+  const hasChildren = children.length > 0;
+  const collapsed = Boolean(topic.collapsed);
+  const visibleChildren = collapsed ? [] : children;
+
+  return {
+    id: topic.id,
+    title,
+    width,
+    height: NODE_HEIGHT,
+    children: visibleChildren.map((child) => buildInternalTree(child, ctx)),
+    subtreeHeight: NODE_HEIGHT,
+    subtreeWidth: width,
+    hasChildren,
+    collapsed,
+  };
 };
 
 const computeSubtreeHeights = (node: InternalNode): number => {
@@ -121,6 +172,20 @@ const computeSubtreeHeights = (node: InternalNode): number => {
   node.subtreeHeight = Math.max(node.height, stacked);
   return node.subtreeHeight;
 };
+
+const computeSubtreeWidths = (node: InternalNode): number => {
+  if (node.children.length === 0) {
+    node.subtreeWidth = node.width;
+    return node.subtreeWidth;
+  }
+  const childrenWidths = node.children.map(computeSubtreeWidths);
+  const stacked = childrenWidths.reduce((sum, w) => sum + w, 0) + SIBLING_GAP_X * (childrenWidths.length - 1);
+  node.subtreeWidth = Math.max(node.width, stacked);
+  return node.subtreeWidth;
+};
+
+const isVerticalLayoutMode = (mode: MindMapLayoutMode) =>
+  mode === "up" || mode === "down" || mode === "downCompact" || mode === "downCompact2";
 
 const assignPositions = (
   node: InternalNode,
@@ -140,27 +205,216 @@ const assignPositions = (
       assignPositions(child, direction, x, node.width, cursorY, out, node.id);
       cursorY += child.subtreeHeight + SIBLING_GAP_Y;
     }
-    const firstChild = out.find((n) => n.id === node.children[0]!.id);
-    const lastChild = out.find((n) => n.id === node.children[node.children.length - 1]!.id);
-    if (firstChild && lastChild) y = (firstChild.y + lastChild.y) / 2;
+
+    const childNodes = out.filter((layoutNode) => node.children.some((child) => child.id === layoutNode.id));
+    if (childNodes.length > 0) {
+      y = (childNodes[0]!.y + childNodes[childNodes.length - 1]!.y) / 2;
+    }
   }
 
-  out.push({ id: node.id, title: node.title, x, y, width: node.width, height: node.height, parentId });
+  out.push({
+    id: node.id,
+    title: node.title,
+    x,
+    y,
+    width: node.width,
+    height: node.height,
+    parentId,
+    hasChildren: node.hasChildren,
+    collapsed: node.collapsed,
+    direction,
+  });
 };
 
-const layoutMindMap = (rootTopic: TopicNode, ctx: CanvasRenderingContext2D): Layout => {
-  const root = buildInternalTree(rootTopic, ctx, "root");
+const computeLayoutBounds = (nodes: LayoutNode[], mode: MindMapLayoutMode) => {
+  let minX = Infinity;
+  let maxX = -Infinity;
+  let minY = Infinity;
+  let maxY = -Infinity;
+
+  const isVertical = isVerticalLayoutMode(mode);
+  for (const node of nodes) {
+    minX = Math.min(minX, node.x - node.width / 2);
+    maxX = Math.max(maxX, node.x + node.width / 2);
+    minY = Math.min(minY, node.y - node.height / 2);
+    maxY = Math.max(maxY, node.y + node.height / 2);
+
+    if (!node.hasChildren) continue;
+    const markerPadding = COLLAPSE_MARKER_RADIUS + 4;
+    if (isVertical) {
+      const markerY = node.y + node.direction * (node.height / 2 + COLLAPSE_MARKER_RADIUS + 8);
+      minX = Math.min(minX, node.x - markerPadding);
+      maxX = Math.max(maxX, node.x + markerPadding);
+      minY = Math.min(minY, markerY - markerPadding);
+      maxY = Math.max(maxY, markerY + markerPadding);
+    } else {
+      const side = node.parentId === null ? 1 : node.direction;
+      const markerX = node.x + side * (node.width / 2 + COLLAPSE_MARKER_RADIUS + 8);
+      minX = Math.min(minX, markerX - markerPadding);
+      maxX = Math.max(maxX, markerX + markerPadding);
+      minY = Math.min(minY, node.y - markerPadding);
+      maxY = Math.max(maxY, node.y + markerPadding);
+    }
+  }
+
+  if (!Number.isFinite(minX) || !Number.isFinite(maxX) || !Number.isFinite(minY) || !Number.isFinite(maxY)) {
+    return { minX: 0, maxX: 0, minY: 0, maxY: 0 };
+  }
+  return { minX, maxX, minY, maxY };
+};
+
+const layoutMindMapHorizontal = (rootTopic: MindMapNode, ctx: CanvasRenderingContext2D, mode: MindMapLayoutMode): Layout => {
+  const root = buildInternalTree(rootTopic, ctx);
   computeSubtreeHeights(root);
 
-  const topChildren = root.children;
+  const nodes: LayoutNode[] = [
+    {
+      id: root.id,
+      title: root.title,
+      x: 0,
+      y: 0,
+      width: root.width,
+      height: root.height,
+      parentId: null,
+      hasChildren: root.hasChildren,
+      collapsed: root.collapsed,
+      direction: 1,
+    },
+  ];
+
   const leftChildren: InternalNode[] = [];
   const rightChildren: InternalNode[] = [];
-  topChildren.forEach((child, index) => {
-    if (index % 2 === 0) rightChildren.push(child);
-    else leftChildren.push(child);
-  });
 
+  if (mode === "balanced") {
+    root.children.forEach((child, index) => {
+      if (index % 2 === 0) rightChildren.push(child);
+      else leftChildren.push(child);
+    });
+  } else if (mode === "left") {
+    leftChildren.push(...root.children);
+  } else {
+    rightChildren.push(...root.children);
+  }
+
+  const totalHeight = (items: InternalNode[]) =>
+    items.reduce((sum, item) => sum + item.subtreeHeight, 0) + Math.max(0, items.length - 1) * SIBLING_GAP_Y;
+
+  let cursorLeft = -totalHeight(leftChildren) / 2;
+  for (const child of leftChildren) {
+    assignPositions(child, -1, 0, root.width, cursorLeft, nodes, root.id);
+    cursorLeft += child.subtreeHeight + SIBLING_GAP_Y;
+  }
+
+  let cursorRight = -totalHeight(rightChildren) / 2;
+  for (const child of rightChildren) {
+    assignPositions(child, 1, 0, root.width, cursorRight, nodes, root.id);
+    cursorRight += child.subtreeHeight + SIBLING_GAP_Y;
+  }
+
+  return { nodes, bounds: computeLayoutBounds(nodes, mode) };
+};
+
+const layoutMindMapVertical = (rootTopic: MindMapNode, ctx: CanvasRenderingContext2D, mode: MindMapLayoutMode): Layout => {
+  const root = buildInternalTree(rootTopic, ctx);
+  computeSubtreeWidths(root);
+
+  const direction: -1 | 1 = mode === "up" ? -1 : 1;
   const nodes: LayoutNode[] = [];
+
+  const assign = (
+    node: InternalNode,
+    subtreeLeftX: number,
+    y: number,
+    parentId: string | null,
+  ): number => {
+    let nodeX = subtreeLeftX + node.subtreeWidth / 2;
+    const nodeY = y;
+
+    if (node.children.length > 0) {
+      const totalChildrenWidth =
+        node.children.reduce((sum, child) => sum + child.subtreeWidth, 0) + SIBLING_GAP_X * (node.children.length - 1);
+      let cursorX = subtreeLeftX + (node.subtreeWidth - totalChildrenWidth) / 2;
+      const childXs: number[] = [];
+      for (const child of node.children) {
+        const childY = nodeY + direction * (node.height / 2 + LEVEL_GAP_Y + child.height / 2);
+        childXs.push(assign(child, cursorX, childY, node.id));
+        cursorX += child.subtreeWidth + SIBLING_GAP_X;
+      }
+      if (childXs.length > 0) {
+        nodeX = (childXs[0]! + childXs[childXs.length - 1]!) / 2;
+      }
+    }
+
+    nodes.push({
+      id: node.id,
+      title: node.title,
+      x: nodeX,
+      y: nodeY,
+      width: node.width,
+      height: node.height,
+      parentId,
+      hasChildren: node.hasChildren,
+      collapsed: node.collapsed,
+      direction,
+    });
+
+    return nodeX;
+  };
+
+  assign(root, -root.subtreeWidth / 2, 0, null);
+  return { nodes, bounds: computeLayoutBounds(nodes, mode) };
+};
+
+const layoutMindMapDownCompact = (rootTopic: MindMapNode, ctx: CanvasRenderingContext2D, mode: MindMapLayoutMode): Layout => {
+  const root = buildInternalTree(rootTopic, ctx);
+  computeSubtreeHeights(root);
+  const nodes: LayoutNode[] = [];
+
+  const assign = (node: InternalNode, depth: number, topY: number, parentId: string | null) => {
+    const x = depth * COMPACT_INDENT_X;
+    const y = topY + node.height / 2;
+
+    nodes.push({
+      id: node.id,
+      title: node.title,
+      x,
+      y,
+      width: node.width,
+      height: node.height,
+      parentId,
+      hasChildren: node.hasChildren,
+      collapsed: node.collapsed,
+      direction: 1,
+    });
+
+    let cursorY = topY + node.height + COMPACT_LEVEL_GAP_Y;
+    for (const child of node.children) {
+      assign(child, depth + 1, cursorY, node.id);
+      cursorY += child.subtreeHeight + COMPACT_LEVEL_GAP_Y;
+    }
+  };
+
+  assign(root, 0, 0, null);
+  return { nodes, bounds: computeLayoutBounds(nodes, mode) };
+};
+
+const computeCompactListHeights = (node: InternalNode): number => {
+  if (node.children.length === 0) {
+    node.subtreeHeight = node.height;
+    return node.subtreeHeight;
+  }
+
+  const childHeights = node.children.map(computeCompactListHeights);
+  const stacked = childHeights.reduce((sum, h) => sum + h, 0) + COMPACT_LEVEL_GAP_Y * Math.max(0, childHeights.length - 1);
+  node.subtreeHeight = node.height + COMPACT_LEVEL_GAP_Y + stacked;
+  return node.subtreeHeight;
+};
+
+const layoutMindMapDownCompact2 = (rootTopic: MindMapNode, ctx: CanvasRenderingContext2D, mode: MindMapLayoutMode): Layout => {
+  const root = buildInternalTree(rootTopic, ctx);
+  computeCompactListHeights(root);
+  const nodes: LayoutNode[] = [];
+
   nodes.push({
     id: root.id,
     title: root.title,
@@ -169,88 +423,298 @@ const layoutMindMap = (rootTopic: TopicNode, ctx: CanvasRenderingContext2D): Lay
     width: root.width,
     height: root.height,
     parentId: null,
+    hasChildren: root.hasChildren,
+    collapsed: root.collapsed,
+    direction: 1,
   });
 
-  const totalHeight = (items: InternalNode[]) =>
-    items.reduce((sum, n) => sum + n.subtreeHeight, 0) + Math.max(0, items.length - 1) * SIBLING_GAP_Y;
-
-  const leftHeight = totalHeight(leftChildren);
-  const rightHeight = totalHeight(rightChildren);
-
-  let cursorLeft = -leftHeight / 2;
-  for (const child of leftChildren) {
-    assignPositions(child, -1, 0, root.width, cursorLeft, nodes, root.id);
-    cursorLeft += child.subtreeHeight + SIBLING_GAP_Y;
+  if (root.children.length === 0) {
+    return { nodes, bounds: computeLayoutBounds(nodes, mode) };
   }
 
-  let cursorRight = -rightHeight / 2;
-  for (const child of rightChildren) {
-    assignPositions(child, 1, 0, root.width, cursorRight, nodes, root.id);
-    cursorRight += child.subtreeHeight + SIBLING_GAP_Y;
+  type BranchLayout = { nodes: LayoutNode[]; bounds: { minX: number; maxX: number; minY: number; maxY: number } };
+  const branches: BranchLayout[] = [];
+
+  const firstLevelY = root.height / 2 + LEVEL_GAP_Y;
+
+  const assignCompactBranch = (branchRoot: InternalNode, startY: number, branchNodes: LayoutNode[]) => {
+    const assign = (node: InternalNode, depth: number, topY: number, parentId: string | null) => {
+      const x = depth * COMPACT_INDENT_X;
+      const y = topY + node.height / 2;
+
+      branchNodes.push({
+        id: node.id,
+        title: node.title,
+        x,
+        y,
+        width: node.width,
+        height: node.height,
+        parentId,
+        hasChildren: node.hasChildren,
+        collapsed: node.collapsed,
+        direction: 1,
+      });
+
+      let cursorY = topY + node.height + COMPACT_LEVEL_GAP_Y;
+      for (const child of node.children) {
+        assign(child, depth + 1, cursorY, node.id);
+        cursorY += child.subtreeHeight + COMPACT_LEVEL_GAP_Y;
+      }
+    };
+
+    assign(branchRoot, 0, startY, root.id);
+  };
+
+  for (const child of root.children) {
+    const branchNodes: LayoutNode[] = [];
+    assignCompactBranch(child, firstLevelY, branchNodes);
+    branches.push({ nodes: branchNodes, bounds: computeLayoutBounds(branchNodes, "downCompact") });
   }
 
-  let minX = Infinity;
-  let maxX = -Infinity;
-  let minY = Infinity;
-  let maxY = -Infinity;
-  for (const node of nodes) {
-    minX = Math.min(minX, node.x - node.width / 2);
-    maxX = Math.max(maxX, node.x + node.width / 2);
-    minY = Math.min(minY, node.y - node.height / 2);
-    maxY = Math.max(maxY, node.y + node.height / 2);
+  const branchWidths = branches.map((branch) => Math.max(1, branch.bounds.maxX - branch.bounds.minX));
+  const totalWidth = branchWidths.reduce((sum, w) => sum + w, 0) + COMPACT2_BRANCH_GAP_X * Math.max(0, branches.length - 1);
+  let cursorLeftX = -totalWidth / 2;
+  for (let index = 0; index < branches.length; index += 1) {
+    const branch = branches[index]!;
+    const width = branchWidths[index]!;
+    const dx = cursorLeftX - branch.bounds.minX;
+    for (const node of branch.nodes) {
+      nodes.push({ ...node, x: node.x + dx });
+    }
+    cursorLeftX += width + COMPACT2_BRANCH_GAP_X;
   }
 
-  return { nodes, bounds: { minX, maxX, minY, maxY } };
+  return { nodes, bounds: computeLayoutBounds(nodes, mode) };
 };
 
-const drawRoundedRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
-  const radius = Math.min(r, w / 2, h / 2);
-  ctx.beginPath();
-  ctx.moveTo(x + radius, y);
-  ctx.arcTo(x + w, y, x + w, y + h, radius);
-  ctx.arcTo(x + w, y + h, x, y + h, radius);
-  ctx.arcTo(x, y + h, x, y, radius);
-  ctx.arcTo(x, y, x + w, y, radius);
-  ctx.closePath();
+const layoutMindMap = (rootTopic: MindMapNode, ctx: CanvasRenderingContext2D, mode: MindMapLayoutMode): Layout => {
+  if (mode === "downCompact2") return layoutMindMapDownCompact2(rootTopic, ctx, mode);
+  if (mode === "downCompact") return layoutMindMapDownCompact(rootTopic, ctx, mode);
+  if (mode === "up" || mode === "down") return layoutMindMapVertical(rootTopic, ctx, mode);
+  return layoutMindMapHorizontal(rootTopic, ctx, mode);
 };
 
-const worldToScreen = (x: number, y: number, view: ViewState) => ({
-  x: x * view.scale + view.offsetX,
-  y: y * view.scale + view.offsetY,
-});
+const getToggleCenter = (node: LayoutNode, mode: MindMapLayoutMode) => {
+  if (isVerticalLayoutMode(mode)) {
+    return {
+      x: node.x,
+      y: node.y + node.direction * (node.height / 2 + COLLAPSE_MARKER_RADIUS + 8),
+    };
+  }
+  const side = node.parentId === null ? 1 : node.direction;
+  return {
+    x: node.x + side * (node.width / 2 + COLLAPSE_MARKER_RADIUS + 8),
+    y: node.y,
+  };
+};
 
-type ViewState = { scale: number; offsetX: number; offsetY: number };
+const drawLayoutStatic = (
+  ctx: CanvasRenderingContext2D,
+  rect: { width: number; height: number },
+  layout: Layout,
+  layoutMode: MindMapLayoutMode,
+  theme: MindMapTheme,
+  view: ViewState,
+) => {
+  ctx.setTransform(1, 0, 0, 1, 0, 0);
+  ctx.clearRect(0, 0, rect.width, rect.height);
+  ctx.fillStyle = theme.canvasBackground;
+  ctx.fillRect(0, 0, rect.width, rect.height);
 
-const defaultView: ViewState = { scale: 1, offsetX: 0, offsetY: 0 };
+  ctx.save();
+  ctx.translate(view.offsetX, view.offsetY);
+  ctx.scale(view.scale, view.scale);
 
-const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function XmindMindMapCanvas({ rootTopic }, ref) {
+  const byId = new Map(layout.nodes.map((node) => [node.id, node] as const));
+  const verticalLinks =
+    layoutMode === "up" || layoutMode === "down" || layoutMode === "downCompact" || layoutMode === "downCompact2";
+
+  ctx.lineWidth = 2;
+  ctx.strokeStyle = theme.linkStroke;
+  for (const node of layout.nodes) {
+    if (!node.parentId) continue;
+    const parent = byId.get(node.parentId);
+    if (!parent) continue;
+    const isDown = node.y > parent.y;
+    const isRight = node.x > parent.x;
+    const fromX = verticalLinks ? parent.x : parent.x + (isRight ? parent.width / 2 : -parent.width / 2);
+    const fromY = verticalLinks ? parent.y + (isDown ? parent.height / 2 : -parent.height / 2) : parent.y;
+    const toX = verticalLinks ? node.x : node.x + (isRight ? -node.width / 2 : node.width / 2);
+    const toY = verticalLinks ? node.y + (isDown ? -node.height / 2 : node.height / 2) : node.y;
+    const dx = toX - fromX;
+    const dy = toY - fromY;
+
+    ctx.beginPath();
+    ctx.moveTo(fromX, fromY);
+    if (verticalLinks) {
+      ctx.bezierCurveTo(fromX, fromY + dy * 0.5, toX, toY - dy * 0.5, toX, toY);
+    } else {
+      ctx.bezierCurveTo(fromX + dx * 0.5, fromY, toX - dx * 0.5, toY, toX, toY);
+    }
+    ctx.stroke();
+  }
+
+  for (const node of layout.nodes) {
+    const left = node.x - node.width / 2;
+    const top = node.y - node.height / 2;
+    const isRoot = node.parentId === null;
+
+    ctx.save();
+    drawRoundedRect(ctx, left, top, node.width, node.height, NODE_RADIUS);
+    ctx.fillStyle = isRoot ? theme.rootFill : theme.nodeFill;
+    ctx.fill();
+    ctx.lineWidth = isRoot ? 2.5 : 2;
+    ctx.strokeStyle = isRoot ? theme.rootStroke : theme.nodeStroke;
+    ctx.stroke();
+
+    ctx.fillStyle = isRoot ? theme.rootText : theme.nodeText;
+    ctx.font = "14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    const displayText = truncateText(ctx, node.title, Math.max(10, node.width - NODE_PADDING_X * 2));
+    ctx.fillText(displayText, node.x, node.y);
+    ctx.restore();
+
+    if (node.hasChildren) {
+      const marker = getToggleCenter(node, layoutMode);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(marker.x, marker.y, COLLAPSE_MARKER_RADIUS, 0, Math.PI * 2);
+      ctx.fillStyle = theme.toggleFill;
+      ctx.fill();
+      ctx.lineWidth = 1.8;
+      ctx.strokeStyle = theme.toggleStroke;
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.moveTo(marker.x - 3.5, marker.y);
+      ctx.lineTo(marker.x + 3.5, marker.y);
+      if (node.collapsed) {
+        ctx.moveTo(marker.x, marker.y - 3.5);
+        ctx.lineTo(marker.x, marker.y + 3.5);
+      }
+      ctx.strokeStyle = theme.toggleText;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+  }
+
+  ctx.restore();
+};
+
+const layoutToSvg = (layout: Layout, layoutMode: MindMapLayoutMode, theme: MindMapTheme, padding: number) => {
+  const width = Math.max(1, Math.ceil(layout.bounds.maxX - layout.bounds.minX + padding * 2));
+  const height = Math.max(1, Math.ceil(layout.bounds.maxY - layout.bounds.minY + padding * 2));
+  const dx = padding - layout.bounds.minX;
+  const dy = padding - layout.bounds.minY;
+  const byId = new Map(layout.nodes.map((node) => [node.id, node] as const));
+  const verticalLinks =
+    layoutMode === "up" || layoutMode === "down" || layoutMode === "downCompact" || layoutMode === "downCompact2";
+
+  const parts: string[] = [];
+  parts.push(
+    `<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">`,
+  );
+  parts.push(`<rect width="100%" height="100%" fill="${theme.canvasBackground}"/>`);
+
+  for (const node of layout.nodes) {
+    if (!node.parentId) continue;
+    const parent = byId.get(node.parentId);
+    if (!parent) continue;
+    const isDown = node.y > parent.y;
+    const isRight = node.x > parent.x;
+    const fromX = (verticalLinks ? parent.x : parent.x + (isRight ? parent.width / 2 : -parent.width / 2)) + dx;
+    const fromY = (verticalLinks ? parent.y + (isDown ? parent.height / 2 : -parent.height / 2) : parent.y) + dy;
+    const toX = (verticalLinks ? node.x : node.x + (isRight ? -node.width / 2 : node.width / 2)) + dx;
+    const toY = (verticalLinks ? node.y + (isDown ? -node.height / 2 : node.height / 2) : node.y) + dy;
+    const ddx = toX - fromX;
+    const ddy = toY - fromY;
+    const d = verticalLinks
+      ? `M ${fromX} ${fromY} C ${fromX} ${fromY + ddy * 0.5}, ${toX} ${toY - ddy * 0.5}, ${toX} ${toY}`
+      : `M ${fromX} ${fromY} C ${fromX + ddx * 0.5} ${fromY}, ${toX - ddx * 0.5} ${toY}, ${toX} ${toY}`;
+    parts.push(`<path d="${d}" fill="none" stroke="${theme.linkStroke}" stroke-width="2"/>`);
+  }
+
+  for (const node of layout.nodes) {
+    const left = node.x - node.width / 2 + dx;
+    const top = node.y - node.height / 2 + dy;
+    const isRoot = node.parentId === null;
+    const fill = isRoot ? theme.rootFill : theme.nodeFill;
+    const stroke = isRoot ? theme.rootStroke : theme.nodeStroke;
+    const textFill = isRoot ? theme.rootText : theme.nodeText;
+    parts.push(
+      `<rect x="${left}" y="${top}" width="${node.width}" height="${node.height}" rx="${NODE_RADIUS}" ry="${NODE_RADIUS}" fill="${fill}" stroke="${stroke}" stroke-width="${isRoot ? 2.5 : 2}"/>`,
+    );
+    const text = escapeXml(node.title);
+    parts.push(
+      `<text x="${node.x + dx}" y="${node.y + dy}" text-anchor="middle" dominant-baseline="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="14" fill="${textFill}">${text}</text>`,
+    );
+
+    if (node.hasChildren) {
+      const marker = getToggleCenter(node, layoutMode);
+      const mx = marker.x + dx;
+      const my = marker.y + dy;
+      parts.push(
+        `<circle cx="${mx}" cy="${my}" r="${COLLAPSE_MARKER_RADIUS}" fill="${theme.toggleFill}" stroke="${theme.toggleStroke}" stroke-width="1.8"/>`,
+      );
+      parts.push(`<line x1="${mx - 3.5}" y1="${my}" x2="${mx + 3.5}" y2="${my}" stroke="${theme.toggleText}" stroke-width="1.5" stroke-linecap="round"/>`);
+      if (node.collapsed) {
+        parts.push(
+          `<line x1="${mx}" y1="${my - 3.5}" x2="${mx}" y2="${my + 3.5}" stroke="${theme.toggleText}" stroke-width="1.5" stroke-linecap="round"/>`,
+        );
+      }
+    }
+  }
+
+  parts.push("</svg>");
+  return parts.join("");
+};
+
+const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function XmindMindMapCanvas(
+  { rootTopic, layoutMode, theme, selectedNodeId, onSelectNode, onToggleCollapse, onMoveNode, viewResetKey, fullscreenSidebar },
+  ref,
+) {
   const containerRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const viewRef = useRef<ViewState>({ ...defaultView });
-  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
-  const [zoomPercent, setZoomPercent] = useState(100);
+  const normalViewRef = useRef<ViewState>({ ...defaultView });
+  const fullscreenViewRef = useRef<ViewState>({ ...defaultView });
+  const appliedResetKeyRef = useRef<number | null>(null);
   const rafRef = useRef<number | null>(null);
   const drawRef = useRef<(() => void) | null>(null);
+  const dropTargetRef = useRef<{ nodeId: string; placement: "before" | "after" | "child" } | null>(null);
+
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
+  const [hoveredToggleNodeId, setHoveredToggleNodeId] = useState<string | null>(null);
+  const [zoomPercent, setZoomPercent] = useState(100);
+  const [draggedNodeId, setDraggedNodeId] = useState<string | null>(null);
+  const [dragCursorWorld, setDragCursorWorld] = useState<{ x: number; y: number } | null>(null);
+  const [dropTarget, setDropTarget] = useState<{ nodeId: string; placement: "before" | "after" | "child" } | null>(
+    null,
+  );
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const measureCtx = useMemo(() => createMeasureContext(), []);
   const layout = useMemo(() => {
     if (!rootTopic || !measureCtx) return null;
-    return layoutMindMap(rootTopic, measureCtx);
-  }, [measureCtx, rootTopic]);
+    return layoutMindMap(rootTopic, measureCtx, layoutMode);
+  }, [layoutMode, measureCtx, rootTopic]);
 
   const requestDraw = useCallback(() => {
     if (rafRef.current) return;
     rafRef.current = window.requestAnimationFrame(() => {
       rafRef.current = null;
       drawRef.current?.();
+      const snapshot = { ...viewRef.current };
+      if (isFullscreen) fullscreenViewRef.current = snapshot;
+      else normalViewRef.current = snapshot;
       setZoomPercent(Math.round(viewRef.current.scale * 100));
     });
-  }, []);
+  }, [isFullscreen]);
 
   const fitToView = useCallback(() => {
     if (!layout) return;
-    const canvas = canvasRef.current;
-    if (!canvas) return;
     const container = containerRef.current;
     if (!container) return;
 
@@ -277,7 +741,168 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     fitToView();
   }, [fitToView]);
 
-  useImperativeHandle(ref, () => ({ fitToView, resetView }));
+  const getViewStateBundle = useCallback(
+    (): ViewStateBundle => ({
+      normal: { ...normalViewRef.current },
+      fullscreen: { ...fullscreenViewRef.current },
+    }),
+    [],
+  );
+
+  const setViewStateBundle = useCallback(
+    (bundle: ViewStateBundle) => {
+      normalViewRef.current = { ...bundle.normal };
+      fullscreenViewRef.current = { ...bundle.fullscreen };
+      viewRef.current = { ...(isFullscreen ? fullscreenViewRef.current : normalViewRef.current) };
+      requestDraw();
+    },
+    [isFullscreen, requestDraw],
+  );
+
+  const getViewState = useCallback((): ViewState => ({ ...viewRef.current }), []);
+
+  const setViewState = useCallback(
+    (viewState: ViewState) => {
+      viewRef.current = { ...viewState };
+      requestDraw();
+    },
+    [requestDraw],
+  );
+
+  const exportAsPng = useCallback(
+    async (options?: { scale?: number; padding?: number }) => {
+      if (!layout) throw new Error("No mind map loaded");
+      const scale = withDefault(options?.scale, 2);
+      const padding = withDefault(options?.padding, 48);
+      const width = Math.max(1, Math.ceil(layout.bounds.maxX - layout.bounds.minX + padding * 2));
+      const height = Math.max(1, Math.ceil(layout.bounds.maxY - layout.bounds.minY + padding * 2));
+
+      const canvas = document.createElement("canvas");
+      canvas.width = Math.max(1, Math.floor(width * scale));
+      canvas.height = Math.max(1, Math.floor(height * scale));
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Failed to create canvas context");
+
+      drawLayoutStatic(
+        ctx,
+        { width: canvas.width, height: canvas.height },
+        layout,
+        layoutMode,
+        theme,
+        {
+          scale,
+          offsetX: (padding - layout.bounds.minX) * scale,
+          offsetY: (padding - layout.bounds.minY) * scale,
+        },
+      );
+
+      const blob = await new Promise<Blob>((resolve, reject) => {
+        canvas.toBlob((result) => {
+          if (!result) reject(new Error("Failed to export PNG"));
+          else resolve(result);
+        }, "image/png");
+      });
+      return blob;
+    },
+    [layout, layoutMode, theme],
+  );
+
+  const exportAsSvg = useCallback(
+    (options?: { padding?: number }) => {
+      if (!layout) throw new Error("No mind map loaded");
+      const padding = withDefault(options?.padding, 48);
+      return layoutToSvg(layout, layoutMode, theme, padding);
+    },
+    [layout, layoutMode, theme],
+  );
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      fitToView,
+      resetView,
+      getViewState,
+      setViewState,
+      getViewStateBundle,
+      setViewStateBundle,
+      exportAsPng,
+      exportAsSvg,
+    }),
+    [exportAsPng, exportAsSvg, fitToView, getViewState, getViewStateBundle, resetView, setViewState, setViewStateBundle],
+  );
+
+  const setFullscreen = useCallback(
+    (nextFullscreen: boolean) => {
+      if (nextFullscreen === isFullscreen) return;
+      const container = containerRef.current;
+      if (!container) {
+        setIsFullscreen(nextFullscreen);
+        return;
+      }
+      const rect = container.getBoundingClientRect();
+      const currentView = viewRef.current;
+      const centerWorld = {
+        x: (rect.width / 2 - currentView.offsetX) / currentView.scale,
+        y: (rect.height / 2 - currentView.offsetY) / currentView.scale,
+      };
+
+      if (isFullscreen) fullscreenViewRef.current = { ...currentView };
+      else normalViewRef.current = { ...currentView };
+
+      let nextBase = nextFullscreen ? fullscreenViewRef.current : normalViewRef.current;
+      if (nextFullscreen) {
+        const stored = fullscreenViewRef.current;
+        const isDefaultStored =
+          stored.scale === defaultView.scale &&
+          stored.offsetX === defaultView.offsetX &&
+          stored.offsetY === defaultView.offsetY;
+        if (isDefaultStored) {
+          fullscreenViewRef.current = { ...currentView };
+          nextBase = fullscreenViewRef.current;
+        }
+      }
+      setIsFullscreen(nextFullscreen);
+
+      window.requestAnimationFrame(() => {
+        window.requestAnimationFrame(() => {
+          const nextContainer = containerRef.current;
+          if (!nextContainer) return;
+          const nextRect = nextContainer.getBoundingClientRect();
+          const scale = nextBase.scale;
+          viewRef.current = {
+            ...nextBase,
+            offsetX: nextRect.width / 2 - centerWorld.x * scale,
+            offsetY: nextRect.height / 2 - centerWorld.y * scale,
+          };
+          requestDraw();
+        });
+      });
+    },
+    [isFullscreen, requestDraw],
+  );
+
+  useEffect(() => {
+    if (!isFullscreen) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setFullscreen(false);
+    };
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isFullscreen, setFullscreen]);
+
+  useEffect(() => {
+    if (!layout) return;
+    if (typeof viewResetKey !== "number") return;
+    if (appliedResetKeyRef.current === viewResetKey) return;
+    appliedResetKeyRef.current = viewResetKey;
+    fitToView();
+  }, [fitToView, layout, viewResetKey]);
 
   useEffect(() => {
     const container = containerRef.current;
@@ -319,8 +944,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
       const rect = container.getBoundingClientRect();
       const centerX = rect.width / 2;
       const centerY = rect.height / 2;
-      const view = viewRef.current;
-      const nextScale = clamp(view.scale * factor, 0.15, 4);
+      const nextScale = clamp(viewRef.current.scale * factor, 0.15, 4);
       zoomAround(nextScale, centerX, centerY);
       requestDraw();
     },
@@ -328,7 +952,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
   );
 
   const hitTest = useCallback(
-    (screenX: number, screenY: number) => {
+    (screenX: number, screenY: number): LayoutNode | null => {
       if (!layout) return null;
       const view = viewRef.current;
       const worldX = (screenX - view.offsetX) / view.scale;
@@ -346,6 +970,45 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     [layout],
   );
 
+  const hitToggle = useCallback(
+    (screenX: number, screenY: number): LayoutNode | null => {
+      if (!layout) return null;
+      const view = viewRef.current;
+      const worldX = (screenX - view.offsetX) / view.scale;
+      const worldY = (screenY - view.offsetY) / view.scale;
+
+      for (let index = layout.nodes.length - 1; index >= 0; index -= 1) {
+        const node = layout.nodes[index]!;
+        if (!node.hasChildren) continue;
+        const marker = getToggleCenter(node, layoutMode);
+        const dx = worldX - marker.x;
+        const dy = worldY - marker.y;
+        if (dx * dx + dy * dy <= (COLLAPSE_MARKER_RADIUS + 2) ** 2) return node;
+      }
+      return null;
+    },
+    [layout, layoutMode],
+  );
+
+  const getPlacementForNode = useCallback(
+    (node: LayoutNode, worldX: number, worldY: number) => {
+      if (layoutMode === "down" || layoutMode === "up") {
+        const left = node.x - node.width / 2;
+        const rel = (worldX - left) / Math.max(1, node.width);
+        if (rel < 0.25) return "before" as const;
+        if (rel > 0.75) return "after" as const;
+        return "child" as const;
+      }
+
+      const top = node.y - node.height / 2;
+      const rel = (worldY - top) / Math.max(1, node.height);
+      if (rel < 0.25) return "before" as const;
+      if (rel > 0.75) return "after" as const;
+      return "child" as const;
+    },
+    [layoutMode],
+  );
+
   const draw = useCallback(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
@@ -358,7 +1021,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
     ctx.clearRect(0, 0, rect.width, rect.height);
 
-    ctx.fillStyle = "#ffffff";
+    ctx.fillStyle = theme.canvasBackground;
     ctx.fillRect(0, 0, rect.width, rect.height);
 
     if (!layout) {
@@ -375,68 +1038,180 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     ctx.translate(view.offsetX, view.offsetY);
     ctx.scale(view.scale, view.scale);
 
-    const byId = new Map(layout.nodes.map((n) => [n.id, n] as const));
+    const byId = new Map(layout.nodes.map((node) => [node.id, node] as const));
 
     ctx.lineWidth = 2;
-    ctx.strokeStyle = "#cbd5e1";
+    ctx.strokeStyle = theme.linkStroke;
+    const verticalLinks =
+      layoutMode === "up" || layoutMode === "down" || layoutMode === "downCompact" || layoutMode === "downCompact2";
     for (const node of layout.nodes) {
       if (!node.parentId) continue;
       const parent = byId.get(node.parentId);
       if (!parent) continue;
+      const isDown = node.y > parent.y;
       const isRight = node.x > parent.x;
-      const fromX = parent.x + (isRight ? parent.width / 2 : -parent.width / 2);
-      const fromY = parent.y;
-      const toX = node.x + (isRight ? -node.width / 2 : node.width / 2);
-      const toY = node.y;
+      const fromX = verticalLinks ? parent.x : parent.x + (isRight ? parent.width / 2 : -parent.width / 2);
+      const fromY = verticalLinks ? parent.y + (isDown ? parent.height / 2 : -parent.height / 2) : parent.y;
+      const toX = verticalLinks ? node.x : node.x + (isRight ? -node.width / 2 : node.width / 2);
+      const toY = verticalLinks ? node.y + (isDown ? -node.height / 2 : node.height / 2) : node.y;
       const dx = toX - fromX;
+      const dy = toY - fromY;
+
       ctx.beginPath();
       ctx.moveTo(fromX, fromY);
-      ctx.bezierCurveTo(fromX + dx * 0.5, fromY, toX - dx * 0.5, toY, toX, toY);
+      if (verticalLinks) {
+        ctx.bezierCurveTo(fromX, fromY + dy * 0.5, toX, toY - dy * 0.5, toX, toY);
+      } else {
+        ctx.bezierCurveTo(fromX + dx * 0.5, fromY, toX - dx * 0.5, toY, toX, toY);
+      }
       ctx.stroke();
     }
-
-    const hover = hoveredNodeId ? byId.get(hoveredNodeId) ?? null : null;
 
     for (const node of layout.nodes) {
       const left = node.x - node.width / 2;
       const top = node.y - node.height / 2;
-
       const isRoot = node.parentId === null;
-      const isHovered = hover?.id === node.id;
+      const isSelected = selectedNodeId === node.id;
+      const isHovered = hoveredNodeId === node.id;
 
       ctx.save();
-      if (isHovered) {
-        ctx.shadowColor = "rgba(15, 23, 42, 0.25)";
+      if (isHovered || isSelected) {
+        ctx.shadowColor = "rgba(15, 23, 42, 0.18)";
         ctx.shadowBlur = 14 / view.scale;
       }
 
       drawRoundedRect(ctx, left, top, node.width, node.height, NODE_RADIUS);
-      ctx.fillStyle = isRoot ? "#0f172a" : "#ffffff";
+      if (isRoot) ctx.fillStyle = theme.rootFill;
+      else if (isSelected) ctx.fillStyle = theme.selectedFill;
+      else ctx.fillStyle = theme.nodeFill;
       ctx.fill();
+
       ctx.lineWidth = isRoot ? 2.5 : 2;
-      ctx.strokeStyle = isRoot ? "#0f172a" : isHovered ? "#0f172a" : "#e2e8f0";
+      if (isRoot) ctx.strokeStyle = theme.rootStroke;
+      else if (isSelected) ctx.strokeStyle = theme.selectedStroke;
+      else if (isHovered) ctx.strokeStyle = theme.hoverStroke;
+      else ctx.strokeStyle = theme.nodeStroke;
       ctx.stroke();
 
       ctx.shadowBlur = 0;
-      ctx.fillStyle = isRoot ? "#ffffff" : "#0f172a";
+      ctx.fillStyle = isRoot ? theme.rootText : theme.nodeText;
       ctx.font = "14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       const displayText = truncateText(ctx, node.title, Math.max(10, node.width - NODE_PADDING_X * 2));
       ctx.fillText(displayText, node.x, node.y);
       ctx.restore();
+
+      if (node.hasChildren) {
+        const marker = getToggleCenter(node, layoutMode);
+        const isToggleHovered = hoveredToggleNodeId === node.id;
+        ctx.save();
+        ctx.beginPath();
+        ctx.arc(marker.x, marker.y, COLLAPSE_MARKER_RADIUS, 0, Math.PI * 2);
+        ctx.fillStyle = isToggleHovered ? theme.accent : theme.toggleFill;
+        ctx.fill();
+        ctx.lineWidth = 1.8;
+        ctx.strokeStyle = isToggleHovered ? theme.accent : theme.toggleStroke;
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(marker.x - 3.5, marker.y);
+        ctx.lineTo(marker.x + 3.5, marker.y);
+        if (node.collapsed) {
+          ctx.moveTo(marker.x, marker.y - 3.5);
+          ctx.lineTo(marker.x, marker.y + 3.5);
+        }
+        ctx.strokeStyle = isToggleHovered ? theme.toggleFill : theme.toggleText;
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+
+    if (dropTarget) {
+      const target = byId.get(dropTarget.nodeId);
+      if (target) {
+        const left = target.x - target.width / 2;
+        const top = target.y - target.height / 2;
+        const right = left + target.width;
+        const bottom = top + target.height;
+
+        ctx.save();
+        ctx.lineWidth = 3 / view.scale;
+        ctx.strokeStyle = theme.accent;
+        ctx.fillStyle = theme.accent;
+        if (dropTarget.placement === "child") {
+          drawRoundedRect(ctx, left - 6, top - 6, target.width + 12, target.height + 12, NODE_RADIUS + 4);
+          ctx.stroke();
+        } else {
+          const verticalDrop = layoutMode === "up" || layoutMode === "down";
+          if (verticalDrop) {
+            const x = dropTarget.placement === "before" ? left - 10 : right + 10;
+            ctx.beginPath();
+            ctx.moveTo(x, top - 18);
+            ctx.lineTo(x, bottom + 18);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(x, top - 18, 4 / view.scale, 0, Math.PI * 2);
+            ctx.arc(x, bottom + 18, 4 / view.scale, 0, Math.PI * 2);
+            ctx.fill();
+          } else {
+            const y = dropTarget.placement === "before" ? top - 8 : bottom + 8;
+            ctx.beginPath();
+            ctx.moveTo(left - 18, y);
+            ctx.lineTo(left + target.width + 18, y);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.arc(left - 18, y, 4 / view.scale, 0, Math.PI * 2);
+            ctx.arc(left + target.width + 18, y, 4 / view.scale, 0, Math.PI * 2);
+            ctx.fill();
+          }
+        }
+        ctx.restore();
+      }
+    }
+
+    if (draggedNodeId && dragCursorWorld) {
+      const dragged = byId.get(draggedNodeId);
+      if (dragged) {
+        ctx.save();
+        ctx.globalAlpha = 0.75;
+        drawRoundedRect(
+          ctx,
+          dragCursorWorld.x - dragged.width / 2,
+          dragCursorWorld.y - dragged.height / 2,
+          dragged.width,
+          dragged.height,
+          NODE_RADIUS,
+        );
+        ctx.fillStyle = "#ffffff";
+        ctx.fill();
+        ctx.lineWidth = 2;
+        ctx.strokeStyle = theme.accent;
+        ctx.stroke();
+
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = theme.nodeText;
+        ctx.font = "14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+        const displayText = truncateText(ctx, dragged.title, Math.max(10, dragged.width - NODE_PADDING_X * 2));
+        ctx.fillText(displayText, dragCursorWorld.x, dragCursorWorld.y);
+        ctx.restore();
+      }
     }
 
     ctx.restore();
 
-    // Corner hints (screen space)
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-    ctx.fillStyle = "#64748b";
+    ctx.fillStyle = theme.nodeText;
+    ctx.globalAlpha = 0.6;
     ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
     ctx.textAlign = "left";
     ctx.textBaseline = "bottom";
-    ctx.fillText("拖拽平移 · 滚轮缩放 · 双击自适应", 14, rect.height - 12);
-  }, [hoveredNodeId, layout]);
+    ctx.fillText("拖拽节点重排 · 空白拖拽平移 · 滚轮缩放 · 双击自适应", 14, rect.height - 12);
+    ctx.globalAlpha = 1;
+  }, [dragCursorWorld, draggedNodeId, dropTarget, hoveredNodeId, hoveredToggleNodeId, layout, layoutMode, selectedNodeId, theme]);
 
   useLayoutEffect(() => {
     drawRef.current = draw;
@@ -444,60 +1219,162 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
 
   useEffect(() => {
     requestDraw();
-  }, [layout, hoveredNodeId, requestDraw]);
-
-  useEffect(() => {
-    if (!layout) return;
-    fitToView();
-  }, [fitToView, layout]);
+  }, [dragCursorWorld, draggedNodeId, dropTarget, layout, hoveredNodeId, hoveredToggleNodeId, requestDraw, selectedNodeId]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
     const container = containerRef.current;
     if (!canvas || !container) return;
 
-    let isDragging = false;
-    let startX = 0;
-    let startY = 0;
+    let pointerDown = false;
+    let panning = false;
+    let draggingNode = false;
+    let startClientX = 0;
+    let startClientY = 0;
     let startOffsetX = 0;
     let startOffsetY = 0;
+    let pressedToggleNodeId: string | null = null;
+    let pressedNodeId: string | null = null;
+    let pressedNodeIsRoot = false;
 
-    const onPointerDown = (e: PointerEvent) => {
-      isDragging = true;
-      startX = e.clientX;
-      startY = e.clientY;
-      startOffsetX = viewRef.current.offsetX;
-      startOffsetY = viewRef.current.offsetY;
-      canvas.setPointerCapture(e.pointerId);
+    const setDropTargetSafe = (next: { nodeId: string; placement: "before" | "after" | "child" } | null) => {
+      dropTargetRef.current = next;
+      setDropTarget(next);
     };
 
-    const onPointerMove = (e: PointerEvent) => {
+    const updateHover = (x: number, y: number) => {
+      if (pointerDown || draggingNode) return;
+      const toggleHit = hitToggle(x, y);
+      const nodeHit = toggleHit ? null : hitTest(x, y);
+      setHoveredToggleNodeId(toggleHit?.id ?? null);
+      setHoveredNodeId(nodeHit?.id ?? null);
+      canvas.style.cursor = toggleHit || nodeHit ? "pointer" : "grab";
+    };
+
+    const onPointerDown = (event: PointerEvent) => {
       const rect = container.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      if (isDragging) {
-        viewRef.current.offsetX = startOffsetX + (e.clientX - startX);
-        viewRef.current.offsetY = startOffsetY + (e.clientY - startY);
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      pointerDown = true;
+      panning = false;
+      draggingNode = false;
+      startClientX = event.clientX;
+      startClientY = event.clientY;
+      startOffsetX = viewRef.current.offsetX;
+      startOffsetY = viewRef.current.offsetY;
+      pressedToggleNodeId = hitToggle(x, y)?.id ?? null;
+      const nodeHit = pressedToggleNodeId ? null : hitTest(x, y);
+      pressedNodeId = nodeHit?.id ?? null;
+      pressedNodeIsRoot = Boolean(nodeHit?.parentId === null);
+      setDraggedNodeId(null);
+      setDragCursorWorld(null);
+      setDropTargetSafe(null);
+      canvas.setPointerCapture(event.pointerId);
+    };
+
+    const onPointerMove = (event: PointerEvent) => {
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+
+      if (!pointerDown) {
+        updateHover(x, y);
+        return;
+      }
+
+      const dx = event.clientX - startClientX;
+      const dy = event.clientY - startClientY;
+      const distance = Math.hypot(dx, dy);
+
+      if (!panning && !draggingNode && distance > 6) {
+        const canDragNode = Boolean(pressedNodeId && !pressedNodeIsRoot && pressedToggleNodeId === null);
+        if (canDragNode) {
+          draggingNode = true;
+          setDraggedNodeId(pressedNodeId);
+          canvas.style.cursor = "grabbing";
+        } else {
+          panning = pressedToggleNodeId === null;
+          if (panning) canvas.style.cursor = "grabbing";
+        }
+      }
+
+      if (draggingNode && pressedNodeId) {
+        const view = viewRef.current;
+        const worldX = (x - view.offsetX) / view.scale;
+        const worldY = (y - view.offsetY) / view.scale;
+        setDragCursorWorld({ x: worldX, y: worldY });
+
+        const nodeHit = hitTest(x, y);
+        if (!nodeHit || nodeHit.id === pressedNodeId) {
+          setDropTargetSafe(null);
+          return;
+        }
+
+        const placement = getPlacementForNode(nodeHit, worldX, worldY);
+        setDropTargetSafe({ nodeId: nodeHit.id, placement });
+        return;
+      }
+
+      if (panning) {
+        viewRef.current.offsetX = startOffsetX + dx;
+        viewRef.current.offsetY = startOffsetY + dy;
         requestDraw();
         return;
       }
-      const hit = hitTest(x, y);
-      setHoveredNodeId(hit?.id ?? null);
+
+      const toggleHit = hitToggle(x, y);
+      const nodeHit = toggleHit ? null : hitTest(x, y);
+      setHoveredToggleNodeId(toggleHit?.id ?? null);
+      setHoveredNodeId(nodeHit?.id ?? null);
+      canvas.style.cursor = toggleHit || nodeHit ? "pointer" : "grab";
     };
 
-    const onPointerUp = () => {
-      isDragging = false;
-    };
+    const onPointerUp = (event: PointerEvent) => {
+      pointerDown = false;
 
-    const onWheel = (e: WheelEvent) => {
-      if (!layout) return;
-      e.preventDefault();
+      if (draggingNode && pressedNodeId && dropTargetRef.current) {
+        const target = dropTargetRef.current;
+        onMoveNode(pressedNodeId, target.nodeId, target.placement);
+        onSelectNode(pressedNodeId);
+      } else if (!panning) {
+        if (pressedToggleNodeId) onToggleCollapse(pressedToggleNodeId);
+        else onSelectNode(pressedNodeId);
+      }
+
+      pressedToggleNodeId = null;
+      pressedNodeId = null;
+      panning = false;
+      draggingNode = false;
+      pressedNodeIsRoot = false;
+      setDraggedNodeId(null);
+      setDragCursorWorld(null);
+      setDropTargetSafe(null);
+
       const rect = container.getBoundingClientRect();
-      const mouseX = e.clientX - rect.left;
-      const mouseY = e.clientY - rect.top;
-      const delta = -e.deltaY;
-      const view = viewRef.current;
-      const nextScale = clamp(view.scale * (delta > 0 ? 1.08 : 0.92), 0.15, 4);
+      updateHover(event.clientX - rect.left, event.clientY - rect.top);
+    };
+
+    const onPointerCancel = () => {
+      pointerDown = false;
+      panning = false;
+      draggingNode = false;
+      pressedToggleNodeId = null;
+      pressedNodeId = null;
+      canvas.style.cursor = "grab";
+      setDraggedNodeId(null);
+      setDragCursorWorld(null);
+      setDropTargetSafe(null);
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      if (!layout) return;
+      event.preventDefault();
+      const rect = container.getBoundingClientRect();
+      const mouseX = event.clientX - rect.left;
+      const mouseY = event.clientY - rect.top;
+      const delta = -event.deltaY;
+      const nextScale = clamp(viewRef.current.scale * (delta > 0 ? 1.08 : 0.92), 0.15, 4);
       zoomAround(nextScale, mouseX, mouseY);
       requestDraw();
     };
@@ -505,10 +1382,11 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     const onDblClick = () => fitToView();
 
     canvas.style.touchAction = "none";
+    canvas.style.cursor = "grab";
     canvas.addEventListener("pointerdown", onPointerDown);
     canvas.addEventListener("pointermove", onPointerMove);
     canvas.addEventListener("pointerup", onPointerUp);
-    canvas.addEventListener("pointercancel", onPointerUp);
+    canvas.addEventListener("pointercancel", onPointerCancel);
     canvas.addEventListener("wheel", onWheel, { passive: false });
     canvas.addEventListener("dblclick", onDblClick);
 
@@ -516,61 +1394,107 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
       canvas.removeEventListener("pointerdown", onPointerDown);
       canvas.removeEventListener("pointermove", onPointerMove);
       canvas.removeEventListener("pointerup", onPointerUp);
-      canvas.removeEventListener("pointercancel", onPointerUp);
+      canvas.removeEventListener("pointercancel", onPointerCancel);
       canvas.removeEventListener("wheel", onWheel);
       canvas.removeEventListener("dblclick", onDblClick);
     };
-  }, [fitToView, hitTest, layout, requestDraw, zoomAround]);
+  }, [
+    fitToView,
+    getPlacementForNode,
+    hitTest,
+    hitToggle,
+    layout,
+    layoutMode,
+    onMoveNode,
+    onSelectNode,
+    onToggleCollapse,
+    requestDraw,
+    zoomAround,
+  ]);
+
+  const hoveredNodeTitle = useMemo(
+    () => layout?.nodes.find((node) => node.id === hoveredNodeId)?.title ?? "",
+    [hoveredNodeId, layout?.nodes],
+  );
+
+  const controls = (
+    <>
+      <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
+        {zoomPercent}%
+      </div>
+      <button
+        type="button"
+        onClick={() => zoomBy(0.9)}
+        className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+        aria-label="缩小"
+      >
+        -
+      </button>
+      <button
+        type="button"
+        onClick={() => zoomBy(1.1)}
+        className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+        aria-label="放大"
+      >
+        +
+      </button>
+      <button
+        type="button"
+        onClick={fitToView}
+        className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+      >
+        自适应
+      </button>
+      <button
+        type="button"
+        onClick={resetView}
+        className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+      >
+        重置
+      </button>
+      <button
+        type="button"
+        onClick={() => setFullscreen(!isFullscreen)}
+        className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+      >
+        {isFullscreen ? "退出全屏" : "全屏"}
+      </button>
+    </>
+  );
 
   return (
-    <div className="space-y-3">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="text-sm font-semibold text-slate-900">思维导图预览（Canvas）</div>
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200">
-            {zoomPercent}%
-          </div>
-          <button
-            type="button"
-            onClick={() => zoomBy(0.9)}
-            className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
-            aria-label="缩小"
-          >
-            -
-          </button>
-          <button
-            type="button"
-            onClick={() => zoomBy(1.1)}
-            className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
-            aria-label="放大"
-          >
-            +
-          </button>
-          <button
-            type="button"
-            onClick={fitToView}
-            className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
-          >
-            自适应
-          </button>
-          <button
-            type="button"
-            onClick={resetView}
-            className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
-          >
-            重置
-          </button>
+    <div className={isFullscreen ? "fixed inset-0 z-50 bg-slate-50" : "space-y-3"}>
+      {!isFullscreen && (
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="text-sm font-semibold text-slate-900">思维导图编辑（Canvas）</div>
+          <div className="flex flex-wrap items-center gap-2">{controls}</div>
         </div>
-      </div>
+      )}
 
-      <div ref={containerRef} className="relative h-[70vh] w-full overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200">
+      <div
+        ref={containerRef}
+        className={
+          isFullscreen
+            ? "absolute inset-0 overflow-hidden bg-white"
+            : "relative h-[70vh] w-full overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200"
+        }
+      >
         <canvas ref={canvasRef} className="absolute inset-0" />
-        {hoveredNodeId && layout?.nodes && (
+        {hoveredNodeId && hoveredNodeTitle && (
           <div className="pointer-events-none absolute left-4 top-4 max-w-[min(520px,calc(100%-2rem))] rounded-2xl bg-slate-900/90 px-3 py-2 text-xs text-white shadow-lg">
-            {layout.nodes.find((n) => n.id === hoveredNodeId)?.title ?? ""}
+            {hoveredNodeTitle}
           </div>
         )}
       </div>
+
+      {isFullscreen && (
+        <div className="absolute right-4 top-4 flex max-h-[calc(100vh-2rem)] w-[min(360px,calc(100vw-2rem))] flex-col gap-3 overflow-auto rounded-3xl bg-white/90 p-3 shadow-xl ring-1 ring-slate-200 backdrop-blur">
+          <div className="flex flex-col gap-2">{controls}</div>
+          {fullscreenSidebar ? <div className="h-px bg-slate-200/80" /> : null}
+          {fullscreenSidebar}
+          <div className="pt-1 text-center text-[11px] text-slate-500">Esc 退出</div>
+        </div>
+      )}
     </div>
   );
 });
