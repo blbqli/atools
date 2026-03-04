@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import ToolPageLayout from "../../../components/ToolPageLayout";
@@ -38,6 +38,7 @@ export default function ExcelToJsonClient() {
   const [emptyAsNull, setEmptyAsNull] = useState(true);
   const [indent, setIndent] = useState(2);
 
+  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloadName, setDownloadName] = useState("data.json");
 
@@ -63,6 +64,25 @@ export default function ExcelToJsonClient() {
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) void pick(selected);
+    e.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (!selected) return;
+    void pick(selected);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const output = useMemo(() => {
@@ -136,13 +156,21 @@ export default function ExcelToJsonClient() {
     <ToolPageLayout toolSlug="excel-to-json">
       <div className="w-full px-4">
         <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            className={`rounded-2xl border-2 border-dashed p-3 transition ${
+              isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
             <button
               type="button"
               onClick={() => inputRef.current?.click()}
               className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-200"
             >
-              选择 .xlsx
+              {file ? "替换 .xlsx" : "选择 .xlsx"}
             </button>
             <input
               ref={inputRef}
@@ -168,6 +196,10 @@ export default function ExcelToJsonClient() {
               >
                 下载 {downloadName}
               </button>
+            </div>
+            </div>
+            <div className="mt-2 text-[11px] text-slate-500">
+              支持点击上传与拖拽上传 XLSX，拖拽可直接替换当前文件。
             </div>
           </div>
 

@@ -1,9 +1,9 @@
 "use client";
 
-import type { ChangeEvent } from "react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { zipSync } from "fflate";
 import ToolPageLayout from "../../../components/ToolPageLayout";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 import { useOptionalI18n } from "../../../i18n/I18nProvider";
 import { loadPdfJs, type PdfJsTextItem } from "../../../lib/pdfjs-loader";
 
@@ -144,7 +144,9 @@ export default function PdfToTextClient() {
       return {
         hint: "Extract text from PDFs locally (no uploads).",
         pick: "Select PDF",
+        replace: "Replace PDF",
         clear: "Clear",
+        dropReplaceHint: "Drag and drop a new PDF here to replace.",
         scope: "Scope",
         all: "All pages",
         custom: "Custom pages",
@@ -170,7 +172,9 @@ export default function PdfToTextClient() {
     return {
       hint: "提取 PDF 文本，全程本地处理，不上传文件。",
       pick: "选择 PDF",
+      replace: "点击替换 PDF",
       clear: "清空",
+      dropReplaceHint: "支持拖拽新 PDF 到此区域直接替换。",
       scope: "范围",
       all: "全部页面",
       custom: "指定页码",
@@ -194,7 +198,6 @@ export default function PdfToTextClient() {
     };
   }, [locale]);
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const [pdf, setPdf] = useState<LoadedPdf | null>(null);
   const [scope, setScope] = useState<Scope>("all");
   const [pagesInput, setPagesInput] = useState("1-");
@@ -239,8 +242,7 @@ export default function PdfToTextClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const loadPdfFile = async (file: File) => {
     if (!file) return;
 
     cleanupUrls();
@@ -261,10 +263,22 @@ export default function PdfToTextClient() {
     } catch {
       setPdf(null);
       setError(locale === "en-us" ? "Failed to load PDF." : "PDF 加载失败。");
-    } finally {
-      event.target.value = "";
     }
   };
+
+  const {
+    inputRef,
+    isDragging,
+    handleInputChange,
+    handleDrop,
+    handleDragOver,
+    handleDragLeave,
+    openFilePicker,
+  } = useFileDropzone({
+    onFile: (file) => {
+      void loadPdfFile(file);
+    },
+  });
 
   const extract = async () => {
     if (!pdf) {
@@ -346,18 +360,29 @@ export default function PdfToTextClient() {
     <ToolPageLayout toolSlug="pdf-to-text">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white/80 p-6 backdrop-blur dark:border-slate-700 dark:bg-slate-950/60">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div
+            className={`flex flex-col gap-3 rounded-xl border-2 border-dashed p-4 transition md:flex-row md:items-center md:justify-between ${
+              isDragging
+                ? "border-slate-400 bg-slate-50/60 dark:bg-slate-900/70"
+                : "border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-900/50"
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
             <div className="space-y-1">
               <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{ui.hint}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">{ui.note}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {ui.note} {ui.dropReplaceHint}
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={openFilePicker}
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 active:scale-95"
               >
-                {ui.pick}
+                {pdf ? ui.replace : ui.pick}
               </button>
               <button
                 type="button"
@@ -366,7 +391,7 @@ export default function PdfToTextClient() {
               >
                 {ui.clear}
               </button>
-              <input ref={inputRef} type="file" accept="application/pdf" className="hidden" onChange={handleFileChange} />
+              <input ref={inputRef} type="file" accept="application/pdf" className="hidden" onChange={handleInputChange} />
             </div>
           </div>
 

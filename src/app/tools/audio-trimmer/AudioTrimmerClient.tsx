@@ -1,9 +1,9 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 const DEFAULT_UI = {
   pickTitle: "选择音频文件",
@@ -110,7 +110,6 @@ function AudioTrimmerInner() {
   const config = useOptionalToolConfig("audio-trimmer");
   const ui: AudioTrimmerUi = { ...DEFAULT_UI, ...((config?.ui ?? {}) as Partial<AudioTrimmerUi>) };
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -146,10 +145,9 @@ function AudioTrimmerInner() {
     setDownloadName(`${selected.name.replace(/\.[^.]+$/, "") || "clip"}.wav`);
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) handlePick(selected);
-  };
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    onFile: handlePick,
+  });
 
   const onLoadedMeta = () => {
     const audio = audioRef.current;
@@ -216,22 +214,32 @@ function AudioTrimmerInner() {
 
   return (
     <div className="mt-8 glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div className="text-sm font-semibold text-slate-900">{ui.pickTitle}</div>
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={openFilePicker}
             className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
           >
-            {ui.pickFile}
+            {file ? "点击替换音频" : ui.pickFile}
           </button>
           <input
             ref={inputRef}
             type="file"
             accept="audio/*"
             className="hidden"
-            onChange={onChange}
+            onChange={handleInputChange}
           />
+          <div className="w-full text-[11px] text-slate-500">支持拖拽新音频到此区域直接替换</div>
         </div>
 
         {file && objectUrl && (
@@ -323,7 +331,6 @@ function AudioTrimmerInner() {
                   <button
                     type="button"
                     onClick={() => {
-                      if (inputRef.current) inputRef.current.value = "";
                       setFile(null);
                       if (objectUrl) URL.revokeObjectURL(objectUrl);
                       setObjectUrl(null);

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
 import ToolPageLayout from "../../../components/ToolPageLayout";
@@ -8,6 +8,8 @@ import ToolPageLayout from "../../../components/ToolPageLayout";
 type Ui = {
   hint: string;
   pick: string;
+  replace: string;
+  dropHint: string;
   clear: string;
   files: string;
   sheets: string;
@@ -25,6 +27,8 @@ type Ui = {
 const DEFAULT_UI: Ui = {
   hint: "Excel 合并工具：导入多个 Excel，将所有工作表合并导出（本地处理不上传）。",
   pick: "选择 Excel 文件",
+  replace: "替换全部文件",
+  dropHint: "支持点击上传与拖拽上传 Excel；已有文件时拖拽会替换当前列表。",
   clear: "清空",
   files: "文件",
   sheets: "工作表",
@@ -75,7 +79,9 @@ export default function ExcelMergerClient() {
 
 function Inner({ ui }: { ui: Ui }) {
   const inputRef = useRef<HTMLInputElement>(null);
+  const pickerModeRef = useRef<"append" | "replace">("append");
   const [books, setBooks] = useState<LoadedBook[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [mode, setMode] = useState<Mode>("keep-sheets");
   const [isWorking, setIsWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -96,8 +102,7 @@ function Inner({ ui }: { ui: Ui }) {
     setDownloadName("merged.xlsx");
   };
 
-  const onPick = async (e: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
+  const loadFiles = async (files: File[], mode: "append" | "replace" = "append") => {
     if (!files.length) return;
     setError(null);
     if (downloadUrl) URL.revokeObjectURL(downloadUrl);
@@ -114,8 +119,38 @@ function Inner({ ui }: { ui: Ui }) {
       const wb = XLSX.read(buffer, { type: "array", cellDates: true, dense: false });
       next.push({ name: file.name, workbook: wb });
     }
-    setBooks((prev) => [...prev, ...next]);
+    setBooks((prev) => (mode === "replace" ? next : [...prev, ...next]));
+  };
+
+  const onPick = async (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []);
+    await loadFiles(files, pickerModeRef.current);
     e.target.value = "";
+  };
+
+  const openPicker = (mode: "append" | "replace") => {
+    pickerModeRef.current = mode;
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(event.dataTransfer.files ?? []);
+    if (!files.length) return;
+    void loadFiles(files, books.length > 0 ? "replace" : "append");
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const totalSheets = useMemo(() => books.reduce((sum, b) => sum + (b.workbook.SheetNames?.length ?? 0), 0), [books]);
@@ -174,22 +209,41 @@ function Inner({ ui }: { ui: Ui }) {
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
         <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">{ui.hint}</div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
-          >
-            {ui.pick}
-          </button>
-          <button
-            type="button"
-            onClick={clear}
-            className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
-          >
-            {ui.clear}
-          </button>
-          <input ref={inputRef} type="file" accept=".xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple className="hidden" onChange={onPick} />
+        <div
+          className={`mt-5 rounded-2xl border-2 border-dashed p-3 transition ${
+            isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => openPicker("append")}
+              className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+            >
+              {ui.pick}
+            </button>
+            {books.length > 0 ? (
+              <button
+                type="button"
+                onClick={() => openPicker("replace")}
+                className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+              >
+                {ui.replace}
+              </button>
+            ) : null}
+            <button
+              type="button"
+              onClick={clear}
+              className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+            >
+              {ui.clear}
+            </button>
+            <input ref={inputRef} type="file" accept=".xlsx,.xls,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" multiple className="hidden" onChange={onPick} />
+          </div>
+          <div className="mt-2 text-[11px] text-slate-500">{ui.dropHint}</div>
         </div>
 
         <div className="mt-5 grid gap-4 md:grid-cols-2">
@@ -255,4 +309,3 @@ function Inner({ ui }: { ui: Ui }) {
     </div>
   );
 }
-

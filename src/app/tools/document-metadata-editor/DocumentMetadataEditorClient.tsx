@@ -1,11 +1,12 @@
 "use client";
 
-import type { ChangeEvent, ReactNode } from "react";
+import type { ReactNode } from "react";
 import { unzipSync, zipSync, strFromU8, strToU8 } from "fflate";
 import { PDFDocument } from "pdf-lib";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 type FileKind = "pdf" | "ooxml" | "unsupported";
 type OoxmlSubtype = "docx" | "docm" | "xlsx" | "xlsm" | "pptx" | "pptm" | "unknown";
@@ -673,8 +674,6 @@ function DocumentMetadataEditorInner() {
   const config = useOptionalToolConfig("document-metadata-editor");
   const ui = { ...DEFAULT_UI, ...((config?.ui ?? {}) as Partial<typeof DEFAULT_UI>) };
 
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const [file, setFile] = useState<File | null>(null);
   const [kind, setKind] = useState<FileKind>("unsupported");
   const [subtype, setSubtype] = useState<OoxmlSubtype>("unknown");
@@ -781,10 +780,11 @@ function DocumentMetadataEditorInner() {
     }
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) void pick(selected);
-  };
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    onFile: (selected) => {
+      void pick(selected);
+    },
+  });
 
   const setNowForPdf = () => {
     const now = dateToDatetimeLocal(new Date());
@@ -935,53 +935,63 @@ function DocumentMetadataEditorInner() {
   return (
     <div className="w-full px-4">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={onChange} />
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-              disabled={isParsing || isSaving}
-            >
-              {ui.pick}
-            </button>
-            <button
-              type="button"
-              onClick={clearAll}
-              className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
-              disabled={isParsing || isSaving}
-            >
-              {ui.clear}
-            </button>
-            {file && (
-              <div className="text-sm text-slate-700">
-                <span className="font-semibold text-slate-900">{file.name}</span>{" "}
-                <span className="text-slate-500">({(file.size / 1024).toFixed(1)} KB)</span>
-                <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{kindLabel}</span>
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void save()}
-              className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={!file || isParsing || isSaving || kind === "unsupported"}
-            >
-              {isSaving ? ui.saving : ui.save}
-            </button>
-            {downloadUrl && (
-              <a
-                href={downloadUrl}
-                download={downloadName}
-                className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+        <div
+          className={`rounded-2xl border-2 border-dashed p-3 transition ${
+            isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/40"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <input ref={inputRef} type="file" accept={accept} className="hidden" onChange={handleInputChange} />
+              <button
+                type="button"
+                onClick={openFilePicker}
+                className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+                disabled={isParsing || isSaving}
               >
-                {ui.download}
-              </a>
-            )}
+                {file ? "替换文件" : ui.pick}
+              </button>
+              <button
+                type="button"
+                onClick={clearAll}
+                className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+                disabled={isParsing || isSaving}
+              >
+                {ui.clear}
+              </button>
+              {file && (
+                <div className="text-sm text-slate-700">
+                  <span className="font-semibold text-slate-900">{file.name}</span>{" "}
+                  <span className="text-slate-500">({(file.size / 1024).toFixed(1)} KB)</span>
+                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-700">{kindLabel}</span>
+                </div>
+              )}
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void save()}
+                className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={!file || isParsing || isSaving || kind === "unsupported"}
+              >
+                {isSaving ? ui.saving : ui.save}
+              </button>
+              {downloadUrl && (
+                <a
+                  href={downloadUrl}
+                  download={downloadName}
+                  className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  {ui.download}
+                </a>
+              )}
+            </div>
           </div>
+          <p className="mt-2 text-xs text-slate-500">支持点击上传与拖拽上传，拖拽可直接替换当前文档。</p>
         </div>
 
         <p className="mt-4 text-xs text-slate-600">{ui.privacyHint}</p>

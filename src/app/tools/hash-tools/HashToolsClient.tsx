@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import type { ChangeEvent, DragEvent } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Algorithm = "MD5" | "SHA-1" | "SHA-256" | "SHA-512";
 type Target = "text" | "file";
@@ -111,12 +112,14 @@ const digestBytes = async (algorithm: Algorithm, data: Uint8Array) => {
 };
 
 export default function HashToolsClient() {
+  const fileRef = useRef<HTMLInputElement>(null);
   const [target, setTarget] = useState<Target>("text");
   const [algorithm, setAlgorithm] = useState<Algorithm>("SHA-256");
   const [upper, setUpper] = useState(false);
 
   const [text, setText] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [expected, setExpected] = useState("");
 
   const [hashHex, setHashHex] = useState<string>("");
@@ -176,6 +179,34 @@ export default function HashToolsClient() {
     } finally {
       setIsComputing(false);
     }
+  };
+
+  const setPickedFile = (selected: File | null) => {
+    setFile(selected);
+    setHashHex("");
+    setExpected("");
+    setError(null);
+  };
+
+  const onFileChange = (event: ChangeEvent<HTMLInputElement>) => {
+    setPickedFile(event.target.files?.[0] ?? null);
+    event.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    setPickedFile(event.dataTransfer.files?.[0] ?? null);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const copy = async (value: string) => {
@@ -269,15 +300,26 @@ export default function HashToolsClient() {
                 className="h-64 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
               />
             ) : (
-              <div className="rounded-2xl border border-slate-200 bg-white p-4">
-                <input
-                  type="file"
-                  onChange={(e) => setFile(e.target.files?.[0] ?? null)}
-                  className="block w-full text-sm text-slate-700 file:mr-4 file:rounded-xl file:border-0 file:bg-slate-100 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-slate-800 hover:file:bg-slate-200"
-                />
+              <div
+                className={`rounded-2xl border-2 border-dashed p-4 transition ${
+                  isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-white"
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                <input ref={fileRef} type="file" className="hidden" onChange={onFileChange} />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+                >
+                  {file ? "替换文件" : "选择文件"}
+                </button>
                 <div className="mt-3 text-xs text-slate-500">
                   {file ? `${file.name}（${file.size.toLocaleString()} 字节）` : "未选择文件"}
                 </div>
+                <div className="mt-2 text-[11px] text-slate-500">支持点击上传与拖拽上传文件，拖拽可直接替换当前文件。</div>
                 <div className="mt-4 flex items-center gap-2">
                   <button
                     type="button"
@@ -290,10 +332,8 @@ export default function HashToolsClient() {
                   <button
                     type="button"
                     onClick={() => {
-                      setFile(null);
-                      setHashHex("");
-                      setExpected("");
-                      setError(null);
+                      setPickedFile(null);
+                      if (fileRef.current) fileRef.current.value = "";
                     }}
                     className="rounded-2xl px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-100"
                   >

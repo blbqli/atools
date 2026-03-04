@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import type { FC } from "react";
 import { useMemo, useRef, useState } from "react";
 import * as XLSX from "xlsx";
@@ -23,9 +23,13 @@ const DEFAULT_UI = {
   skipEmptyLines: "忽略空行",
   sheetNameLabel: "工作表名称",
   chooseCsvFile: "选择 CSV 文件",
+  replaceCsvFile: "替换 CSV 文件",
+  dropCsvHint: "支持点击上传与拖拽上传 CSV，拖拽可直接替换当前 CSV 内容。",
   downloadXlsx: "下载 XLSX",
   xlsxReadSettingsTitle: "读取设置",
   chooseXlsxFile: "选择 XLSX 文件",
+  replaceXlsxFile: "替换 XLSX 文件",
+  dropXlsxHint: "支持点击上传与拖拽上传 XLSX，拖拽可直接替换当前 XLSX。",
   noFileSelected: "未选择文件",
   sheetLabel: "工作表",
   outDelimiterLabel: "输出分隔符",
@@ -154,6 +158,8 @@ const CsvExcelConverterInner: FC<{ ui: CsvExcelConverterUi }> = ({ ui }) => {
   const [csvDelimiter, setCsvDelimiter] = useState<DelimiterOption>("auto");
   const [skipEmptyLines, setSkipEmptyLines] = useState(true);
   const [sheetName, setSheetName] = useState("Sheet1");
+  const [csvFileName, setCsvFileName] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [xlsxFile, setXlsxFile] = useState<File | null>(null);
@@ -187,17 +193,53 @@ const CsvExcelConverterInner: FC<{ ui: CsvExcelConverterUi }> = ({ ui }) => {
     }
   };
 
+  const loadCsvFile = async (selected: File) => {
+    const isCsvMime = selected.type === "text/csv";
+    const isCsvExt = selected.name.toLowerCase().endsWith(".csv");
+    if (!isCsvMime && !isCsvExt) {
+      setError("请选择 CSV 文件");
+      return;
+    }
+    setError(null);
+    const text = await selected.text();
+    setCsvInput(text);
+    setCsvFileName(selected.name);
+  };
+
   const handleCsvFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0];
     if (!selected) return;
-    const text = await selected.text();
-    setCsvInput(text);
+    await loadCsvFile(selected);
+    event.target.value = "";
   };
 
   const handleXlsxFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0];
     if (!selected) return;
     await readXlsx(selected);
+    event.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (!selected) return;
+    if (mode === "csvToXlsx") {
+      void loadCsvFile(selected);
+    } else {
+      void readXlsx(selected);
+    }
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const exportXlsx = async () => {
@@ -319,28 +361,41 @@ const CsvExcelConverterInner: FC<{ ui: CsvExcelConverterUi }> = ({ ui }) => {
                 </label>
               </div>
 
-              <div className="mt-4 flex flex-wrap items-center gap-2">
-                <input
-                  ref={csvFileInputRef}
-                  type="file"
-                  accept=".csv,text/csv"
-                  className="hidden"
-                  onChange={handleCsvFileChange}
-                />
-                <button
-                  type="button"
-                  onClick={() => csvFileInputRef.current?.click()}
-                  className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 active:scale-[0.99]"
-                >
-                  {ui.chooseCsvFile}
-                </button>
-                <button
-                  type="button"
-                  onClick={exportXlsx}
-                  className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:bg-blue-700 active:scale-[0.99]"
-                >
-                  {ui.downloadXlsx}
-                </button>
+              <div
+                className={`mt-4 rounded-2xl border-2 border-dashed p-3 transition ${
+                  isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                <div className="flex flex-wrap items-center gap-2">
+                  <input
+                    ref={csvFileInputRef}
+                    type="file"
+                    accept=".csv,text/csv"
+                    className="hidden"
+                    onChange={handleCsvFileChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => csvFileInputRef.current?.click()}
+                    className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 active:scale-[0.99]"
+                  >
+                    {csvFileName ? ui.replaceCsvFile : ui.chooseCsvFile}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={exportXlsx}
+                    className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-blue-500/30 transition hover:bg-blue-700 active:scale-[0.99]"
+                  >
+                    {ui.downloadXlsx}
+                  </button>
+                </div>
+                <div className="mt-2 text-[11px] text-slate-500">
+                  {ui.dropCsvHint}
+                  {csvFileName ? ` 当前文件：${csvFileName}` : ""}
+                </div>
               </div>
             </div>
           </div>
@@ -349,23 +404,33 @@ const CsvExcelConverterInner: FC<{ ui: CsvExcelConverterUi }> = ({ ui }) => {
             <div className="rounded-2xl bg-white/60 p-4 ring-1 ring-black/5">
               <div className="text-sm font-semibold text-slate-900">{ui.xlsxReadSettingsTitle}</div>
               <div className="mt-3 space-y-3">
-                <input
-                  ref={xlsxFileInputRef}
-                  type="file"
-                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-                  className="hidden"
-                  onChange={handleXlsxFileChange}
-                />
-                <button
-                  type="button"
-                  onClick={() => xlsxFileInputRef.current?.click()}
-                  className="w-full rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 active:scale-[0.99]"
+                <div
+                  className={`rounded-2xl border-2 border-dashed p-3 transition ${
+                    isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+                  }`}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
                 >
-                  {ui.chooseXlsxFile}
-                </button>
+                  <input
+                    ref={xlsxFileInputRef}
+                    type="file"
+                    accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                    className="hidden"
+                    onChange={handleXlsxFileChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => xlsxFileInputRef.current?.click()}
+                    className="w-full rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 active:scale-[0.99]"
+                  >
+                    {xlsxFile ? ui.replaceXlsxFile : ui.chooseXlsxFile}
+                  </button>
 
-                <div className="text-xs text-slate-500">
-                  {xlsxFile ? xlsxFile.name : ui.noFileSelected}
+                  <div className="mt-2 text-xs text-slate-500">
+                    {xlsxFile ? xlsxFile.name : ui.noFileSelected}
+                  </div>
+                  <div className="mt-2 text-[11px] text-slate-500">{ui.dropXlsxHint}</div>
                 </div>
 
                 <label className="block">

@@ -46,6 +46,7 @@ export default function GifOptimizerClient() {
   const [loop, setLoop] = useState(true);
 
   const [isWorking, setIsWorking] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [progress, setProgress] = useState<number | null>(null);
   const [logs, setLogs] = useState("");
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -107,6 +108,29 @@ export default function GifOptimizerClient() {
     if (selected) pick(selected);
   };
 
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (selected) pick(selected);
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+  };
+
   const inputName = useMemo(() => (file ? "input.gif" : null), [file]);
 
   const optimize = async () => {
@@ -162,7 +186,16 @@ export default function GifOptimizerClient() {
     <ToolPageLayout toolSlug="gif-optimizer">
       <div className="w-full px-4">
         <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+              isDragging
+                ? "border-slate-400 bg-slate-50/60"
+                : "border-slate-200 bg-slate-50/80"
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
             <div className="text-sm text-slate-700">
               基于 <span className="font-mono">ffmpeg.wasm</span> 本地处理，首次使用需下载核心文件（浏览器缓存）。
             </div>
@@ -177,13 +210,14 @@ export default function GifOptimizerClient() {
               </button>
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={openFilePicker}
                 className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-200"
               >
-                选择 GIF
+                {file ? "点击替换 GIF" : "选择 GIF"}
               </button>
               <input ref={inputRef} type="file" accept="image/gif" className="hidden" onChange={onChange} />
             </div>
+            <div className="w-full text-[11px] text-slate-500">支持拖拽新 GIF 到此区域直接替换</div>
           </div>
 
           {file && (

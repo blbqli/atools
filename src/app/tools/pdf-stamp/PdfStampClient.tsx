@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent, FC } from "react";
+import type { ChangeEvent, DragEvent, FC } from "react";
 import { useEffect, useRef, useState } from "react";
 import { PDFDocument, degrees } from "pdf-lib";
 import * as fabric from "fabric";
@@ -155,6 +155,8 @@ const PdfStampClient: FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1);
   const [isRendering, setIsRendering] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
+  const [isPdfDragging, setIsPdfDragging] = useState(false);
+  const [isStampDragging, setIsStampDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [stampPreviewUrl, setStampPreviewUrl] = useState<string | null>(
@@ -279,8 +281,7 @@ const PdfStampClient: FC = () => {
     }
   };
 
-  const handlePdfChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const handlePdfFile = async (file: File) => {
     if (!file) return;
 
     if (file.type !== "application/pdf") {
@@ -324,10 +325,32 @@ const PdfStampClient: FC = () => {
     }
   };
 
-  const handleStampChange = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
+  const handlePdfChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
+    if (!file) return;
+    await handlePdfFile(file);
+    event.target.value = "";
+  };
+
+  const handlePdfDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsPdfDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+    void handlePdfFile(file);
+  };
+
+  const handlePdfDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsPdfDragging(true);
+  };
+
+  const handlePdfDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsPdfDragging(false);
+  };
+
+  const handleStampFile = async (file: File) => {
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
@@ -345,6 +368,33 @@ const PdfStampClient: FC = () => {
     stampImageBytesRef.current = new Uint8Array(buffer);
     const preview = URL.createObjectURL(file);
     setStampPreviewUrl(preview);
+  };
+
+  const handleStampChange = async (
+    event: ChangeEvent<HTMLInputElement>,
+  ) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await handleStampFile(file);
+    event.target.value = "";
+  };
+
+  const handleStampDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsStampDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+    void handleStampFile(file);
+  };
+
+  const handleStampDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsStampDragging(true);
+  };
+
+  const handleStampDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsStampDragging(false);
   };
 
   const handleAddStamp = async () => {
@@ -549,7 +599,18 @@ const PdfStampClient: FC = () => {
         <div className="flex flex-col lg:flex-row items-stretch lg:items-center gap-2 lg:gap-4 p-2">
           
           {/* Step 1: Upload */}
-          <div className={`flex-1 flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${pdfFileName ? 'bg-slate-50 border border-slate-200/50' : 'bg-blue-50/50 border border-blue-100 hover:bg-blue-50'}`}>
+          <div
+            className={`flex-1 flex items-center gap-3 rounded-2xl p-3 transition-all duration-300 ${
+              isPdfDragging
+                ? "border-2 border-dashed border-blue-300 bg-blue-100/70"
+                : pdfFileName
+                  ? "border border-slate-200/50 bg-slate-50"
+                  : "border border-blue-100 bg-blue-50/50 hover:bg-blue-50"
+            }`}
+            onDrop={handlePdfDrop}
+            onDragOver={handlePdfDragOver}
+            onDragLeave={handlePdfDragLeave}
+          >
             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${pdfFileName ? 'bg-slate-200 text-slate-600' : 'bg-blue-600 text-white shadow-md shadow-blue-200'}`}>
               <FileUp size={20} />
             </div>
@@ -563,7 +624,7 @@ const PdfStampClient: FC = () => {
                   onClick={() => pdfInputRef.current?.click()}
                   className="text-sm font-semibold text-slate-900 hover:text-blue-600 transition-colors truncate text-left"
                 >
-                  {pdfFileName || "上传 PDF 文件"}
+                  {pdfFileName ? "更换 PDF 文件" : "上传 PDF 文件"}
                 </button>
               </div>
               {pdfFileName && (
@@ -571,6 +632,7 @@ const PdfStampClient: FC = () => {
                   {formatSize(pdfSize)} • {pageCount} 页
                 </div>
               )}
+              <div className="text-[10px] text-slate-500 truncate">支持拖拽上传/替换 PDF</div>
             </div>
             <input
               ref={pdfInputRef}
@@ -584,7 +646,18 @@ const PdfStampClient: FC = () => {
           <div className="hidden lg:block w-px h-10 bg-slate-200/60" />
 
           {/* Step 2: Stamp */}
-          <div className={`flex-1 flex items-center gap-3 p-3 rounded-2xl transition-all duration-300 ${stampPreviewUrl ? 'bg-slate-50 border border-slate-200/50' : 'bg-rose-50/50 border border-rose-100 hover:bg-rose-50'}`}>
+          <div
+            className={`flex-1 flex items-center gap-3 rounded-2xl p-3 transition-all duration-300 ${
+              isStampDragging
+                ? "border-2 border-dashed border-rose-300 bg-rose-100/70"
+                : stampPreviewUrl
+                  ? "border border-slate-200/50 bg-slate-50"
+                  : "border border-rose-100 bg-rose-50/50 hover:bg-rose-50"
+            }`}
+            onDrop={handleStampDrop}
+            onDragOver={handleStampDragOver}
+            onDragLeave={handleStampDragLeave}
+          >
             <div className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${stampPreviewUrl ? 'bg-white border border-slate-100' : 'bg-rose-500 text-white shadow-md shadow-rose-200'}`}>
               {stampPreviewUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -605,7 +678,7 @@ const PdfStampClient: FC = () => {
                 {stampPreviewUrl ? "更换印章" : "选择印章图片"}
               </button>
               <div className="text-[10px] text-slate-500 truncate">
-                建议使用透明 PNG
+                建议使用透明 PNG，支持拖拽上传/替换
               </div>
             </div>
             <input

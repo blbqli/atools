@@ -13,7 +13,7 @@
   "side_panel": {
     "default_path": "sidepanel.html"
   },
-  "permissions": ["sidePanel", "tabs", "scripting", "activeTab", "downloads"],
+  "permissions": ["sidePanel", "scripting", "activeTab", "downloads"],
   "host_permissions": ["<all_urls>"],
   "icons": {
     "16": "icons/icon16.png",
@@ -22,4 +22,3 @@
     "128": "icons/icon128.png"
   }
 }
-

@@ -301,6 +301,12 @@ export default function SvgConverterClient() {
     setIsDragging(false);
   };
 
+  const openFilePicker = () => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.value = "";
+    fileInputRef.current.click();
+  };
+
   const handleSvgContentChange = (content: string) => {
     setSvgContent(content);
     setSvgPreview(content);
@@ -437,22 +443,32 @@ export default function SvgConverterClient() {
                     onDrop={handleDrop}
                     onDragOver={handleDragOver}
                     onDragLeave={handleDragLeave}
-                    onClick={() => fileInputRef.current?.click()}
+                    onClick={openFilePicker}
                     role="button"
                     tabIndex={0}
                     onKeyDown={(e) => {
-                      if (e.key === "Enter" || e.key === " ") fileInputRef.current?.click();
+                      if (e.key === "Enter" || e.key === " ") {
+                        e.preventDefault();
+                        openFilePicker();
+                      }
                     }}
                   >
                     <div className="text-center">
                       <p className="text-sm font-medium text-slate-700">
-                        点击选择或拖拽 SVG 到此处
+                        {fileInfo
+                          ? "点击替换或拖拽 SVG 到此处"
+                          : "点击选择或拖拽 SVG 到此处"}
                       </p>
-                      <p className="mt-1 text-xs text-slate-500">
-                        支持 .svg / image/svg+xml，也支持拖拽 SVG 代码片段
-                      </p>
-                    </div>
-                  </div>
+	                      <p className="mt-1 text-xs text-slate-500">
+	                        支持 .svg / image/svg+xml，也支持拖拽 SVG 代码片段
+	                      </p>
+                        {fileInfo && (
+                          <p className="mt-1 text-xs text-slate-500">
+                            支持拖拽新 SVG 到此区域直接替换
+                          </p>
+                        )}
+	                    </div>
+	                  </div>
                   {fileInfo && (
                     <p className="mt-2 text-xs text-slate-600">
                       已选择: {fileInfo.name} ({Math.round(fileInfo.size / 1024)}KB)

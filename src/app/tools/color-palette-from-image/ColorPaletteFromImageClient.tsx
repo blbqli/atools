@@ -83,6 +83,7 @@ function ColorPaletteFromImageInner() {
 
   const [file, setFile] = useState<File | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [count, setCount] = useState(8);
   const [ignoreWhite, setIgnoreWhite] = useState(true);
   const [ignoreBlack, setIgnoreBlack] = useState(false);
@@ -109,6 +110,29 @@ function ColorPaletteFromImageInner() {
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) pick(selected);
+  };
+
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (selected) pick(selected);
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const extract = async () => {
@@ -179,15 +203,24 @@ function ColorPaletteFromImageInner() {
   return (
     <div className="w-full px-4">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-blue-400 bg-blue-50/50"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onChange} />
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
-              选择图片
+              {file ? "点击替换图片" : "选择图片"}
             </button>
             <button
               type="button"
@@ -202,6 +235,9 @@ function ColorPaletteFromImageInner() {
                 <span className="text-slate-500">({(file.size / 1024).toFixed(1)} KB)</span>
               </div>
             )}
+          </div>
+          <div className="w-full text-[11px] text-slate-500">
+            支持拖拽新图片到此区域直接替换
           </div>
 
           <button

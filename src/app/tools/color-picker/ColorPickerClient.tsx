@@ -53,7 +53,9 @@ type ColorPickerUi = {
   dropTitle: string;
   dropSubtitle: string;
   currentImagePrefix: string;
-  reselect: string;
+  replace: string;
+  clear: string;
+  dropReplaceHint: string;
   hintPick: string;
   colorInfo: string;
   pixelPrefix: string;
@@ -67,7 +69,9 @@ const DEFAULT_UI: ColorPickerUi = {
   dropTitle: "点击或拖拽图片到此处",
   dropSubtitle: "支持常见图片格式（JPG/PNG/WebP…）",
   currentImagePrefix: "当前图片：",
-  reselect: "重新选择",
+  replace: "点击替换图片",
+  clear: "清空",
+  dropReplaceHint: "支持拖拽新图片到此区域直接替换",
   hintPick: "提示：点击画布任意位置即可取色。",
   colorInfo: "颜色信息",
   pixelPrefix: "像素坐标：",
@@ -171,6 +175,22 @@ function ColorPickerInner({ ui }: { ui: ColorPickerUi }) {
     setIsDragging(false);
   };
 
+  const openFilePicker = () => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.value = "";
+    fileInputRef.current.click();
+  };
+
+  const resetWorkspace = () => {
+    setFile(null);
+    setPicked(null);
+    setError(null);
+    setBitmap((prev) => {
+      if (prev) prev.close();
+      return null;
+    });
+  };
+
   const pickAt = (clientX: number, clientY: number) => {
     if (!bitmap || !displaySize) return;
     const canvas = canvasRef.current;
@@ -228,6 +248,13 @@ function ColorPickerInner({ ui }: { ui: ColorPickerUi }) {
   return (
     <>
       <div className="mt-8 glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
         {!file ? (
           <div
             className={`relative flex h-64 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300 ${
@@ -238,21 +265,23 @@ function ColorPickerInner({ ui }: { ui: ColorPickerUi }) {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={openFilePicker}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
             <div className="text-sm font-medium text-slate-700">{ui.dropTitle}</div>
             <div className="mt-1 text-xs text-slate-500">{ui.dropSubtitle}</div>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50/80 p-4">
+            <div
+              className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+                isDragging
+                  ? "border-blue-400 bg-blue-50/50"
+                  : "border-slate-200 bg-slate-50/80"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
               <div className="text-sm text-slate-700">
                 <span className="font-semibold text-slate-900">{ui.currentImagePrefix}</span>
                 {file.name}
@@ -262,21 +291,23 @@ function ColorPickerInner({ ui }: { ui: ColorPickerUi }) {
                   </span>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setFile(null);
-                  setPicked(null);
-                  setError(null);
-                  setBitmap((prev) => {
-                    if (prev) prev.close();
-                    return null;
-                  });
-                }}
-                className="rounded-xl bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
-              >
-                {ui.reselect}
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={openFilePicker}
+                  className="rounded-xl bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                >
+                  {ui.replace}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetWorkspace}
+                  className="rounded-xl bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                >
+                  {ui.clear}
+                </button>
+              </div>
+              <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[1fr_280px]">

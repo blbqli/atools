@@ -11,7 +11,9 @@ type Preset = { key: PresetKey; name: string; width: number; height: number };
 type Ui = {
   hint: string;
   pick: string;
+  replace: string;
   clear: string;
+  dropReplaceHint: string;
   preset: string;
   presets: Record<PresetKey, string>;
   size: string;
@@ -31,7 +33,9 @@ type Ui = {
 const DEFAULT_UI: Ui = {
   hint: "证件照处理器：选择尺寸与背景色，调整缩放与位置，一键导出证件照（全程本地处理不上传）。",
   pick: "选择照片",
+  replace: "点击替换照片",
   clear: "清空",
+  dropReplaceHint: "支持拖拽新照片到此区域直接替换",
   preset: "尺寸预设",
   presets: { "one-inch": "一寸（295×413）", "two-inch": "二寸（413×579）", custom: "自定义" },
   size: "尺寸",
@@ -63,6 +67,7 @@ function Inner({ ui }: { ui: Ui }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const [bitmap, setBitmap] = useState<ImageBitmap | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [bg, setBg] = useState("#FFFFFF");
 
   const [presetKey, setPresetKey] = useState<PresetKey>("two-inch");
@@ -131,6 +136,29 @@ function Inner({ ui }: { ui: Ui }) {
     e.target.value = "";
   };
 
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (selected) void pick(selected);
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+  };
+
   const renderToCanvas = () => {
     const bm = bitmap;
     const canvas = canvasRef.current;
@@ -188,13 +216,22 @@ function Inner({ ui }: { ui: Ui }) {
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
         <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">{ui.hint}</div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div
+          className={`mt-5 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={openFilePicker}
             className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
           >
-            {ui.pick}
+            {bitmap ? ui.replace : ui.pick}
           </button>
           <button
             type="button"
@@ -204,6 +241,7 @@ function Inner({ ui }: { ui: Ui }) {
             {ui.clear}
           </button>
           <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onChange} />
+          <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">

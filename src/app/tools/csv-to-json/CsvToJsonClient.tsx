@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import type { FC } from "react";
 import { useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
@@ -17,6 +17,8 @@ const DEFAULT_UI = {
   hasHeader: "首行表头",
   skipEmptyLines: "忽略空行",
   chooseCsvFile: "选择 CSV 文件",
+  replaceCsvFile: "替换 CSV 文件",
+  dropCsvHint: "支持点击上传与拖拽上传 CSV，拖拽可直接替换当前内容。",
   copyJson: "复制 JSON",
   downloadJson: "下载 JSON",
   csvInputTitle: "CSV 输入",
@@ -143,6 +145,8 @@ const CsvToJsonInner: FC<{ ui: CsvToJsonUi }> = ({ ui }) => {
   const [hasHeader, setHasHeader] = useState(true);
   const [skipEmptyLines, setSkipEmptyLines] = useState(true);
   const [input, setInput] = useState("name,age\nAlice,18\nBob,20\n");
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -187,15 +191,50 @@ const CsvToJsonInner: FC<{ ui: CsvToJsonUi }> = ({ ui }) => {
     await navigator.clipboard.writeText(parsed.json);
   };
 
+  const loadCsvFile = async (selected: File) => {
+    const isCsvMime = selected.type === "text/csv";
+    const isCsvExt = selected.name.toLowerCase().endsWith(".csv");
+    if (!isCsvMime && !isCsvExt) return;
+    const text = await selected.text();
+    setInput(text);
+    setUploadedFileName(selected.name);
+  };
+
   const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
     const selected = event.target.files?.[0];
     if (!selected) return;
-    const text = await selected.text();
-    setInput(text);
+    await loadCsvFile(selected);
+    event.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (!selected) return;
+    void loadCsvFile(selected);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   return (
     <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
+      <div
+        className={`rounded-2xl border-2 border-dashed p-3 transition ${
+          isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+        }`}
+        onDrop={handleDrop}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
             <label className="flex items-center gap-2 text-sm text-slate-700">
@@ -247,7 +286,7 @@ const CsvToJsonInner: FC<{ ui: CsvToJsonUi }> = ({ ui }) => {
               onClick={() => fileInputRef.current?.click()}
               className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 active:scale-[0.99]"
             >
-              {ui.chooseCsvFile}
+              {uploadedFileName ? ui.replaceCsvFile : ui.chooseCsvFile}
             </button>
             <button
               type="button"
@@ -270,8 +309,13 @@ const CsvToJsonInner: FC<{ ui: CsvToJsonUi }> = ({ ui }) => {
             </button>
           </div>
         </div>
+        <div className="mt-2 text-[11px] text-slate-500">
+          {ui.dropCsvHint}
+          {uploadedFileName ? ` 当前文件：${uploadedFileName}` : ""}
+        </div>
+      </div>
 
-        <div className="mt-6 grid gap-4 lg:grid-cols-2">
+      <div className="mt-6 grid gap-4 lg:grid-cols-2">
           <div>
             <div className="mb-2 text-sm font-semibold text-slate-900">{ui.csvInputTitle}</div>
             <textarea
@@ -302,7 +346,7 @@ const CsvToJsonInner: FC<{ ui: CsvToJsonUi }> = ({ ui }) => {
               </div>
             )}
           </div>
-        </div>
+      </div>
     </div>
   );
 };

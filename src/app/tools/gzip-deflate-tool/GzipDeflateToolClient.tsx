@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { deflateSync, gzipSync, gunzipSync, inflateSync, strFromU8, strToU8 } from "fflate";
 import { useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
@@ -57,6 +57,7 @@ export default function GzipDeflateToolClient() {
   const [text, setText] = useState("");
   const [base64, setBase64] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
 
   const result = useMemo(() => {
@@ -94,10 +95,32 @@ export default function GzipDeflateToolClient() {
     await navigator.clipboard.writeText(value);
   };
 
-  const pickFile = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0] ?? null;
+  const pickFile = (selected: File | null) => {
     setFile(selected);
     setFileError(null);
+  };
+
+  const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0] ?? null;
+    pickFile(selected);
+    e.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0] ?? null;
+    pickFile(selected);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const processFile = async () => {
@@ -233,7 +256,14 @@ export default function GzipDeflateToolClient() {
               </div>
             </div>
           ) : (
-            <div className="mt-6 rounded-3xl bg-white p-5 ring-1 ring-slate-200">
+            <div
+              className={`mt-6 rounded-3xl border-2 border-dashed bg-white p-5 ring-1 transition ${
+                isDragging ? "border-slate-400 bg-slate-50/60 ring-slate-300" : "border-slate-200 ring-slate-200"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div className="text-sm text-slate-700">
                   选择文件后点击处理（{mode === "compress" ? "输出 .gz/.deflate" : "输出解压后的文件"}）。
@@ -244,9 +274,9 @@ export default function GzipDeflateToolClient() {
                     onClick={() => fileRef.current?.click()}
                     className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-200"
                   >
-                    选择文件
+                    {file ? "替换文件" : "选择文件"}
                   </button>
-                  <input ref={fileRef} type="file" className="hidden" onChange={pickFile} />
+                  <input ref={fileRef} type="file" className="hidden" onChange={onFileChange} />
                   <button
                     type="button"
                     onClick={() => void processFile()}
@@ -257,6 +287,7 @@ export default function GzipDeflateToolClient() {
                   </button>
                 </div>
               </div>
+              <div className="mt-2 text-[11px] text-slate-500">支持点击上传与拖拽上传文件；拖拽可直接替换当前文件。</div>
               {file && (
                 <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">
                   {file.name}（{formatBytes(file.size)}）

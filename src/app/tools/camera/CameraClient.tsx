@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
+import defaultToolConfig from "./tool.json";
 
 type CameraState = "idle" | "starting" | "running" | "stopped" | "error";
 
@@ -21,6 +22,11 @@ type CameraUi = {
   unsupported: string;
   videoNotReady: string;
   unableStart: string;
+  permissionDenied: string;
+  noCameraFound: string;
+  cameraBusy: string;
+  constraintFallback: string;
+  insecureContext: string;
   statusStarting: string;
   statusRunning: string;
   statusError: string;
@@ -28,33 +34,60 @@ type CameraUi = {
   statusIdle: string;
 };
 
-const DEFAULT_UI: CameraUi = {
-  controls: "控制",
-  camera: "摄像头",
-  rear: "后置（environment）",
-  front: "前置（user）",
-  start: "启动相机",
-  stop: "停止",
-  capture: "拍照",
-  photo: "照片",
-  capturedAlt: "拍照结果",
-  downloadPng: "下载 PNG",
-  noPhoto: "尚未拍照。",
-  errorPrefix: "错误：",
-  unsupported: "当前浏览器不支持摄像头访问。",
-  videoNotReady: "视频元素未初始化。",
-  unableStart: "无法启动摄像头。",
-  statusStarting: "启动中",
-  statusRunning: "运行中",
-  statusError: "错误",
-  statusStopped: "已停止",
-  statusIdle: "未启动",
-};
+const DEFAULT_UI = defaultToolConfig.ui as CameraUi;
+
+function stopMediaTracks(stream: MediaStream | null) {
+  if (!stream) return;
+  for (const track of stream.getTracks()) track.stop();
+}
+
+function getErrorName(error: unknown): string | null {
+  if (!error || typeof error !== "object") return null;
+  const maybeName = (error as { name?: unknown }).name;
+  return typeof maybeName === "string" ? maybeName : null;
+}
+
+function shouldRetryWithFallback(error: unknown): boolean {
+  const name = getErrorName(error);
+  return name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError" || name === "NotFoundError";
+}
+
+function formatCameraError(error: unknown, ui: CameraUi): string {
+  const name = getErrorName(error);
+  if (name === "NotAllowedError" || name === "SecurityError") return ui.permissionDenied;
+  if (name === "NotFoundError") return ui.noCameraFound;
+  if (name === "NotReadableError" || name === "TrackStartError") return ui.cameraBusy;
+  if (name === "OverconstrainedError" || name === "ConstraintNotSatisfiedError" || name === "TypeError")
+    return ui.constraintFallback;
+  if (name === "NotSupportedError") return ui.insecureContext;
+  return ui.unableStart;
+}
+
+async function requestCameraStream(facingMode: "environment" | "user") {
+  const attempts: MediaStreamConstraints[] = [
+    { video: { facingMode: { exact: facingMode } }, audio: false },
+    { video: { facingMode }, audio: false },
+    { video: true, audio: false },
+  ];
+
+  let lastError: unknown = null;
+  for (let index = 0; index < attempts.length; index += 1) {
+    try {
+      return await navigator.mediaDevices.getUserMedia(attempts[index]);
+    } catch (error) {
+      lastError = error;
+      if (!shouldRetryWithFallback(error) || index === attempts.length - 1) throw error;
+    }
+  }
+  throw (lastError ?? new Error("camera_start_failed"));
+}
 
 function CameraInner({ ui }: { ui: CameraUi }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
+  const startTokenRef = useRef(0);
+  const photoUrlRef = useRef<string | null>(null);
 
   const [state, setState] = useState<CameraState>("idle");
   const [error, setError] = useState<string | null>(null);
@@ -64,19 +97,35 @@ function CameraInner({ ui }: { ui: CameraUi }) {
 
   const supported = typeof navigator !== "undefined" && Boolean(navigator.mediaDevices?.getUserMedia);
 
-  const stop = () => {
+  const stopStream = () => {
     const stream = streamRef.current;
-    if (stream) for (const track of stream.getTracks()) track.stop();
+    stopMediaTracks(stream);
     streamRef.current = null;
+
     const video = videoRef.current;
-    if (video) video.srcObject = null;
+    if (video) {
+      video.pause();
+      video.srcObject = null;
+    }
+  };
+
+  const stop = () => {
+    startTokenRef.current += 1;
+    stopStream();
     setState((prev) => (prev === "error" ? "error" : "stopped"));
   };
 
-  useEffect(() => () => {
-    stop();
-    if (photoUrl) URL.revokeObjectURL(photoUrl);
-  }, [photoUrl]);
+  useEffect(
+    () => () => {
+      startTokenRef.current += 1;
+      stopStream();
+      if (photoUrlRef.current) {
+        URL.revokeObjectURL(photoUrlRef.current);
+        photoUrlRef.current = null;
+      }
+    },
+    [],
+  );
 
   const start = async () => {
     if (!supported) {
@@ -84,28 +133,49 @@ function CameraInner({ ui }: { ui: CameraUi }) {
       setState("error");
       return;
     }
+
+    const startToken = startTokenRef.current + 1;
+    startTokenRef.current = startToken;
+
+    stopStream();
     setError(null);
     setState("starting");
+
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode },
-        audio: false,
-      });
+      const stream = await requestCameraStream(facingMode);
+
+      if (startToken !== startTokenRef.current) {
+        stopMediaTracks(stream);
+        return;
+      }
+
       streamRef.current = stream;
       const video = videoRef.current;
       if (!video) {
+        stopMediaTracks(stream);
         setError(ui.videoNotReady);
         setState("error");
-        stop();
+        streamRef.current = null;
         return;
       }
+
+      video.autoplay = true;
+      video.playsInline = true;
+      video.muted = true;
       video.srcObject = stream;
       await video.play();
+
+      if (startToken !== startTokenRef.current) {
+        stopStream();
+        return;
+      }
+
       setState("running");
-    } catch (e) {
-      setError(e instanceof Error ? e.message : ui.unableStart);
+    } catch (cameraError) {
+      if (startToken !== startTokenRef.current) return;
+      stopStream();
+      setError(formatCameraError(cameraError, ui));
       setState("error");
-      stop();
     }
   };
 
@@ -128,8 +198,9 @@ function CameraInner({ ui }: { ui: CameraUi }) {
     );
     if (!blob) return;
 
-    if (photoUrl) URL.revokeObjectURL(photoUrl);
+    if (photoUrlRef.current) URL.revokeObjectURL(photoUrlRef.current);
     const url = URL.createObjectURL(blob);
+    photoUrlRef.current = url;
     setPhotoUrl(url);
     setPhotoName(`photo-${new Date().toISOString().replace(/[:.]/g, "-")}.png`);
   };
@@ -235,7 +306,7 @@ function CameraInner({ ui }: { ui: CameraUi }) {
 export default function CameraClient() {
   return (
     <ToolPageLayout toolSlug="camera">
-      {({ config }) => <CameraInner ui={{ ...DEFAULT_UI, ...(config.ui as Partial<CameraUi> | undefined) }} />}
+      {({ config }) => <CameraInner ui={{ ...DEFAULT_UI, ...((config.ui as Partial<CameraUi> | undefined) ?? {}) }} />}
     </ToolPageLayout>
   );
 }

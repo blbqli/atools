@@ -1,9 +1,38 @@
 "use client";
 
 import type { ChangeEvent, FC } from "react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
+import {
+  exportCanvasToImageBlob,
+  getImageExportExtension,
+  getImageExportLabel,
+  IMAGE_EXPORT_FORMATS,
+  type ImageExportFormat,
+} from "@/lib/image-export";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 type Mode = "stretch" | "contain";
+const MAX_DIMENSION = 20000;
+
+const gcd = (a: number, b: number): number => {
+  let x = Math.abs(a);
+  let y = Math.abs(b);
+  while (y !== 0) {
+    const t = x % y;
+    x = y;
+    y = t;
+  }
+  return x || 1;
+};
+
+const formatAspectRatio = (width: number | null, height: number | null): string => {
+  if (!width || !height) return "-";
+  const divider = gcd(width, height);
+  return `${Math.round(width / divider)}:${Math.round(height / divider)}`;
+};
+
+const clampDimension = (value: number): number =>
+  Math.min(MAX_DIMENSION, Math.max(1, Math.round(value)));
 
 const formatSize = (bytes: number | null): string => {
   if (!bytes || bytes <= 0) return "-";
@@ -25,6 +54,7 @@ async function resizeImage(
   targetWidth: number,
   targetHeight: number,
   mode: Mode,
+  format: ImageExportFormat,
 ): Promise<Blob> {
   if (targetWidth <= 0 || targetHeight <= 0) {
     throw new Error("目标宽高需为大于 0 的整数");
@@ -62,16 +92,7 @@ async function resizeImage(
     );
   }
 
-  return new Promise<Blob>((resolve, reject) => {
-    canvas.toBlob(
-      (result) => {
-        if (result) resolve(result);
-        else reject(new Error("生成结果失败"));
-      },
-      "image/png",
-      1,
-    );
-  });
+  return exportCanvasToImageBlob(canvas, format);
 }
 
 const ImageResizerClient: FC = () => {
@@ -85,11 +106,11 @@ const ImageResizerClient: FC = () => {
     useState<number | null>(null);
   const [targetWidth, setTargetWidth] = useState<number | "">("");
   const [targetHeight, setTargetHeight] = useState<number | "">("");
+  const [lockAspectRatio, setLockAspectRatio] = useState(true);
+  const [targetFormat, setTargetFormat] = useState<ImageExportFormat>("png");
   const [mode, setMode] = useState<Mode>("contain");
   const [isProcessing, setIsProcessing] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const computeDimensions = async (selected: File) => {
     const imageBitmap = await createImageBitmap(selected);
@@ -118,31 +139,12 @@ const ImageResizerClient: FC = () => {
     await computeDimensions(selected);
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const selected = event.target.files?.[0];
-    if (selected) {
-      void processFile(selected);
-    }
-  };
-
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragging(false);
-    const selected = event.dataTransfer.files?.[0];
-    if (selected) {
-      void processFile(selected);
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragging(false);
-  };
+  const { inputRef: fileInputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } =
+    useFileDropzone({
+      onFile: (selected) => {
+        void processFile(selected);
+      },
+    });
 
   const handleTargetWidthChange = (
     event: ChangeEvent<HTMLInputElement>,
@@ -150,11 +152,17 @@ const ImageResizerClient: FC = () => {
     const value = event.target.value;
     if (value === "") {
       setTargetWidth("");
+      if (lockAspectRatio) setTargetHeight("");
       return;
     }
     const num = Number(value);
-    if (!Number.isNaN(num) && num > 0 && num <= 20000) {
-      setTargetWidth(Math.round(num));
+    if (!Number.isNaN(num) && num > 0 && num <= MAX_DIMENSION) {
+      const rounded = clampDimension(num);
+      setTargetWidth(rounded);
+      if (lockAspectRatio && originalWidth && originalHeight) {
+        const ratio = originalWidth / originalHeight;
+        setTargetHeight(clampDimension(rounded / ratio));
+      }
     }
   };
 
@@ -164,16 +172,45 @@ const ImageResizerClient: FC = () => {
     const value = event.target.value;
     if (value === "") {
       setTargetHeight("");
+      if (lockAspectRatio) setTargetWidth("");
       return;
     }
     const num = Number(value);
-    if (!Number.isNaN(num) && num > 0 && num <= 20000) {
-      setTargetHeight(Math.round(num));
+    if (!Number.isNaN(num) && num > 0 && num <= MAX_DIMENSION) {
+      const rounded = clampDimension(num);
+      setTargetHeight(rounded);
+      if (lockAspectRatio && originalWidth && originalHeight) {
+        const ratio = originalWidth / originalHeight;
+        setTargetWidth(clampDimension(rounded * ratio));
+      }
     }
   };
 
   const handleModeChange = (next: Mode) => {
     setMode(next);
+  };
+
+  const handleFormatChange = (next: ImageExportFormat) => {
+    setTargetFormat(next);
+    if (resultUrl) {
+      URL.revokeObjectURL(resultUrl);
+      setResultUrl(null);
+      setResultSize(null);
+    }
+  };
+
+  const handleLockAspectRatioChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const checked = event.target.checked;
+    setLockAspectRatio(checked);
+    if (!checked || !originalWidth || !originalHeight) return;
+    const ratio = originalWidth / originalHeight;
+    if (targetWidth !== "") {
+      setTargetHeight(clampDimension(targetWidth / ratio));
+      return;
+    }
+    if (targetHeight !== "") {
+      setTargetWidth(clampDimension(targetHeight * ratio));
+    }
   };
 
   const handleResize = async () => {
@@ -205,6 +242,7 @@ const ImageResizerClient: FC = () => {
         targetWidth,
         targetHeight,
         mode,
+        targetFormat,
       );
       setResultSize(blob.size);
       const url = URL.createObjectURL(blob);
@@ -230,6 +268,8 @@ const ImageResizerClient: FC = () => {
     setOriginalHeight(null);
     setTargetWidth("");
     setTargetHeight("");
+    setLockAspectRatio(true);
+    setTargetFormat("png");
     setError(null);
   };
 
@@ -254,6 +294,13 @@ const ImageResizerClient: FC = () => {
       </div>
 
       <div className="glass-card overflow-hidden rounded-3xl p-8 shadow-xl">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleInputChange}
+        />
         {!file ? (
           <div
             className={`relative flex h-64 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300 ${
@@ -264,15 +311,8 @@ const ImageResizerClient: FC = () => {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={openFilePicker}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
             <div className="mb-4 rounded-full bg-emerald-50 p-4">
               <svg
                 className="h-8 w-8 text-emerald-500"
@@ -297,7 +337,16 @@ const ImageResizerClient: FC = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="flex flex-col gap-6 rounded-xl bg-slate-50/80 p-6 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+            <div
+              className={`flex flex-col gap-6 rounded-xl border-2 border-dashed p-6 backdrop-blur-sm transition sm:flex-row sm:items-center sm:justify-between ${
+                isDragging
+                  ? "border-emerald-400 bg-emerald-50/50"
+                  : "border-slate-200 bg-slate-50/80"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
               <div className="space-y-2 text-sm">
                 <div className="flex flex-wrap items-center gap-2 text-slate-600">
                   <span className="font-medium text-slate-900">
@@ -323,7 +372,7 @@ const ImageResizerClient: FC = () => {
                     <input
                       type="number"
                       min={1}
-                      max={20000}
+                      max={MAX_DIMENSION}
                       value={targetWidth}
                       onChange={handleTargetWidthChange}
                       className="w-24 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -333,7 +382,7 @@ const ImageResizerClient: FC = () => {
                     <input
                       type="number"
                       min={1}
-                      max={20000}
+                      max={MAX_DIMENSION}
                       value={targetHeight}
                       onChange={handleTargetHeightChange}
                       className="w-24 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs focus:border-emerald-500 focus:outline-none focus:ring-1 focus:ring-emerald-500"
@@ -342,6 +391,15 @@ const ImageResizerClient: FC = () => {
                     <span className="text-[11px] text-slate-400">
                       单位：像素
                     </span>
+                    <label className="ml-2 inline-flex items-center gap-1 text-[11px] text-slate-500">
+                      <input
+                        type="checkbox"
+                        checked={lockAspectRatio}
+                        onChange={handleLockAspectRatioChange}
+                        className="h-3.5 w-3.5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                      />
+                      锁定长宽比（{formatAspectRatio(originalWidth, originalHeight)}）
+                    </label>
                   </div>
                 </div>
               </div>
@@ -370,13 +428,37 @@ const ImageResizerClient: FC = () => {
                     自动拉伸
                   </button>
                 </div>
+                <div className="inline-flex flex-wrap items-center gap-2 rounded-full bg-white px-2 py-1 text-xs font-medium text-slate-600 shadow-sm">
+                  <span className="px-2 text-[11px] text-slate-500">导出格式</span>
+                  {IMAGE_EXPORT_FORMATS.map((format) => (
+                    <button
+                      key={format}
+                      type="button"
+                      onClick={() => handleFormatChange(format)}
+                      className={`rounded-full px-3 py-1 transition ${
+                        targetFormat === format
+                          ? "bg-emerald-500 text-white shadow"
+                          : "hover:bg-slate-100"
+                      }`}
+                    >
+                      {getImageExportLabel(format)}
+                    </button>
+                  ))}
+                </div>
                 <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={openFilePicker}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:scale-95"
+                  >
+                    点击替换图片
+                  </button>
                   <button
                     type="button"
                     onClick={handleReset}
                     className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:scale-95"
                   >
-                    重新选择图片
+                    清空
                   </button>
                   <button
                     type="button"
@@ -387,6 +469,9 @@ const ImageResizerClient: FC = () => {
                     {isProcessing ? "处理中..." : "生成新尺寸图片"}
                   </button>
                 </div>
+                <p className="text-[11px] text-slate-500">
+                  支持拖拽新图片到此区域直接替换
+                </p>
               </div>
             </div>
 
@@ -451,10 +536,10 @@ const ImageResizerClient: FC = () => {
                       download={`resized-${file.name.replace(
                         /\.[^.]+$/,
                         "",
-                      )}.png`}
+                      )}.${getImageExportExtension(targetFormat)}`}
                       className="rounded-lg bg-emerald-600 px-4 py-1.5 text-xs font-medium text-white shadow-md transition-transform hover:scale-105 hover:bg-emerald-700 active:scale-95"
                     >
-                      下载 PNG
+                      下载 {getImageExportLabel(targetFormat)}
                     </a>
                   )}
                 </div>
@@ -474,4 +559,3 @@ const ImageResizerClient: FC = () => {
 };
 
 export default ImageResizerClient;
-

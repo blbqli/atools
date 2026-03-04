@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import * as GBK from "gbk.js";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
@@ -269,6 +269,8 @@ const encodeText = (text: string, encoding: "utf-8" | "gbk"): Uint8Array => {
 
 const DEFAULT_UI = {
   upload: "上传字幕文件",
+  replaceUpload: "替换字幕文件",
+  dropHint: "支持点击上传与拖拽上传字幕文件，拖拽可直接替换当前内容。",
   clear: "清空",
   parsedCount: "已解析",
   copyOutput: "复制输出",
@@ -315,6 +317,8 @@ function SubtitleExtractorInner() {
   const [offsetMs, setOffsetMs] = useState(0);
   const [speed, setSpeed] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
 
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [downloadName, setDownloadName] = useState<string>("output.srt");
@@ -380,9 +384,7 @@ function SubtitleExtractorInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [outputText, outputEncoding, outputFormat]);
 
-  const onUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
+  const loadSubtitleFile = async (f: File) => {
     const bytes = new Uint8Array(await f.arrayBuffer());
     const text = decodeText(bytes, inputEncoding);
     setInputText(text);
@@ -391,6 +393,32 @@ function SubtitleExtractorInner() {
     setOutputFormat(detected);
     const base = f.name.replace(/\.[^.]+$/, "") || "subtitle";
     setDownloadName(`${base}.out.${detected}`);
+    setUploadedFileName(f.name);
+  };
+
+  const onUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    await loadSubtitleFile(f);
+    e.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const f = event.dataTransfer.files?.[0];
+    if (!f) return;
+    void loadSubtitleFile(f);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const copyOutput = async () => {
@@ -400,6 +428,7 @@ function SubtitleExtractorInner() {
   const clear = () => {
     setInputText("");
     setError(null);
+    setUploadedFileName(null);
     setOffsetMs(0);
     setSpeed(1);
     if (inputRef.current) inputRef.current.value = "";
@@ -408,44 +437,57 @@ function SubtitleExtractorInner() {
   return (
     <div className="w-full px-4">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <input ref={inputRef} type="file" accept=".srt,.vtt,.ass,text/*" className="hidden" onChange={(e) => void onUpload(e)} />
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-            >
-              {ui.upload}
-            </button>
-            <button
-              type="button"
-              onClick={clear}
-              className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
-            >
-              {ui.clear}
-            </button>
-            <div className="text-xs text-slate-500">
-              {ui.parsedCount} {parsed.cues.length} 条
+        <div
+          className={`rounded-2xl border-2 border-dashed p-3 transition ${
+            isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <input ref={inputRef} type="file" accept=".srt,.vtt,.ass,text/*" className="hidden" onChange={(e) => void onUpload(e)} />
+              <button
+                type="button"
+                onClick={() => inputRef.current?.click()}
+                className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                {uploadedFileName ? ui.replaceUpload : ui.upload}
+              </button>
+              <button
+                type="button"
+                onClick={clear}
+                className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+              >
+                {ui.clear}
+              </button>
+              <div className="text-xs text-slate-500">
+                {ui.parsedCount} {parsed.cues.length} 条
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void copyOutput()}
+                className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                {ui.copyOutput}
+              </button>
+              {downloadUrl && (
+                <a
+                  href={downloadUrl}
+                  download={downloadName}
+                  className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  {ui.download} {downloadName}
+                </a>
+              )}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void copyOutput()}
-              className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              {ui.copyOutput}
-            </button>
-            {downloadUrl && (
-              <a
-                href={downloadUrl}
-                download={downloadName}
-                className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
-              >
-                {ui.download} {downloadName}
-              </a>
-            )}
+          <div className="mt-2 text-[11px] text-slate-500">
+            {ui.dropHint}
+            {uploadedFileName ? ` 当前文件：${uploadedFileName}` : ""}
           </div>
         </div>
 

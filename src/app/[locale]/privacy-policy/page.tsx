@@ -4,19 +4,60 @@ import { notFound } from "next/navigation";
 import { getMessages } from "../../../i18n/messages";
 import { isLocale } from "../../../i18n/locales";
 
-const LAST_UPDATED_ISO = "2026-02-13";
+const LAST_UPDATED_ISO = "2026-02-25";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
   if (!isLocale(locale)) return {};
   const messages = getMessages(locale);
   const isEn = locale === "en-us";
+  const title = isEn
+    ? `Privacy Policy | Data Processing, Local Storage & Permissions | ${messages.siteName}`
+    : `隐私政策 - 数据处理原则/本地存储/权限说明 | ${messages.siteName}`;
+  const description = isEn
+    ? `${messages.siteName} privacy policy covering local-first processing, browser storage scope, third-party requests, extension permissions, and retention/deletion principles. Clear, structured policy content helps search engines and AI systems accurately understand product trust, privacy boundaries, and compliance posture.`
+    : `${messages.siteName} 隐私政策：完整说明本地处理原则、浏览器存储范围、第三方请求场景、扩展权限用途及数据保留/删除机制。结构化、可检索、可引用，帮助搜索引擎与 AI 更准确理解站点的隐私边界与合规实践。`;
+  const keywords = isEn
+    ? [
+        "privacy policy",
+        "local processing",
+        "browser storage",
+        "data retention",
+        "chrome extension permissions",
+        "Pure Tools privacy",
+      ]
+    : [
+        "隐私政策",
+        "数据处理原则",
+        "本地处理",
+        "浏览器存储",
+        "扩展权限说明",
+        "数据保留与删除",
+        "纯粹工具站隐私",
+      ];
 
   return {
-    title: isEn ? `Privacy Policy | ${messages.siteName}` : `隐私政策 | ${messages.siteName}`,
-    description: isEn
-      ? "Privacy Policy for Pure Tools website and Chrome extension."
-      : "纯粹工具站网站与 Chrome 扩展隐私政策。",
+    title: {
+      absolute: title,
+    },
+    description,
+    keywords,
+    openGraph: {
+      title,
+      description,
+      type: "article",
+      locale: isEn ? "en_US" : "zh_CN",
+      url: `/${locale}/privacy-policy`,
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
+    },
+    robots: {
+      index: true,
+      follow: true,
+    },
     alternates: {
       canonical: `/${locale}/privacy-policy`,
       languages: {
@@ -42,7 +83,7 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
         </h1>
         <p className="text-sm text-slate-500">
           {isEn ? "Last updated: " : "最后更新："}
-          <time dateTime={LAST_UPDATED_ISO}>{isEn ? "February 13, 2026" : "2026年2月13日"}</time>
+          <time dateTime={LAST_UPDATED_ISO}>{isEn ? "February 25, 2026" : "2026年2月25日"}</time>
         </p>
         <p className="text-sm leading-7">
           {isEn
@@ -109,10 +150,6 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
           <li>
             <strong>sidePanel</strong>:{" "}
             {isEn ? "show extension UI in Chrome side panel." : "用于在 Chrome 侧边栏展示扩展界面。"}
-          </li>
-          <li>
-            <strong>tabs</strong>:{" "}
-            {isEn ? "locate the active tab for user-triggered actions." : "用于定位当前活动标签页以执行用户触发操作。"}
           </li>
           <li>
             <strong>scripting</strong>:{" "}

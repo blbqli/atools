@@ -1,9 +1,9 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 import { getFFmpegBaseURL } from "../../../lib/r2-assets";
 
 // 动态获取 FFmpeg 基础 URL（支持本地和 R2）
@@ -21,7 +21,6 @@ const formatSeconds = (seconds: number): string => {
 };
 
 export default function VideoToGifClient() {
-  const inputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const logRef = useRef<string[]>([]);
 
@@ -98,10 +97,9 @@ export default function VideoToGifClient() {
     setDownloadName(`${base}.gif`);
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) pick(selected);
-  };
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    onFile: pick,
+  });
 
   const convert = async () => {
     if (!file || !inputName) return;
@@ -192,15 +190,24 @@ export default function VideoToGifClient() {
       </div>
 
       <div className="mt-8 glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div className="text-sm font-semibold text-slate-900">选择视频文件</div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              选择文件
+              {file ? "点击替换视频" : "选择文件"}
             </button>
             <button
               type="button"
@@ -218,8 +225,9 @@ export default function VideoToGifClient() {
             >
               清空
             </button>
-            <input ref={inputRef} type="file" accept="video/*" className="hidden" onChange={onChange} />
+            <input ref={inputRef} type="file" accept="video/*" className="hidden" onChange={handleInputChange} />
           </div>
+          <div className="w-full text-[11px] text-slate-500">支持拖拽新视频到此区域直接替换</div>
         </div>
 
         <div className="mt-4 rounded-3xl bg-slate-50 p-5 ring-1 ring-slate-200 text-xs text-slate-600">

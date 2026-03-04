@@ -9,7 +9,9 @@ import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
 const DEFAULT_UI = {
   title: "图标字体转换器",
   pickFile: "选择字体文件",
+  replaceFile: "点击替换字体",
   clear: "清空",
+  dropReplaceHint: "支持拖拽新字体文件到此区域直接替换",
   settings: "设置",
   familyLabel: "font-family 名称",
   familyPlaceholder: "例如 MyIconFont",
@@ -79,6 +81,7 @@ function IconFontConverterInner() {
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [family, setFamily] = useState("IconFont");
   const [dataUrl, setDataUrl] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -130,6 +133,29 @@ function IconFontConverterInner() {
     if (selected) pick(selected);
   };
 
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (selected) pick(selected);
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+  };
+
   const clear = () => {
     setFile(null);
     setError(null);
@@ -140,7 +166,16 @@ function IconFontConverterInner() {
   return (
     <div className="w-full px-4">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-blue-400 bg-blue-50/50"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div className="flex flex-wrap items-center gap-2">
             <input
               ref={inputRef}
@@ -151,10 +186,10 @@ function IconFontConverterInner() {
             />
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
-              {ui.pickFile}
+              {file ? ui.replaceFile : ui.pickFile}
             </button>
             <button
               type="button"
@@ -170,6 +205,7 @@ function IconFontConverterInner() {
               </div>
             )}
           </div>
+          <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
         </div>
 
         {error && (

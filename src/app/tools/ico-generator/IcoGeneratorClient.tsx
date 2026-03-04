@@ -278,6 +278,12 @@ const IcoGeneratorClient: FC = () => {
     }
   };
 
+  const openFilePicker = () => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.value = "";
+    fileInputRef.current.click();
+  };
+
   const handleDrop = (event: React.DragEvent) => {
     event.preventDefault();
     setIsDragging(false);
@@ -395,11 +401,11 @@ const IcoGeneratorClient: FC = () => {
           onDragLeave={handleDragLeave}
           role="button"
           tabIndex={0}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={openFilePicker}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
-              fileInputRef.current?.click();
+              openFilePicker();
             }
           }}
         >
@@ -414,11 +420,16 @@ const IcoGeneratorClient: FC = () => {
             <span className="text-xl">🖼️</span>
           </div>
           <p className="text-sm font-medium text-slate-900">
-            拖拽图片到此处，或点击选择文件
+            {file ? "拖拽新图片到此处，或点击替换图片" : "拖拽图片到此处，或点击选择文件"}
           </p>
           <p className="mt-2 text-[11px] text-slate-500">
             支持 PNG、JPG、WebP 等格式，单张图片建议不超过 30MB。
           </p>
+          {file && (
+            <p className="mt-1 text-[11px] text-slate-500">
+              已支持点击替换和拖拽替换。
+            </p>
+          )}
           {file && (
             <p className="mt-3 text-xs text-slate-600">
               已选择：{" "}

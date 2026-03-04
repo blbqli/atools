@@ -66,7 +66,9 @@ const newId = () => `${Date.now().toString(36)}-${Math.random().toString(36).sli
 
 export default function PdfPageMergerClient() {
   const inputRef = useRef<HTMLInputElement>(null);
+  const pickerModeRef = useRef<"append" | "replace">("append");
   const [items, setItems] = useState<LoadedPdf[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -90,8 +92,7 @@ export default function PdfPageMergerClient() {
     setDownloadName("");
   };
 
-  const onFiles = async (event: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(event.target.files ?? []);
+  const loadFiles = async (files: File[], mode: "append" | "replace" = "append") => {
     if (!files.length) return;
     setError(null);
     cleanupUrl();
@@ -116,8 +117,39 @@ export default function PdfPageMergerClient() {
       }
     }
 
-    setItems((prev) => [...prev, ...next]);
+    setItems((prev) => (mode === "replace" ? next : [...prev, ...next]));
+  };
+
+  const onFiles = async (event: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(event.target.files ?? []);
+    if (!files.length) return;
+    await loadFiles(files, pickerModeRef.current);
     event.target.value = "";
+  };
+
+  const openFilePicker = (mode: "append" | "replace") => {
+    if (!inputRef.current) return;
+    pickerModeRef.current = mode;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(event.dataTransfer.files ?? []);
+    if (!files.length) return;
+    void loadFiles(files, items.length > 0 ? "replace" : "append");
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const move = (id: string, dir: -1 | 1) => {
@@ -186,14 +218,32 @@ export default function PdfPageMergerClient() {
           <div className="w-full px-4">
             <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">{ui.hint}</div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2">
+            <div
+              className={`mt-5 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed p-4 transition ${
+                isDragging
+                  ? "border-slate-400 bg-slate-50/60"
+                  : "border-slate-200 bg-slate-50/80"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={() => openFilePicker("append")}
                 className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
               >
-                {ui.pick}
+                {items.length > 0 ? ui.add : ui.pick}
               </button>
+              {items.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => openFilePicker("replace")}
+                  className="rounded-md border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                >
+                  {ui.replace}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={resetAll}
@@ -209,6 +259,7 @@ export default function PdfPageMergerClient() {
                 className="hidden"
                 onChange={onFiles}
               />
+              <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
             </div>
 
             {items.length ? (
@@ -332,7 +383,10 @@ export default function PdfPageMergerClient() {
 type Ui = {
   hint: string;
   pick: string;
+  add: string;
+  replace: string;
   clear: string;
+  dropReplaceHint: string;
   files: string;
   fileUnit: string;
   pageUnit: string;
@@ -356,7 +410,10 @@ type Ui = {
 const DEFAULT_UI: Ui = {
   hint: "合并多个 PDF 并调整顺序，可为每个文件设置页码范围，全程本地处理不上传。",
   pick: "选择多个 PDF",
+  add: "追加 PDF",
+  replace: "点击替换全部",
   clear: "清空",
+  dropReplaceHint: "支持拖拽新 PDF 到此区域直接替换全部已选文件。",
   files: "文件列表",
   fileUnit: "个文件",
   pageUnit: "页",

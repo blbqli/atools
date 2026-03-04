@@ -1,16 +1,18 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 type OutputFormat = "webm" | "wav";
 
 const DEFAULT_UI = {
   pickTitle: "选择文件",
   pickFile: "选择文件",
+  replaceFile: "点击替换文件",
   clear: "清空",
+  dropReplaceHint: "支持拖拽新音频/视频到此区域直接替换",
   previewTitle: "预览",
   fileInfoTemplate: "文件：{name} · 时长：{time}（{seconds}s）",
   outputFormatTitle: "输出格式",
@@ -112,7 +114,6 @@ function AvTranscoderInner() {
   const config = useOptionalToolConfig("av-transcoder");
   const ui: AvTranscoderUi = { ...DEFAULT_UI, ...((config?.ui ?? {}) as Partial<AvTranscoderUi>) };
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
 
@@ -140,9 +141,7 @@ function AvTranscoderInner() {
     };
   }, [downloadUrl, url]);
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
+  const applyPickedFile = (selected: File) => {
     setError(null);
     setProgress(null);
     if (url) URL.revokeObjectURL(url);
@@ -156,6 +155,10 @@ function AvTranscoderInner() {
     setDownloadName(`${selected.name.replace(/\.[^.]+$/, "") || "output"}.${output}`);
   };
 
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    onFile: applyPickedFile,
+  });
+
   const clear = () => {
     if (url) URL.revokeObjectURL(url);
     if (downloadUrl) URL.revokeObjectURL(downloadUrl);
@@ -165,7 +168,6 @@ function AvTranscoderInner() {
     setError(null);
     setProgress(null);
     setDownloadUrl(null);
-    if (inputRef.current) inputRef.current.value = "";
   };
 
   useEffect(() => {
@@ -268,15 +270,24 @@ function AvTranscoderInner() {
 
   return (
     <div className="mt-8 glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div className="text-sm font-semibold text-slate-900">{ui.pickTitle}</div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              {ui.pickFile}
+              {file ? ui.replaceFile : ui.pickFile}
             </button>
             <button
               type="button"
@@ -286,8 +297,9 @@ function AvTranscoderInner() {
             >
               {ui.clear}
             </button>
-            <input ref={inputRef} type="file" accept="audio/*,video/*" className="hidden" onChange={onChange} />
+            <input ref={inputRef} type="file" accept="audio/*,video/*" className="hidden" onChange={handleInputChange} />
           </div>
+          <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
         </div>
 
         {url && (

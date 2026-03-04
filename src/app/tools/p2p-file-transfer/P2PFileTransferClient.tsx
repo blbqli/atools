@@ -516,6 +516,13 @@ const P2PFileTransferClient: FC = () => {
     const files = Array.from(event.target.files ?? []);
     if (!files.length) return;
     setSelectedFiles(files);
+    event.target.value = "";
+  };
+
+  const openFilePicker = () => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.value = "";
+    fileInputRef.current.click();
   };
 
   const handleDrop = (event: React.DragEvent) => {
@@ -803,11 +810,11 @@ const P2PFileTransferClient: FC = () => {
           <div className="flex items-center gap-2">
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={openFilePicker}
               disabled={!connectionReady || isSending}
               className="rounded-lg bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-sm ring-1 ring-slate-200 transition hover:bg-slate-50 active:scale-95 disabled:cursor-not-allowed disabled:opacity-40"
             >
-              选择文件
+              {selectedFiles.length ? "点击替换文件" : "选择文件"}
             </button>
             <button
               type="button"
@@ -841,7 +848,9 @@ const P2PFileTransferClient: FC = () => {
           <p className="text-sm font-medium text-slate-900">拖拽文件到这里</p>
           <p className="mt-1 text-xs text-slate-500">
             {connectionReady
-              ? "或点击“选择文件”从本地挑选"
+              ? selectedFiles.length
+                ? "支持拖拽新文件到此区域直接替换当前待发送列表，或点击“点击替换文件”"
+                : "支持点击上传和拖拽上传"
               : "请先完成连接后再选择文件"}
           </p>
         </div>

@@ -1,8 +1,9 @@
 "use client";
 
-import type { ChangeEvent, FC } from "react";
-import { useEffect, useRef, useState } from "react";
+import type { FC } from "react";
+import { useEffect, useState } from "react";
 import { PDFDocument } from "pdf-lib";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 type LoadedPdf = {
   name: string;
@@ -28,8 +29,6 @@ const PdfTrimClient: FC = () => {
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [downloadName, setDownloadName] =
     useState<string>("trimmed.pdf");
-
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   const cleanupDownloadUrl = () => {
     if (downloadUrl) {
@@ -58,10 +57,7 @@ const PdfTrimClient: FC = () => {
     return null;
   };
 
-  const handleFileChange = async (
-    event: ChangeEvent<HTMLInputElement>,
-  ) => {
-    const file = event.target.files?.[0];
+  const loadPdfFile = async (file: File) => {
     if (!file) return;
 
     const validationError = validatePdfFile(file);
@@ -99,6 +95,13 @@ const PdfTrimClient: FC = () => {
       );
     }
   };
+
+  const { inputRef: fileInputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } =
+    useFileDropzone({
+      onFile: (file) => {
+        void loadPdfFile(file);
+      },
+    });
 
   const togglePageSelection = (pageNumber: number) => {
     if (!pdf) return;
@@ -215,22 +218,31 @@ const PdfTrimClient: FC = () => {
       </div>
 
       <div className="glass-card rounded-2xl p-6 space-y-4">
-        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div
+          className={`flex flex-col gap-4 rounded-2xl border-2 border-dashed p-4 transition md:flex-row md:items-center md:justify-between ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div>
             <h2 className="text-sm font-semibold text-slate-900">
               第一步：选择要剪切的 PDF
             </h2>
             <p className="mt-1 text-xs text-slate-500">
-              支持常见 A4 文档，建议文件大小不超过 50MB。
+              支持常见 A4 文档，建议文件大小不超过 50MB。支持拖拽新 PDF 到此区域直接替换。
             </p>
           </div>
           <div className="flex items-center gap-3">
             <button
               type="button"
-              onClick={() => fileInputRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-lg bg-slate-900 px-4 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
             >
-              选择 PDF 文件
+              {pdf ? "点击替换 PDF" : "选择 PDF 文件"}
             </button>
             <button
               type="button"
@@ -244,7 +256,7 @@ const PdfTrimClient: FC = () => {
               type="file"
               accept="application/pdf"
               className="hidden"
-              onChange={handleFileChange}
+              onChange={handleInputChange}
             />
           </div>
         </div>

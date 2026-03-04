@@ -1,10 +1,10 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 import { getFFmpegBaseURL } from "../../../lib/r2-assets";
 
 type OutputFormat = "mp3" | "wav" | "m4a" | "ogg" | "flac" | "opus";
@@ -12,7 +12,9 @@ type OutputFormat = "mp3" | "wav" | "m4a" | "ogg" | "flac" | "opus";
 type Ui = {
   hint: string;
   pick: string;
+  replace: string;
   clear: string;
+  dropReplaceHint: string;
   loadFfmpeg: string;
   ffmpegLoading: string;
   ffmpegReady: string;
@@ -42,7 +44,9 @@ type Ui = {
 const DEFAULT_UI: Ui = {
   hint: "音频格式转换：支持 MP3/WAV/FLAC/OGG/M4A/OPUS 转换与基础参数设置（纯前端本地处理不上传）。首次需加载 ffmpeg.wasm。",
   pick: "选择音频文件",
+  replace: "点击替换音频",
   clear: "清空",
+  dropReplaceHint: "支持拖拽新音频到此区域直接替换。",
   loadFfmpeg: "加载 FFmpeg",
   ffmpegLoading: "加载中…",
   ffmpegReady: "FFmpeg 已就绪",
@@ -101,7 +105,6 @@ export default function AudioFormatConverterClient() {
 }
 
 function Inner({ ui }: { ui: Ui }) {
-  const inputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const logRef = useRef<string[]>([]);
 
@@ -180,11 +183,9 @@ function Inner({ ui }: { ui: Ui }) {
     setDownloadName(`${base}.${outputExt(outputFormat)}`);
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) pickFile(selected);
-    e.target.value = "";
-  };
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    onFile: pickFile,
+  });
 
   const clear = () => {
     setFile(null);
@@ -262,13 +263,22 @@ function Inner({ ui }: { ui: Ui }) {
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
         <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">{ui.hint}</div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div
+          className={`mt-5 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={openFilePicker}
             className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
           >
-            {ui.pick}
+            {file ? ui.replace : ui.pick}
           </button>
           <button
             type="button"
@@ -277,7 +287,7 @@ function Inner({ ui }: { ui: Ui }) {
           >
             {ui.clear}
           </button>
-          <input ref={inputRef} type="file" accept="audio/*" className="hidden" onChange={onChange} />
+          <input ref={inputRef} type="file" accept="audio/*" className="hidden" onChange={handleInputChange} />
 
           <div className="ml-auto flex items-center gap-2 text-xs text-slate-600">
             {ffmpegState === "ready" ? (
@@ -293,6 +303,7 @@ function Inner({ ui }: { ui: Ui }) {
               </button>
             )}
           </div>
+          <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -438,4 +449,3 @@ function Inner({ ui }: { ui: Ui }) {
     </div>
   );
 }
-

@@ -1,7 +1,8 @@
 "use client";
 
-import { type ChangeEvent, useRef, useState } from "react";
+import { useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 interface ConversionOptions {
   indentSize: number;
@@ -269,29 +270,27 @@ export default function XmlJsonConverterClient() {
   const [conversionResult, setConversionResult] = useState<ConversionResult | null>(null);
   const [fileInfo, setFileInfo] = useState<{ name: string; size: number } | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const loadXmlFile = (file: File) => {
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      const content = e.target?.result as string;
+      setXmlInput(content);
+      setFileInfo({ name: file.name, size: file.size });
 
-  const handleFileSelect = (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const content = e.target?.result as string;
-        setXmlInput(content);
-        setFileInfo({ name: file.name, size: file.size });
+      const result = XmlJsonConverter.validateXml(content);
+      setValidation(result);
 
-        // 验证XML
-        const result = XmlJsonConverter.validateXml(content);
-        setValidation(result);
-
-        // 自动转换
-        if (result.isValid) {
-          convertXmlToJson(content);
-        }
-      };
-      reader.readAsText(file);
-    }
+      if (result.isValid) {
+        convertXmlToJson(content);
+      }
+    };
+    reader.readAsText(file);
   };
+
+  const { inputRef: fileInputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } =
+    useFileDropzone({
+      onFile: loadXmlFile,
+    });
 
   const handleXmlInputChange = (content: string) => {
     setXmlInput(content);
@@ -405,27 +404,37 @@ export default function XmlJsonConverterClient() {
               </div>
 
               {/* 文件选择 */}
-              <div className="flex gap-3">
-                <input
-                  ref={fileInputRef}
-                  type="file"
-                  accept=".xml,text/xml"
-                  onChange={handleFileSelect}
-                  className="hidden"
-                />
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  className="flex-1 px-4 py-2 border border-slate-200 rounded-lg hover:bg-slate-50 transition"
-                >
-                  选择XML文件
-                </button>
-                <button
-                  onClick={handleFormatXml}
-                  disabled={!xmlInput.trim()}
-                  className="px-4 py-2 border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition"
-                >
-                  格式化XML
-                </button>
+              <div
+                className={`rounded-xl border-2 border-dashed p-3 transition ${
+                  isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/40"
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                <div className="flex gap-3">
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".xml,text/xml"
+                    onChange={handleInputChange}
+                    className="hidden"
+                  />
+                  <button
+                    onClick={openFilePicker}
+                    className="flex-1 rounded-lg border border-slate-200 px-4 py-2 transition hover:bg-slate-50"
+                  >
+                    {fileInfo ? "替换XML文件" : "选择XML文件"}
+                  </button>
+                  <button
+                    onClick={handleFormatXml}
+                    disabled={!xmlInput.trim()}
+                    className="rounded-lg border border-slate-200 px-4 py-2 text-slate-700 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    格式化XML
+                  </button>
+                </div>
+                <div className="mt-2 text-[11px] text-slate-500">支持点击上传与拖拽上传 XML，拖拽可直接替换当前内容。</div>
               </div>
 
               {/* XML文本输入 */}
@@ -586,7 +595,7 @@ export default function XmlJsonConverterClient() {
         {/* 操作按钮 */}
         <div className="flex justify-center gap-3">
           <button
-            onClick={() => fileInputRef.current?.click()}
+            onClick={openFilePicker}
             className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
           >
             选择文件

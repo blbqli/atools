@@ -1,18 +1,15 @@
 "use client";
 
-import type { ChangeEvent, FC } from "react";
-import { useEffect, useRef, useState } from "react";
-
-type TargetFormat = "jpg" | "png" | "webp" | "bmp" | "ico" | "gif";
-
-const MIME_MAP: Record<TargetFormat, string> = {
-  jpg: "image/jpeg",
-  png: "image/png",
-  webp: "image/webp",
-  bmp: "image/bmp",
-  ico: "image/x-icon",
-  gif: "image/gif",
-};
+import type { FC } from "react";
+import { useEffect, useState } from "react";
+import {
+  exportCanvasToImageBlob,
+  getImageExportExtension,
+  getImageExportLabel,
+  IMAGE_EXPORT_FORMATS,
+  type ImageExportFormat,
+} from "@/lib/image-export";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 const formatSize = (bytes: number | null): string => {
   if (!bytes || bytes <= 0) return "-";
@@ -86,7 +83,7 @@ const loadSvgImage = async (svgContent: string): Promise<HTMLImageElement> => {
 
 async function convertImage(
   file: File,
-  format: TargetFormat,
+  format: ImageExportFormat,
 ): Promise<Blob> {
   const canvas = document.createElement("canvas");
   const ctx = canvas.getContext("2d");
@@ -100,12 +97,7 @@ async function convertImage(
     canvas.width = width;
     canvas.height = height;
 
-    if (format === "jpg") {
-      ctx.fillStyle = "#ffffff";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-    } else {
-      ctx.clearRect(0, 0, canvas.width, canvas.height);
-    }
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
 
     const img = await loadSvgImage(svgContent);
     ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
@@ -117,45 +109,8 @@ async function convertImage(
     ctx.drawImage(imageBitmap, 0, 0);
   }
 
-  const mimeType = MIME_MAP[format];
-
-  return new Promise<Blob>((resolve, reject) => {
-    const quality =
-      format === "jpg" || format === "webp" ? 0.92 : undefined;
-    canvas.toBlob(
-      (result) => {
-        if (result) {
-          resolve(result);
-        } else {
-          reject(
-            new Error(
-              "当前浏览器可能不支持导出该格式，请尝试其他格式或更新浏览器。",
-            ),
-          );
-        }
-      },
-      mimeType,
-      quality,
-    );
-  });
+  return exportCanvasToImageBlob(canvas, format);
 }
-
-const formatLabel = (format: TargetFormat): string => {
-  switch (format) {
-    case "jpg":
-      return "JPG";
-    case "png":
-      return "PNG";
-    case "webp":
-      return "WebP";
-    case "bmp":
-      return "BMP";
-    case "ico":
-      return "ICO";
-    case "gif":
-      return "GIF";
-  }
-};
 
 const ImageConverterClient: FC = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -171,11 +126,9 @@ const ImageConverterClient: FC = () => {
   const [originalHeight, setOriginalHeight] =
     useState<number | null>(null);
   const [targetFormat, setTargetFormat] =
-    useState<TargetFormat>("png");
+    useState<ImageExportFormat>("png");
   const [isConverting, setIsConverting] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const cleanupUrls = () => {
     if (originalUrl) URL.revokeObjectURL(originalUrl);
@@ -218,34 +171,20 @@ const ImageConverterClient: FC = () => {
     }
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const selected = event.target.files?.[0];
-    if (selected) {
-      void processFile(selected);
-    }
-  };
+  const { inputRef: fileInputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } =
+    useFileDropzone({
+      onFile: (selected) => {
+        void processFile(selected);
+      },
+    });
 
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragging(false);
-    const selected = event.dataTransfer.files?.[0];
-    if (selected) {
-      void processFile(selected);
-    }
-  };
-
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragging(false);
-  };
-
-  const handleFormatChange = (format: TargetFormat) => {
+  const handleFormatChange = (format: ImageExportFormat) => {
     setTargetFormat(format);
+    if (convertedUrl) {
+      URL.revokeObjectURL(convertedUrl);
+      setConvertedUrl(null);
+      setConvertedSize(null);
+    }
   };
 
   const handleConvert = async () => {
@@ -312,6 +251,13 @@ const ImageConverterClient: FC = () => {
       </div>
 
       <div className="glass-card overflow-hidden rounded-3xl p-8 shadow-xl">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleInputChange}
+        />
         {!file ? (
           <div
             className={`relative flex h-64 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300 ${
@@ -322,15 +268,8 @@ const ImageConverterClient: FC = () => {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={openFilePicker}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
             <div className="mb-4 rounded-full bg-indigo-50 p-4">
               <svg
                 className="h-8 w-8 text-indigo-500"
@@ -355,7 +294,16 @@ const ImageConverterClient: FC = () => {
           </div>
         ) : (
           <div className="space-y-8">
-            <div className="flex flex-col gap-6 rounded-xl bg-slate-50/80 p-6 backdrop-blur-sm sm:flex-row sm:items-center sm:justify-between">
+            <div
+              className={`flex flex-col gap-6 rounded-xl border-2 border-dashed p-6 backdrop-blur-sm transition sm:flex-row sm:items-center sm:justify-between ${
+                isDragging
+                  ? "border-indigo-400 bg-indigo-50/50"
+                  : "border-slate-200 bg-slate-50/80"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
               <div className="space-y-2 text-sm">
                 <div className="flex flex-wrap items-center gap-2 text-slate-600">
                   <span className="font-medium text-slate-900">
@@ -385,7 +333,7 @@ const ImageConverterClient: FC = () => {
                     目标格式
                   </span>
                   {(
-                    ["jpg", "png", "webp", "bmp", "ico", "gif"] as TargetFormat[]
+                    IMAGE_EXPORT_FORMATS
                   ).map(
                     (format) => (
                       <button
@@ -398,7 +346,7 @@ const ImageConverterClient: FC = () => {
                             : "hover:bg-slate-100"
                         }`}
                       >
-                        {formatLabel(format)}
+                        {getImageExportLabel(format)}
                       </button>
                     ),
                   )}
@@ -406,10 +354,17 @@ const ImageConverterClient: FC = () => {
                 <div className="flex items-center gap-2">
                   <button
                     type="button"
+                    onClick={openFilePicker}
+                    className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:scale-95"
+                  >
+                    点击替换图片
+                  </button>
+                  <button
+                    type="button"
                     onClick={handleReset}
                     className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:scale-95"
                   >
-                    重新选择图片
+                    清空
                   </button>
                   <button
                     type="button"
@@ -420,6 +375,9 @@ const ImageConverterClient: FC = () => {
                     {isConverting ? "转换中..." : "开始转换"}
                   </button>
                 </div>
+                <p className="text-[11px] text-slate-500">
+                  支持拖拽新图片到此区域直接替换
+                </p>
               </div>
             </div>
 
@@ -446,7 +404,7 @@ const ImageConverterClient: FC = () => {
 
               <div className="group relative overflow-hidden rounded-2xl bg-slate-100 ring-2 ring-indigo-500 ring-offset-2">
                 <div className="absolute left-4 top-4 z-10 rounded-lg bg-indigo-600 px-3 py-1 text-xs font-medium text-white shadow-lg">
-                  转换后（{formatLabel(targetFormat)})
+                  转换后（{getImageExportLabel(targetFormat)})
                 </div>
                 <div className="aspect-[4/3] w-full overflow-hidden">
                   {isConverting ? (
@@ -490,10 +448,10 @@ const ImageConverterClient: FC = () => {
                       download={`converted-${file.name.replace(
                         /\.[^.]+$/,
                         "",
-                      )}.${targetFormat}`}
+                      )}.${getImageExportExtension(targetFormat)}`}
                       className="rounded-lg bg-indigo-600 px-4 py-1.5 text-xs font-medium text-white shadow-md transition-transform hover:scale-105 hover:bg-indigo-700 active:scale-95"
                     >
-                      下载 {formatLabel(targetFormat)}
+                      下载 {getImageExportLabel(targetFormat)}
                     </a>
                   )}
                 </div>

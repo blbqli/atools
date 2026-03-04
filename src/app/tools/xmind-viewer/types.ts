@@ -31,10 +31,25 @@ export type MindMapNode = {
   collapsed?: boolean;
 };
 
+export type MindMapRelationship = {
+  id: string;
+  fromId: string;
+  toId: string;
+  title?: string;
+};
+
+export type MindMapBoundary = {
+  id: string;
+  nodeId: string;
+  title?: string;
+};
+
 export type MindMapSheet = {
   id: string;
   title: string;
   rootTopic: MindMapNode | null;
   layoutMode: MindMapLayoutMode;
   themeId: MindMapThemeId;
+  relationships?: MindMapRelationship[];
+  boundaries?: MindMapBoundary[];
 };

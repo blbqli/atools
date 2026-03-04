@@ -76,7 +76,9 @@ export default function PdfSplitClient() {
       return {
         hint: "Split PDFs or extract selected pages locally (no uploads).",
         pick: "Select PDF",
+        replace: "Replace PDF",
         clear: "Clear",
+        dropReplaceHint: "Drag and drop a new PDF here to replace.",
         mode: "Mode",
         extract: "Extract to one PDF",
         perPage: "Split to per-page PDFs (ZIP)",
@@ -96,7 +98,9 @@ export default function PdfSplitClient() {
     return {
       hint: "拆分 PDF 或提取指定页面，全程本地处理，不上传文件。",
       pick: "选择 PDF",
+      replace: "点击替换 PDF",
       clear: "清空",
+      dropReplaceHint: "支持拖拽新 PDF 到此区域直接替换。",
       mode: "模式",
       extract: "提取为一个新 PDF",
       perPage: "按页拆分（ZIP）",
@@ -119,6 +123,7 @@ export default function PdfSplitClient() {
   const [mode, setMode] = useState<SplitMode>("extract");
   const [scope, setScope] = useState<Scope>("all");
   const [pagesInput, setPagesInput] = useState("1-");
+  const [isDragging, setIsDragging] = useState(false);
 
   const [isWorking, setIsWorking] = useState(false);
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
@@ -156,8 +161,7 @@ export default function PdfSplitClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const loadPdfFile = async (file: File) => {
     if (!file) return;
     cleanupUrls();
     setDownloadUrl(null);
@@ -175,9 +179,37 @@ export default function PdfSplitClient() {
     } catch (e) {
       setPdf(null);
       setError(e instanceof Error ? e.message : locale === "en-us" ? "Failed to load PDF." : "PDF 加载失败。");
-    } finally {
-      event.target.value = "";
     }
+  };
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await loadPdfFile(file);
+    event.target.value = "";
+  };
+
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) void loadPdfFile(file);
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const run = async () => {
@@ -249,18 +281,29 @@ export default function PdfSplitClient() {
     <ToolPageLayout toolSlug="pdf-split">
       <div className="mx-auto max-w-5xl space-y-6">
         <div className="rounded-2xl border border-slate-200 bg-white/80 p-6 backdrop-blur dark:border-slate-700 dark:bg-slate-950/60">
-          <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div
+            className={`flex flex-col gap-3 rounded-xl border-2 border-dashed p-4 transition md:flex-row md:items-center md:justify-between ${
+              isDragging
+                ? "border-slate-400 bg-slate-50/60 dark:bg-slate-900/70"
+                : "border-slate-200 bg-slate-50/70 dark:border-slate-700 dark:bg-slate-900/50"
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
             <div className="space-y-1">
               <div className="text-sm font-medium text-slate-900 dark:text-slate-100">{ui.hint}</div>
-              <div className="text-xs text-slate-500 dark:text-slate-400">{ui.note}</div>
+              <div className="text-xs text-slate-500 dark:text-slate-400">
+                {ui.note} {ui.dropReplaceHint}
+              </div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={openFilePicker}
                 className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-500 active:scale-95"
               >
-                {ui.pick}
+                {pdf ? ui.replace : ui.pick}
               </button>
               <button
                 type="button"

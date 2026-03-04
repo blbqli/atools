@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
@@ -12,7 +12,11 @@ const DEFAULT_UI = {
   encrypt: "加密",
   decrypt: "解密",
   pickFile: "选择文件",
+  replaceFile: "替换文件",
   pickEncryptedFile: "选择加密 JSON 文件",
+  replaceEncryptedFile: "替换加密 JSON 文件",
+  dropHintEncrypt: "支持点击上传任意文件或拖拽文件到此区域替换。",
+  dropHintDecrypt: "支持点击上传 JSON 或拖拽 JSON 到此区域替换。",
   password: "密码",
   iterations: "PBKDF2 迭代次数",
   run: "执行",
@@ -58,6 +62,7 @@ function FileEncryptorInner() {
   const [jsonText, setJsonText] = useState("");
 
   const [isWorking, setIsWorking] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [outputText, setOutputText] = useState("");
@@ -96,15 +101,54 @@ function FileEncryptorInner() {
   const onFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) pickFile(selected);
+    e.target.value = "";
+  };
+
+  const readEncryptedJsonFile = async (selected: File) => {
+    const isJsonType = selected.type === "application/json";
+    const isJsonExt = selected.name.toLowerCase().endsWith(".json");
+    if (!isJsonType && !isJsonExt) {
+      setError("请选择 JSON 文件");
+      return;
+    }
+    resetOutput();
+    setFile(null);
+    const text = await readAsText(selected);
+    setJsonText(text);
   };
 
   const onEncryptedFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
-    resetOutput();
-    setFile(null);
-    const text = await readAsText(selected);
-    setJsonText(text);
+    await readEncryptedJsonFile(selected);
+    e.target.value = "";
+  };
+
+  const openActivePicker = () => {
+    if (mode === "encrypt") inputRef.current?.click();
+    else encryptedFileRef.current?.click();
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (!selected) return;
+    if (mode === "encrypt") {
+      pickFile(selected);
+    } else {
+      void readEncryptedJsonFile(selected);
+    }
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const copy = async (text: string) => {
@@ -233,52 +277,64 @@ function FileEncryptorInner() {
               <div className="text-sm font-semibold text-slate-900">输入</div>
 
               <div className="mt-4 space-y-3">
-                {mode === "encrypt" ? (
-                  <>
-                    <input ref={inputRef} type="file" className="hidden" onChange={onFileChange} />
-                    <button
-                      type="button"
-                      onClick={() => inputRef.current?.click()}
-                      className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-                    >
-                      {ui.pickFile}
-                    </button>
-                    {file && (
-                      <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
-                        <div className="font-medium text-slate-900">{file.name}</div>
-                        <div className="mt-1 text-xs text-slate-600">
-                          {file.type || "unknown"} · {(file.size / 1024).toFixed(1)} KB
+                <div
+                  className={`rounded-2xl border-2 border-dashed p-3 transition ${
+                    isDragging ? "border-slate-400 bg-slate-50/80" : "border-slate-200 bg-slate-50/80"
+                  }`}
+                  onDrop={handleDrop}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                >
+                  {mode === "encrypt" ? (
+                    <>
+                      <input ref={inputRef} type="file" className="hidden" onChange={onFileChange} />
+                      <button
+                        type="button"
+                        onClick={openActivePicker}
+                        className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                      >
+                        {file ? ui.replaceFile : ui.pickFile}
+                      </button>
+                      {file && (
+                        <div className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
+                          <div className="font-medium text-slate-900">{file.name}</div>
+                          <div className="mt-1 text-xs text-slate-600">
+                            {file.type || "unknown"} · {(file.size / 1024).toFixed(1)} KB
+                          </div>
                         </div>
-                      </div>
-                    )}
-                  </>
-                ) : (
-                  <>
-                    <input
-                      ref={encryptedFileRef}
-                      type="file"
-                      accept="application/json,.json"
-                      className="hidden"
-                      onChange={(e) => void onEncryptedFileChange(e)}
-                    />
-                    <button
-                      type="button"
-                      onClick={() => encryptedFileRef.current?.click()}
-                      className="w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                    >
-                      {ui.pickEncryptedFile}
-                    </button>
-                    <label className="block text-sm text-slate-700">
-                      {ui.inputJson}
-                      <textarea
-                        value={jsonText}
-                        onChange={(e) => setJsonText(e.target.value)}
-                        placeholder={ui.inputJsonPlaceholder}
-                        className="mt-2 h-44 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <input
+                        ref={encryptedFileRef}
+                        type="file"
+                        accept="application/json,.json"
+                        className="hidden"
+                        onChange={(e) => void onEncryptedFileChange(e)}
                       />
-                    </label>
-                  </>
-                )}
+                      <button
+                        type="button"
+                        onClick={openActivePicker}
+                        className="w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                      >
+                        {jsonText.trim() ? ui.replaceEncryptedFile : ui.pickEncryptedFile}
+                      </button>
+                      <label className="mt-3 block text-sm text-slate-700">
+                        {ui.inputJson}
+                        <textarea
+                          value={jsonText}
+                          onChange={(e) => setJsonText(e.target.value)}
+                          placeholder={ui.inputJsonPlaceholder}
+                          className="mt-2 h-44 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
+                        />
+                      </label>
+                    </>
+                  )}
+                  <div className="mt-2 text-[11px] text-slate-500">
+                    {mode === "encrypt" ? ui.dropHintEncrypt : ui.dropHintDecrypt}
+                  </div>
+                </div>
 
                 <div className="grid gap-3 sm:grid-cols-2">
                   <label className="block text-sm text-slate-700">

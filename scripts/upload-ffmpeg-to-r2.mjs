@@ -41,7 +41,6 @@ const ASSETS = [
 ];
 
 // 从环境变量获取配置
-const ACCOUNT_ID = process.env.CLOUDFLARE_ACCOUNT_ID;
 const BUCKET_NAME = process.env.CLOUDFLARE_R2_BUCKET || "atools-assets";
 
 /**

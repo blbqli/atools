@@ -10,7 +10,9 @@ type ToolMode = "select" | "pen" | "rect" | "arrow" | "text";
 type Ui = {
   hint: string;
   pick: string;
+  replace: string;
   clear: string;
+  dropReplaceHint: string;
   mode: string;
   select: string;
   pen: string;
@@ -32,7 +34,9 @@ type Ui = {
 const DEFAULT_UI: Ui = {
   hint: "截图标注工具：上传截图后可画笔、矩形、箭头、文字标注，导出 PNG（全程本地处理不上传）。",
   pick: "选择图片",
+  replace: "点击替换图片",
   clear: "清空",
+  dropReplaceHint: "支持拖拽新图片到此区域直接替换。",
   mode: "工具",
   select: "选择/移动",
   pen: "画笔",
@@ -101,8 +105,10 @@ function Inner({ ui }: { ui: Ui }) {
   const historyIndexRef = useRef<number>(-1);
   const [hasUndo, setHasUndo] = useState(false);
   const [hasRedo, setHasRedo] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [copyState, setCopyState] = useState<"idle" | "copied">("idle");
+  const [hasImageLoaded, setHasImageLoaded] = useState(false);
 
   const syncHistoryFlags = () => {
     const idx = historyIndexRef.current;
@@ -202,6 +208,7 @@ function Inner({ ui }: { ui: Ui }) {
     canvas.backgroundColor = "#ffffff";
     canvas.renderAll();
     pushHistory(JSON.stringify(canvas.toJSON()));
+    setHasImageLoaded(false);
   };
 
   const setBackgroundImage = async (file: File) => {
@@ -223,6 +230,7 @@ function Inner({ ui }: { ui: Ui }) {
       img.scale(fit.scale);
       canvas.backgroundImage = img;
       canvas.renderAll();
+      setHasImageLoaded(true);
 
       pushHistory(JSON.stringify(canvas.toJSON()));
     } finally {
@@ -230,15 +238,44 @@ function Inner({ ui }: { ui: Ui }) {
     }
   };
 
-  const onPick = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file) return;
+  const handlePickedFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       alert(ui.errPickImage);
       return;
     }
     await setBackgroundImage(file);
+  };
+
+  const onPick = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await handlePickedFile(file);
     event.target.value = "";
+  };
+
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (selected) {
+      void handlePickedFile(selected);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   useEffect(() => {
@@ -386,13 +423,22 @@ function Inner({ ui }: { ui: Ui }) {
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
         <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">{ui.hint}</div>
 
-        <div className="mt-5 flex flex-wrap items-center gap-2">
+        <div
+          className={`mt-5 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <button
             type="button"
-            onClick={() => inputRef.current?.click()}
+            onClick={openFilePicker}
             className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
           >
-            {ui.pick}
+            {hasImageLoaded ? ui.replace : ui.pick}
           </button>
           <button
             type="button"
@@ -402,6 +448,7 @@ function Inner({ ui }: { ui: Ui }) {
             {ui.clear}
           </button>
           <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onPick} />
+          <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
         </div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(0,340px)]">

@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, useRef } from "react";
+import { useMemo, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 // 中文默认值
 const DEFAULT_UI = {
@@ -364,8 +365,7 @@ export default function MarkdownToWordClient() {
   const [outputFormat, setOutputFormat] = useState<OutputFormat>("richtext");
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
   const [manualError, setManualError] = useState<string>("");
-
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedFileName, setUploadedFileName] = useState("");
   const config = useOptionalToolConfig("markdown-to-word");
 
   // 配置合并，英文优先，中文回退
@@ -386,9 +386,7 @@ export default function MarkdownToWordClient() {
 
   const error = manualError || conversion.error;
 
-  // 处理文件上传
-  const handleFileUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const loadMarkdownFile = (file: File) => {
     if (!file) return;
 
     if (!file.name.endsWith('.md')) {
@@ -400,6 +398,7 @@ export default function MarkdownToWordClient() {
     reader.onload = (e) => {
       const content = e.target?.result as string;
       setMarkdown(content);
+      setUploadedFileName(file.name);
       setManualError("");
     };
     reader.onerror = () => {
@@ -407,6 +406,11 @@ export default function MarkdownToWordClient() {
     };
     reader.readAsText(file);
   };
+
+  const { inputRef: fileInputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } =
+    useFileDropzone({
+      onFile: loadMarkdownFile,
+    });
 
   // 复制到剪贴板
   const copyToClipboard = async () => {
@@ -422,12 +426,14 @@ export default function MarkdownToWordClient() {
   // 加载示例
   const loadSample = () => {
     setMarkdown(ui.sampleMarkdown || SAMPLE_MARKDOWN);
+    setUploadedFileName("");
     setManualError("");
   };
 
   // 清空内容
   const clearContent = () => {
     setMarkdown("");
+    setUploadedFileName("");
     setManualError("");
     setCopySuccess(false);
     if (fileInputRef.current) {
@@ -445,33 +451,48 @@ export default function MarkdownToWordClient() {
         </div>
 
         {/* 控制按钮 */}
-        <div className="flex flex-wrap gap-3 justify-center">
-          <label className="cursor-pointer">
+        <div
+          className={`rounded-2xl border-2 border-dashed p-3 transition ${
+            isDragging ? "border-blue-400 bg-blue-50/70" : "border-slate-200 bg-slate-50/50"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
+          <div className="flex flex-wrap gap-3 justify-center">
             <input
               type="file"
-              accept=".md"
-              onChange={handleFileUpload}
+              accept=".md,text/markdown"
+              onChange={handleInputChange}
               ref={fileInputRef}
               className="hidden"
             />
-            <span className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition">
-              📁 {ui.uploadButton}
-            </span>
-          </label>
+            <button
+              type="button"
+              onClick={openFilePicker}
+              className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-2xl hover:bg-blue-700 transition"
+            >
+              📁 {uploadedFileName ? "替换.md文件" : ui.uploadButton}
+            </button>
 
-          <button
-            onClick={loadSample}
-            className="px-4 py-2 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition"
-          >
-            📝 {ui.sampleText}
-          </button>
+            <button
+              onClick={loadSample}
+              className="px-4 py-2 bg-green-600 text-white rounded-2xl hover:bg-green-700 transition"
+            >
+              📝 {ui.sampleText}
+            </button>
 
-          <button
-            onClick={clearContent}
-            className="px-4 py-2 bg-slate-100 text-slate-700 rounded-2xl hover:bg-slate-200 transition"
-          >
-            🗑️ {ui.clearButton}
-          </button>
+            <button
+              onClick={clearContent}
+              className="px-4 py-2 bg-slate-100 text-slate-700 rounded-2xl hover:bg-slate-200 transition"
+            >
+              🗑️ {ui.clearButton}
+            </button>
+          </div>
+          <p className="mt-2 text-center text-xs text-slate-500">
+            支持点击上传与拖拽上传 Markdown 文件，拖拽可直接替换当前内容。
+            {uploadedFileName ? ` 当前文件：${uploadedFileName}` : ""}
+          </p>
         </div>
 
         {/* 格式选择 */}

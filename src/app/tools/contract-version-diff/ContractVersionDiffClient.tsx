@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
@@ -181,6 +181,7 @@ function ContractVersionDiffInner() {
 
   const baseFileRef = useRef<HTMLInputElement>(null);
   const versionsFileRef = useRef<HTMLInputElement>(null);
+  const versionsPickerModeRef = useRef<"append" | "replace">("append");
 
   const [base, setBase] = useState<string>(ui.defaultBaseText);
   const [versions, setVersions] = useState<Version[]>([
@@ -189,6 +190,9 @@ function ContractVersionDiffInner() {
   const [activeId, setActiveId] = useState<string>(versions[0]?.id ?? "");
   const [ignoreTrailingWhitespace, setIgnoreTrailingWhitespace] = useState(true);
   const [notice, setNotice] = useState<UploadNotice | null>(null);
+  const [baseFileName, setBaseFileName] = useState<string | null>(null);
+  const [isBaseDragging, setIsBaseDragging] = useState(false);
+  const [isVersionsDragging, setIsVersionsDragging] = useState(false);
 
   const active = useMemo(() => versions.find((v) => v.id === activeId) ?? versions[0] ?? null, [activeId, versions]);
 
@@ -231,25 +235,28 @@ function ContractVersionDiffInner() {
     await navigator.clipboard.writeText(activeDiff.unified);
   };
 
-  const onBaseUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const f = e.target.files?.[0];
-    if (!f) return;
+  const loadBaseFile = async (f: File) => {
     const pdf = isPdfFile(f);
     try {
       if (pdf) setNotice({ tone: "info", text: formatTemplate(ui.parsingPdf, f.name) });
       const text = await readFileAsText(f);
       setBase(text);
+      setBaseFileName(f.name);
       if (pdf) setNotice({ tone: "info", text: formatTemplate(ui.parsingPdfDone, f.name) });
     } catch (err) {
       console.error(err);
       if (pdf) setNotice({ tone: "error", text: formatTemplate(ui.parsingPdfFailed, f.name) });
-    } finally {
-      e.target.value = "";
     }
   };
 
-  const onVersionsUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const picked = Array.from(e.target.files ?? []);
+  const onBaseUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const f = e.target.files?.[0];
+    if (!f) return;
+    await loadBaseFile(f);
+    e.target.value = "";
+  };
+
+  const loadVersionsFiles = async (picked: File[], mode: "append" | "replace" = "append") => {
     if (picked.length === 0) return;
     const loaded: Version[] = [];
     for (const f of picked) {
@@ -265,10 +272,63 @@ function ContractVersionDiffInner() {
       }
     }
     if (loaded.length > 0) {
-      setVersions((prev) => [...prev, ...loaded]);
-      if (!activeId && loaded[0]) setActiveId(loaded[0].id);
+      if (mode === "replace") {
+        setVersions(loaded);
+        setActiveId(loaded[0]?.id ?? "");
+      } else {
+        setVersions((prev) => [...prev, ...loaded]);
+        if (!activeId && loaded[0]) setActiveId(loaded[0].id);
+      }
     }
+  };
+
+  const onVersionsUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files ?? []);
+    await loadVersionsFiles(picked, versionsPickerModeRef.current);
     e.target.value = "";
+  };
+
+  const openVersionsPicker = (mode: "append" | "replace") => {
+    versionsPickerModeRef.current = mode;
+    if (!versionsFileRef.current) return;
+    versionsFileRef.current.value = "";
+    versionsFileRef.current.click();
+  };
+
+  const handleBaseDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsBaseDragging(false);
+    const f = event.dataTransfer.files?.[0];
+    if (!f) return;
+    void loadBaseFile(f);
+  };
+
+  const handleBaseDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsBaseDragging(true);
+  };
+
+  const handleBaseDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsBaseDragging(false);
+  };
+
+  const handleVersionsDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsVersionsDragging(false);
+    const picked = Array.from(event.dataTransfer.files ?? []);
+    if (picked.length === 0) return;
+    void loadVersionsFiles(picked, versions.length > 0 ? "replace" : "append");
+  };
+
+  const handleVersionsDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsVersionsDragging(true);
+  };
+
+  const handleVersionsDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsVersionsDragging(false);
   };
 
   return (
@@ -284,7 +344,7 @@ function ContractVersionDiffInner() {
             />
             {ui.ignoreTrailingWhitespace}
           </label>
-          <div className="flex flex-wrap items-center gap-2">
+          <div className="grid w-full gap-2 sm:w-auto sm:grid-cols-2">
             <input
               ref={baseFileRef}
               type="file"
@@ -300,27 +360,58 @@ function ContractVersionDiffInner() {
               className="hidden"
               onChange={(e) => void onVersionsUpload(e)}
             />
-            <button
-              type="button"
-              onClick={() => baseFileRef.current?.click()}
-              className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+            <div
+              className={`rounded-2xl border-2 border-dashed p-2 transition ${
+                isBaseDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+              }`}
+              onDrop={handleBaseDrop}
+              onDragOver={handleBaseDragOver}
+              onDragLeave={handleBaseDragLeave}
             >
-              {ui.uploadBaseText}
-            </button>
-            <button
-              type="button"
-              onClick={() => versionsFileRef.current?.click()}
-              className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+              <button
+                type="button"
+                onClick={() => baseFileRef.current?.click()}
+                className="w-full rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+              >
+                {baseFileName ? "替换基准文本" : ui.uploadBaseText}
+              </button>
+              <div className="mt-1 text-[11px] text-slate-500">支持点击或拖拽替换基准文本。</div>
+            </div>
+            <div
+              className={`rounded-2xl border-2 border-dashed p-2 transition ${
+                isVersionsDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+              }`}
+              onDrop={handleVersionsDrop}
+              onDragOver={handleVersionsDragOver}
+              onDragLeave={handleVersionsDragLeave}
             >
-              {ui.batchUploadVersions}
-            </button>
-            <button
-              type="button"
-              onClick={addVersion}
-              className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
-            >
-              {ui.addVersion}
-            </button>
+              <div className="flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => openVersionsPicker("append")}
+                  className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+                >
+                  {ui.batchUploadVersions}
+                </button>
+                {versions.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => openVersionsPicker("replace")}
+                    className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+                  >
+                    替换版本列表
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={addVersion}
+                  className="rounded-2xl bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                >
+                  {ui.addVersion}
+                </button>
+              </div>
+              <div className="mt-1 text-[11px] text-slate-500">支持点击或拖拽上传版本；拖拽会替换当前版本列表。</div>
+            </div>
           </div>
         </div>
         <div className="mt-3 text-xs text-slate-500">{ui.pdfSupportHint}</div>

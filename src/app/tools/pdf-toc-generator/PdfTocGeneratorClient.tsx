@@ -10,7 +10,9 @@ type TocItem = { title: string; page: number };
 
 const DEFAULT_UI = {
   selectPdf: "选择 PDF",
+  replacePdf: "点击替换 PDF",
   clear: "清空",
+  dropReplaceHint: "支持拖拽新 PDF 到此区域直接替换",
   pageCount: "页数：",
   generating: "生成中…",
   generateTocPage: "生成目录页",
@@ -79,6 +81,7 @@ function PdfTocGeneratorInner() {
   const [title, setTitle] = useState<string>(ui.defaultTitle);
   const [insertAtBeginning, setInsertAtBeginning] = useState(true);
   const [shiftPageNumbers, setShiftPageNumbers] = useState(true);
+  const [isDragging, setIsDragging] = useState(false);
 
   const [isWorking, setIsWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -117,6 +120,29 @@ function PdfTocGeneratorInner() {
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) void pick(selected);
+  };
+
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (selected) void pick(selected);
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const build = async () => {
@@ -244,15 +270,24 @@ function PdfTocGeneratorInner() {
   return (
     <div className="w-full px-4">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div className="flex flex-wrap items-center gap-2">
             <input ref={inputRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={onChange} />
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
-              {ui.selectPdf}
+              {file ? ui.replacePdf : ui.selectPdf}
             </button>
             <button
               type="button"
@@ -268,6 +303,7 @@ function PdfTocGeneratorInner() {
               </div>
             )}
           </div>
+          <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
           <button
             type="button"
             onClick={() => void build()}

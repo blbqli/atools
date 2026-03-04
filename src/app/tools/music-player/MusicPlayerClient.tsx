@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type Track = {
@@ -21,8 +21,10 @@ const formatTime = (seconds: number): string => {
 export default function MusicPlayerClient() {
   const inputRef = useRef<HTMLInputElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
+  const pickerModeRef = useRef<"append" | "replace">("append");
 
   const [tracks, setTracks] = useState<Track[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
   const [currentId, setCurrentId] = useState<string | null>(null);
   const [isLoop, setIsLoop] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
@@ -54,7 +56,7 @@ export default function MusicPlayerClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const addFiles = (files: File[]) => {
+  const addFiles = (files: File[], mode: "append" | "replace" = "append") => {
     const next: Track[] = files
       .filter((file) => file.type.startsWith("audio/") || /\.(mp3|wav|m4a|aac|ogg|flac)$/i.test(file.name))
       .map((file) => ({
@@ -66,15 +68,47 @@ export default function MusicPlayerClient() {
 
     if (next.length === 0) return;
     setTracks((prev) => {
+      if (mode === "replace") {
+        for (const track of prev) URL.revokeObjectURL(track.url);
+        setCurrentId(next[0]?.id ?? null);
+        setIsPlaying(false);
+        setCurrentTime(0);
+        setDuration(0);
+        return next;
+      }
       const merged = [...prev, ...next];
+      if (!currentId) setCurrentId(next[0].id);
       return merged;
     });
-    if (!currentId) setCurrentId(next[0].id);
   };
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    if (files.length > 0) addFiles(files);
+    if (files.length > 0) addFiles(files, pickerModeRef.current);
+    e.target.value = "";
+  };
+
+  const openFilePicker = (mode: "append" | "replace") => {
+    pickerModeRef.current = mode;
+    inputRef.current?.click();
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(event.dataTransfer.files ?? []);
+    if (files.length === 0) return;
+    addFiles(files, tracks.length > 0 ? "replace" : "append");
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const play = async () => {
@@ -145,25 +179,46 @@ export default function MusicPlayerClient() {
       </div>
 
       <div className="mt-8 glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-slate-900">播放列表</div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-            >
-              添加音乐
-            </button>
-            <button
-              type="button"
-              onClick={clear}
-              disabled={tracks.length === 0}
-              className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
-            >
-              清空
-            </button>
-            <input ref={inputRef} type="file" accept="audio/*" multiple className="hidden" onChange={onChange} />
+        <div
+          className={`rounded-2xl border-2 border-dashed p-3 transition ${
+            isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="text-sm font-semibold text-slate-900">播放列表</div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => openFilePicker("append")}
+                className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+              >
+                添加音乐
+              </button>
+              {tracks.length > 0 && (
+                <button
+                  type="button"
+                  onClick={() => openFilePicker("replace")}
+                  className="rounded-2xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-100"
+                >
+                  替换列表
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={clear}
+                disabled={tracks.length === 0}
+                className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
+              >
+                清空
+              </button>
+              <input ref={inputRef} type="file" accept="audio/*" multiple className="hidden" onChange={onChange} />
+            </div>
+          </div>
+          <div className="mt-2 text-[11px] text-slate-500">
+            支持点击上传与拖拽上传音频；已有播放列表时拖拽会直接替换整个列表。
           </div>
         </div>
 
@@ -320,4 +375,3 @@ export default function MusicPlayerClient() {
     </div>
   );
 }
-

@@ -1,7 +1,7 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 const formatTime = (seconds: number): string => {
   if (!Number.isFinite(seconds) || seconds < 0) return "0:00";
@@ -34,7 +34,6 @@ const waitForEvent = (target: EventTarget, name: string): Promise<void> =>
   });
 
 export default function VideoTrimmerClient() {
-  const inputRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLVideoElement>(null);
 
   const [file, setFile] = useState<File | null>(null);
@@ -56,9 +55,7 @@ export default function VideoTrimmerClient() {
     };
   }, [downloadUrl, url]);
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
+  const handlePick = (selected: File) => {
     setError(null);
     setProgress(null);
     if (url) URL.revokeObjectURL(url);
@@ -73,6 +70,10 @@ export default function VideoTrimmerClient() {
     setEnd(0);
     setDownloadName(`${selected.name.replace(/\.[^.]+$/, "") || "clip"}.webm`);
   };
+
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    onFile: handlePick,
+  });
 
   const onLoadedMetadata = () => {
     const video = videoRef.current;
@@ -185,7 +186,6 @@ export default function VideoTrimmerClient() {
     setEnd(0);
     setError(null);
     setProgress(null);
-    if (inputRef.current) inputRef.current.value = "";
   };
 
   return (
@@ -196,15 +196,24 @@ export default function VideoTrimmerClient() {
       </div>
 
       <div className="mt-8 glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div className="text-sm font-semibold text-slate-900">选择视频文件</div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              选择文件
+              {file ? "点击替换视频" : "选择文件"}
             </button>
             <button
               type="button"
@@ -214,8 +223,9 @@ export default function VideoTrimmerClient() {
             >
               清空
             </button>
-            <input ref={inputRef} type="file" accept="video/*" className="hidden" onChange={onChange} />
+            <input ref={inputRef} type="file" accept="video/*" className="hidden" onChange={handleInputChange} />
           </div>
+          <div className="w-full text-[11px] text-slate-500">支持拖拽新视频到此区域直接替换</div>
         </div>
 
         {url && (

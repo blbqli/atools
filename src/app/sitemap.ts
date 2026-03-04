@@ -4,28 +4,84 @@ import { toolSlugs } from "./tools/tool-registry";
 
 export const dynamic = "force-static";
 
-const baseUrl =
-  String(process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").trim() || "http://www.atools.live";
+function getBaseUrl(): string {
+  const fallback = "https://www.atools.live";
+  const raw = String(process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").trim();
+  const candidate = raw || fallback;
+  try {
+    return new URL(candidate).origin;
+  } catch {
+    try {
+      return new URL(`https://${candidate}`).origin;
+    } catch {
+      return fallback;
+    }
+  }
+}
+
+const baseUrl = getBaseUrl();
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const routes = [
-    "/",
-    ...SUPPORTED_LOCALES.map((locale) => `/${locale}`),
-    ...SUPPORTED_LOCALES.map((locale) => `/${locale}/privacy-policy`),
-    ...SUPPORTED_LOCALES.flatMap((locale) =>
-      toolSlugs.map((slug) => `/${locale}/tools/${slug}`),
-    ),
+  const lastModified = new Date();
+  const entries: MetadataRoute.Sitemap = [
+    {
+      url: `${baseUrl}/`,
+      lastModified,
+      changeFrequency: "daily",
+      priority: 1,
+      alternates: {
+        languages: {
+          "zh-CN": `${baseUrl}/zh-cn`,
+          "en-US": `${baseUrl}/en-us`,
+        },
+      },
+    },
   ];
 
-  const lastModified = new Date();
+  for (const locale of SUPPORTED_LOCALES) {
+    entries.push({
+      url: `${baseUrl}/${locale}`,
+      lastModified,
+      changeFrequency: "daily",
+      priority: 0.95,
+      alternates: {
+        languages: {
+          "zh-CN": `${baseUrl}/zh-cn`,
+          "en-US": `${baseUrl}/en-us`,
+        },
+      },
+    });
 
-  // Main site sitemap entries
-  const mainSitemap = routes.map((route) => ({
-    url: `${baseUrl.replace(/\/+$/, "")}${route}`,
-    lastModified,
-    changeFrequency: "weekly" as const,
-    priority: route === "/" ? 1 : 0.8,
-  }));
+    entries.push({
+      url: `${baseUrl}/${locale}/privacy-policy`,
+      lastModified,
+      changeFrequency: "monthly",
+      priority: 0.4,
+      alternates: {
+        languages: {
+          "zh-CN": `${baseUrl}/zh-cn/privacy-policy`,
+          "en-US": `${baseUrl}/en-us/privacy-policy`,
+        },
+      },
+    });
+  }
 
-  return mainSitemap;
+  for (const slug of toolSlugs) {
+    for (const locale of SUPPORTED_LOCALES) {
+      entries.push({
+        url: `${baseUrl}/${locale}/tools/${slug}`,
+        lastModified,
+        changeFrequency: "weekly",
+        priority: 0.85,
+        alternates: {
+          languages: {
+            "zh-CN": `${baseUrl}/zh-cn/tools/${slug}`,
+            "en-US": `${baseUrl}/en-us/tools/${slug}`,
+          },
+        },
+      });
+    }
+  }
+
+  return entries;
 }

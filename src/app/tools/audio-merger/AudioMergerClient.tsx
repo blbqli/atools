@@ -1,9 +1,9 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 type PickedAudio = {
   id: string;
@@ -14,6 +14,8 @@ type PickedAudio = {
 const DEFAULT_UI = {
   pickTitle: "选择多个音频文件",
   addFiles: "添加文件",
+  replaceFiles: "替换全部文件",
+  dropReplaceHint: "支持点击上传与拖拽上传；已有文件时拖拽会直接替换当前列表。",
   probeDurations: "读取时长",
   orderTitle: "拼接顺序",
   totalDurationUnknown: "未读取时长",
@@ -114,7 +116,7 @@ function AudioMergerInner() {
   const config = useOptionalToolConfig("audio-merger");
   const ui: AudioMergerUi = { ...DEFAULT_UI, ...((config?.ui ?? {}) as Partial<AudioMergerUi>) };
 
-  const inputRef = useRef<HTMLInputElement>(null);
+  const pickerModeRef = useRef<"append" | "replace">("append");
 
   const [items, setItems] = useState<PickedAudio[]>([]);
   const [isProcessing, setIsProcessing] = useState(false);
@@ -134,26 +136,46 @@ function AudioMergerInner() {
     return durations.reduce((a, b) => a + b, 0);
   }, [items]);
 
-  const onChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files ?? []);
-    if (files.length === 0) return;
-    setError(null);
+  const clearOutput = () => {
     if (downloadUrl) URL.revokeObjectURL(downloadUrl);
     setDownloadUrl(null);
+  };
+
+  const addFiles = (files: File[], mode: "append" | "replace" = "append") => {
+    if (files.length === 0) return;
+    setError(null);
+    clearOutput();
 
     const next: PickedAudio[] = files.map((file) => ({
       id: `${file.name}-${file.size}-${file.lastModified}-${crypto.randomUUID()}`,
       file,
       durationSec: null,
     }));
-    setItems((prev) => [...prev, ...next]);
+    setItems((prev) => (mode === "replace" ? next : [...prev, ...next]));
+  };
+
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    multiple: true,
+    onFiles: (files) => {
+      addFiles(files, pickerModeRef.current);
+    },
+  });
+
+  const openPickerByMode = (mode: "append" | "replace") => {
+    pickerModeRef.current = mode;
+    openFilePicker();
+  };
+
+  const handleDropWithMode = (event: Parameters<typeof handleDrop>[0]) => {
+    pickerModeRef.current = items.length > 0 ? "replace" : "append";
+    handleDrop(event);
   };
 
   const remove = (id: string) => setItems((prev) => prev.filter((item) => item.id !== id));
 
   const move = (id: string, direction: -1 | 1) => {
     setItems((prev) => {
-      const idx = prev.findIndex((i) => i.id === id);
+      const idx = prev.findIndex((item) => item.id === id);
       if (idx < 0) return prev;
       const nextIdx = idx + direction;
       if (nextIdx < 0 || nextIdx >= prev.length) return prev;
@@ -196,10 +218,7 @@ function AudioMergerInner() {
 
     setIsProcessing(true);
     setError(null);
-    if (downloadUrl) {
-      URL.revokeObjectURL(downloadUrl);
-      setDownloadUrl(null);
-    }
+    clearOutput();
 
     try {
       const context = new AudioContext();
@@ -242,16 +261,33 @@ function AudioMergerInner() {
 
   return (
     <div className="mt-8 glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
+      <div
+        className={`rounded-3xl border-2 border-dashed p-4 transition ${
+          isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+        }`}
+        onDrop={handleDropWithMode}
+        onDragOver={handleDragOver}
+        onDragLeave={handleDragLeave}
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="text-sm font-semibold text-slate-900">{ui.pickTitle}</div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={() => openPickerByMode("append")}
               className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
               {ui.addFiles}
             </button>
+            {items.length > 0 && (
+              <button
+                type="button"
+                onClick={() => openPickerByMode("replace")}
+                className="rounded-2xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-100"
+              >
+                {ui.replaceFiles}
+              </button>
+            )}
             <button
               type="button"
               disabled={items.length === 0 || isProcessing}
@@ -267,130 +303,128 @@ function AudioMergerInner() {
             accept="audio/*"
             multiple
             className="hidden"
-            onChange={onChange}
+            onChange={handleInputChange}
           />
         </div>
+        <div className="mt-2 text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
+      </div>
 
-	        {items.length > 0 && (
-	          <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
-            <div className="space-y-3">
-                <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
-                  <div className="flex items-center justify-between">
-                    <div className="text-sm font-semibold text-slate-900">{ui.orderTitle}</div>
-                    <div className="text-xs text-slate-500">
-                      {totalDuration === null
-                        ? ui.totalDurationUnknown
-                        : applyTemplate(ui.totalDurationTemplate, {
-                            time: formatTime(totalDuration),
-                            seconds: totalDuration.toFixed(2),
-                          })}
-                    </div>
-                  </div>
-                  <div className="mt-4 space-y-2">
-                    {items.map((item, index) => (
-                    <div
-                      key={item.id}
-                      className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-sm ring-1 ring-slate-200"
-                    >
-                      <div className="min-w-0">
-                        <div className="font-medium text-slate-900 truncate">
-                          {index + 1}. {item.file.name}
-                        </div>
-                        <div className="mt-1 text-xs text-slate-500">
-                          {item.durationSec == null
-                            ? ui.durationUnknown
-                            : applyTemplate(ui.durationTemplate, {
-                                time: formatTime(item.durationSec),
-                                seconds: item.durationSec.toFixed(2),
-                              })}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => move(item.id, -1)}
-                          disabled={index === 0 || isProcessing}
-                          className="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-100 disabled:opacity-60"
-                        >
-                          {ui.moveUp}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => move(item.id, 1)}
-                          disabled={index === items.length - 1 || isProcessing}
-                          className="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-100 disabled:opacity-60"
-                        >
-                          {ui.moveDown}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => remove(item.id)}
-                          disabled={isProcessing}
-                          className="rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-100 transition hover:bg-rose-100 disabled:opacity-60"
-                        >
-                          {ui.remove}
-                        </button>
-                      </div>
-                    </div>
-                  ))}
+      {items.length > 0 && (
+        <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)]">
+          <div className="space-y-3">
+            <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
+              <div className="flex items-center justify-between">
+                <div className="text-sm font-semibold text-slate-900">{ui.orderTitle}</div>
+                <div className="text-xs text-slate-500">
+                  {totalDuration === null
+                    ? ui.totalDurationUnknown
+                    : applyTemplate(ui.totalDurationTemplate, {
+                        time: formatTime(totalDuration),
+                        seconds: totalDuration.toFixed(2),
+                      })}
                 </div>
               </div>
-            </div>
-
-            <div className="space-y-4">
-              <div className="rounded-3xl bg-slate-50 p-5 ring-1 ring-slate-200">
-                <div className="text-sm font-semibold text-slate-900">{ui.exportTitle}</div>
-                <p className="mt-2 text-xs text-slate-500">
-                  {ui.exportHint}
-                </p>
-                <div className="mt-4 flex flex-wrap items-center gap-3">
-                  <button
-                    type="button"
-                    onClick={merge}
-                    disabled={isProcessing || items.length < 2}
-                    className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+              <div className="mt-4 space-y-2">
+                {items.map((item, index) => (
+                  <div
+                    key={item.id}
+                    className="flex flex-wrap items-center justify-between gap-2 rounded-2xl bg-slate-50 px-4 py-3 text-sm ring-1 ring-slate-200"
                   >
-                    {isProcessing ? ui.processing : ui.mergeExport}
-                  </button>
-                  <button
-                    type="button"
-                    disabled={isProcessing}
-                    onClick={() => {
-                      if (inputRef.current) inputRef.current.value = "";
-                      setItems([]);
-                      if (downloadUrl) URL.revokeObjectURL(downloadUrl);
-                      setDownloadUrl(null);
-                      setError(null);
-                    }}
-                    className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
-                  >
-                    {ui.clear}
-                  </button>
-                </div>
-
-                {downloadUrl && (
-                  <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-                    {ui.generated}
-                    <a
-                      href={downloadUrl}
-                      download={downloadName}
-                      className="ml-2 font-semibold underline decoration-emerald-400 underline-offset-2"
-                    >
-                      {ui.download} {downloadName}
-                    </a>
+                    <div className="min-w-0">
+                      <div className="truncate font-medium text-slate-900">
+                        {index + 1}. {item.file.name}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {item.durationSec == null
+                          ? ui.durationUnknown
+                          : applyTemplate(ui.durationTemplate, {
+                              time: formatTime(item.durationSec),
+                              seconds: item.durationSec.toFixed(2),
+                            })}
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => move(item.id, -1)}
+                        disabled={index === 0 || isProcessing}
+                        className="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-100 disabled:opacity-60"
+                      >
+                        {ui.moveUp}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => move(item.id, 1)}
+                        disabled={index === items.length - 1 || isProcessing}
+                        className="rounded-xl bg-white px-3 py-1.5 text-xs font-semibold text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-100 disabled:opacity-60"
+                      >
+                        {ui.moveDown}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => remove(item.id)}
+                        disabled={isProcessing}
+                        className="rounded-xl bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 ring-1 ring-rose-100 transition hover:bg-rose-100 disabled:opacity-60"
+                      >
+                        {ui.remove}
+                      </button>
+                    </div>
                   </div>
-                )}
-
-                {error && (
-                  <div className="mt-4 text-sm text-rose-600">
-                    {ui.errorPrefix}
-                    {error}
-                  </div>
-                )}
+                ))}
               </div>
             </div>
-	          </div>
-	        )}
-	    </div>
-	  );
+          </div>
+
+          <div className="space-y-4">
+            <div className="rounded-3xl bg-slate-50 p-5 ring-1 ring-slate-200">
+              <div className="text-sm font-semibold text-slate-900">{ui.exportTitle}</div>
+              <p className="mt-2 text-xs text-slate-500">{ui.exportHint}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-3">
+                <button
+                  type="button"
+                  onClick={merge}
+                  disabled={isProcessing || items.length < 2}
+                  className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                >
+                  {isProcessing ? ui.processing : ui.mergeExport}
+                </button>
+                <button
+                  type="button"
+                  disabled={isProcessing}
+                  onClick={() => {
+                    setItems([]);
+                    clearOutput();
+                    setError(null);
+                  }}
+                  className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
+                >
+                  {ui.clear}
+                </button>
+              </div>
+
+              {downloadUrl && (
+                <div className="mt-4 rounded-2xl bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+                  {ui.generated}
+                  <a
+                    href={downloadUrl}
+                    download={downloadName}
+                    className="ml-2 font-semibold underline decoration-emerald-400 underline-offset-2"
+                  >
+                    {ui.download} {downloadName}
+                  </a>
+                </div>
+              )}
+
+              {error && (
+                <div className="mt-4 text-sm text-rose-600">
+                  {ui.errorPrefix}
+                  {error}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
 }

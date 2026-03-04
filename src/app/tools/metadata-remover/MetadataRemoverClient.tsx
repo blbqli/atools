@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { PDFDocument } from "pdf-lib";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
@@ -11,6 +11,8 @@ type ImageOut = "png" | "jpeg" | "webp";
 
 const DEFAULT_UI = {
   pick: "选择文件",
+  replace: "替换文件",
+  dropHint: "支持点击上传与拖拽上传文件，拖拽可直接替换当前文件。",
   clear: "清空",
   run: "开始清理",
   working: "处理中…",
@@ -57,6 +59,7 @@ function MetadataRemoverInner() {
   const [outFormat, setOutFormat] = useState<ImageOut>("png");
   const [quality, setQuality] = useState(0.92);
 
+  const [isDragging, setIsDragging] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -91,6 +94,25 @@ function MetadataRemoverInner() {
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) pick(selected);
+    e.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (!selected) return;
+    pick(selected);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   useEffect(() => {
@@ -183,21 +205,31 @@ function MetadataRemoverInner() {
           </button>
         </div>
 
-        <div className="mt-4 flex flex-wrap items-center gap-2">
-          <input ref={inputRef} type="file" className="hidden" onChange={onChange} accept={`${imageAccept},application/pdf,.pdf`} />
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-          >
-            {ui.pick}
-          </button>
-          {file && (
-            <div className="text-sm text-slate-700">
-              <span className="font-semibold text-slate-900">{file.name}</span>{" "}
-              <span className="text-slate-500">({(file.size / 1024).toFixed(1)} KB)</span>
-            </div>
-          )}
+        <div
+          className={`mt-4 rounded-2xl border-2 border-dashed p-3 transition ${
+            isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <input ref={inputRef} type="file" className="hidden" onChange={onChange} accept={`${imageAccept},application/pdf,.pdf`} />
+            <button
+              type="button"
+              onClick={() => inputRef.current?.click()}
+              className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+            >
+              {file ? ui.replace : ui.pick}
+            </button>
+            {file && (
+              <div className="text-sm text-slate-700">
+                <span className="font-semibold text-slate-900">{file.name}</span>{" "}
+                <span className="text-slate-500">({(file.size / 1024).toFixed(1)} KB)</span>
+              </div>
+            )}
+          </div>
+          <div className="mt-2 text-[11px] text-slate-500">{ui.dropHint}</div>
         </div>
 
         {!file ? (

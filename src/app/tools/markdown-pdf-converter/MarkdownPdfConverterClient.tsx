@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 
@@ -520,22 +520,49 @@ export default function MarkdownPdfConverterClient() {
   const inputRef = useRef<HTMLInputElement>(null);
   const [title, setTitle] = useState("Markdown 文档");
   const [markdown, setMarkdown] = useState("");
+  const [isDragging, setIsDragging] = useState(false);
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const blocks = useMemo(() => parseMarkdown(markdown), [markdown]);
   const previewHtml = useMemo(() => sanitizeHtml(blocksToHtml(blocks)), [blocks]);
 
-  const onChangeFile = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const loadMarkdownFile = async (file: File) => {
     if (!file) return;
     setError(null);
     try {
       const text = await file.text();
       setMarkdown(text);
       setTitle(file.name.replace(/\.[^.]+$/, "") || "Markdown 文档");
+      setUploadedFileName(file.name);
     } catch (err) {
       setError(err instanceof Error ? err.message : "读取文件失败。");
     }
+  };
+
+  const onChangeFile = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await loadMarkdownFile(file);
+    e.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+    void loadMarkdownFile(file);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const exportPdf = () => {
@@ -552,25 +579,38 @@ export default function MarkdownPdfConverterClient() {
     <ToolPageLayout toolSlug="markdown-pdf-converter">
       <div className="w-full px-4">
         <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
+          <div
+            className={`rounded-2xl border-2 border-dashed p-3 transition ${
+              isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => inputRef.current?.click()}
+                  className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-200"
+                >
+                  {uploadedFileName ? "替换 .md" : "上传 .md"}
+                </button>
+                <input ref={inputRef} type="file" accept=".md,text/markdown,text/plain" className="hidden" onChange={onChangeFile} />
+              </div>
+
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
-                className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-200"
+                onClick={exportPdf}
+                className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
               >
-                上传 .md
+                导出为 PDF（打印）
               </button>
-              <input ref={inputRef} type="file" accept=".md,text/markdown,text/plain" className="hidden" onChange={onChangeFile} />
             </div>
-
-            <button
-              type="button"
-              onClick={exportPdf}
-              className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700"
-            >
-              导出为 PDF（打印）
-            </button>
+            <div className="mt-2 text-[11px] text-slate-500">
+              支持点击上传与拖拽上传 Markdown 文件，拖拽可直接替换当前内容。
+              {uploadedFileName ? ` 当前文件：${uploadedFileName}` : ""}
+            </div>
           </div>
 
           <div className="mt-6 grid gap-4 lg:grid-cols-2">

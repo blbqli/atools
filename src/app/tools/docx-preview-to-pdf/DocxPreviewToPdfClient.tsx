@@ -1,6 +1,6 @@
 "use client";
 
-import type { DragEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import styles from "./DocxPreviewToPdf.module.css";
@@ -35,10 +35,10 @@ const DEFAULT_UI: Ui = {
   hint: "DOCX 预览与转 PDF：纯前端本地渲染（不上传），支持 .docx 文件的快速预览与打印/保存为 PDF。",
   privacyNote: "提示：文件仅在浏览器本地处理，不会上传到服务器。",
   dropTitle: "点击或拖拽 DOCX 文件到此处",
-  dropSubtitle: "仅支持 .docx（Word 文档的新格式）；如为 .doc/.wps 请先另存为 .docx 或导出 PDF。",
+  dropSubtitle: "仅支持 .docx（Word 文档的新格式）；如为 .doc/.wps 请先另存为 .docx 或导出 PDF。已加载后也支持点击替换和拖拽替换。",
   selectFile: "选择文件",
   currentFilePrefix: "当前文件：",
-  reselect: "重新选择",
+  reselect: "点击替换",
   optionsTitle: "渲染选项",
   optionPageBreaks: "分页（接近 Word 的页面效果）",
   optionHeaders: "渲染页眉",
@@ -208,6 +208,18 @@ function Inner({ ui }: { ui: Ui }) {
     void pickFile(f);
   };
 
+  const handleInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const next = event.target.files?.[0] ?? null;
+    void pickFile(next);
+    event.target.value = "";
+  };
+
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
   return (
     <div className={`docx-pdf-root w-full px-4 ${styles.root}`}>
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
@@ -217,24 +229,28 @@ function Inner({ ui }: { ui: Ui }) {
         </div>
 
         <div className="no-print mt-5 grid gap-4 lg:grid-cols-[1fr_360px]">
-          <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
+          <div
+            className={`rounded-3xl bg-white p-5 ring-1 transition ${
+              isDragging ? "ring-blue-300 bg-blue-50/20" : "ring-slate-200"
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
+              className="hidden"
+              onChange={handleInputChange}
+            />
             {!file ? (
               <div
                 className={`relative flex min-h-[220px] cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300 ${
                   isDragging ? "border-blue-500 bg-blue-50/50" : "border-slate-300 hover:border-slate-400 hover:bg-slate-50/50"
                 }`}
-                onClick={() => inputRef.current?.click()}
-                onDrop={handleDrop}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
+                onClick={openFilePicker}
               >
-                <input
-                  ref={inputRef}
-                  type="file"
-                  accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                  className="hidden"
-                  onChange={(e) => void pickFile(e.target.files?.[0] ?? null)}
-                />
                 <div className="text-sm font-medium text-slate-700">{ui.dropTitle}</div>
                 <div className="mt-1 max-w-[520px] px-4 text-center text-xs text-slate-500">{ui.dropSubtitle}</div>
                 <button
@@ -254,7 +270,7 @@ function Inner({ ui }: { ui: Ui }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <button
                       type="button"
-                      onClick={() => inputRef.current?.click()}
+                      onClick={openFilePicker}
                       className="rounded-xl bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
                     >
                       {ui.reselect}
@@ -268,6 +284,7 @@ function Inner({ ui }: { ui: Ui }) {
                     </button>
                   </div>
                 </div>
+                <div className="text-[11px] text-slate-500">支持拖拽新 DOCX 到当前区域直接替换</div>
 
                 <div className="grid gap-3 rounded-2xl bg-white/60 p-4 ring-1 ring-black/5">
                   <div className="text-sm font-semibold text-slate-900">{ui.optionsTitle}</div>

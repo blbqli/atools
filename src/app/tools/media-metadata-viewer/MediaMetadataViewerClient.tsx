@@ -1,10 +1,10 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 import { getFFmpegBaseURL } from "../../../lib/r2-assets";
 
 type ParsedInfo = {
@@ -99,7 +99,6 @@ export default function MediaMetadataViewerClient() {
 }
 
 function MediaMetadataViewerInner() {
-  const inputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const logRef = useRef<string[]>([]);
 
@@ -155,10 +154,9 @@ function MediaMetadataViewerInner() {
     setUrl(URL.createObjectURL(selected));
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) pick(selected);
-  };
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    onFile: pick,
+  });
 
   const analyze = async () => {
     if (!file || !inputName) return;
@@ -203,50 +201,60 @@ function MediaMetadataViewerInner() {
   return (
     <div className="w-full px-4">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <input ref={inputRef} type="file" accept="audio/*,video/*" className="hidden" onChange={onChange} />
-            <button
-              type="button"
-              onClick={() => inputRef.current?.click()}
-              className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-            >
-              选择音视频文件
-            </button>
-            <button
-              type="button"
-              onClick={clear}
-              className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
-            >
-              清空
-            </button>
-            {file && (
-              <div className="text-sm text-slate-700">
-                <span className="font-semibold text-slate-900">{file.name}</span>{" "}
-                <span className="text-slate-500">({formatSize(file.size)})</span>
-              </div>
-            )}
+        <div
+          className={`rounded-2xl border-2 border-dashed p-3 transition ${
+            isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <input ref={inputRef} type="file" accept="audio/*,video/*" className="hidden" onChange={handleInputChange} />
+              <button
+                type="button"
+                onClick={openFilePicker}
+                className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                {file ? "替换音视频文件" : "选择音视频文件"}
+              </button>
+              <button
+                type="button"
+                onClick={clear}
+                className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+              >
+                清空
+              </button>
+              {file && (
+                <div className="text-sm text-slate-700">
+                  <span className="font-semibold text-slate-900">{file.name}</span>{" "}
+                  <span className="text-slate-500">({formatSize(file.size)})</span>
+                </div>
+              )}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => void ensureLoaded()}
+                className="rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+              >
+                加载 FFmpeg
+              </button>
+              <button
+                type="button"
+                onClick={() => void analyze()}
+                disabled={!file}
+                className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
+              >
+                解析元数据
+              </button>
+              <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
+                {ffmpegState === "ready" ? "FFmpeg 就绪" : ffmpegState === "loading" ? "加载中…" : "FFmpeg"}
+              </span>
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onClick={() => void ensureLoaded()}
-              className="rounded-2xl bg-slate-900 px-4 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
-            >
-              加载 FFmpeg
-            </button>
-            <button
-              type="button"
-              onClick={() => void analyze()}
-              disabled={!file}
-              className="rounded-2xl bg-emerald-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-700 disabled:opacity-60"
-            >
-              解析元数据
-            </button>
-            <span className="rounded-full bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-700">
-              {ffmpegState === "ready" ? "FFmpeg 就绪" : ffmpegState === "loading" ? "加载中…" : "FFmpeg"}
-            </span>
-          </div>
+          <div className="mt-2 text-[11px] text-slate-500">支持点击上传与拖拽上传音视频；拖拽可直接替换当前文件。</div>
         </div>
 
         <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">

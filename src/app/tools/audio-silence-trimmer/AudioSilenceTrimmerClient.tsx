@@ -1,11 +1,11 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 import { getFFmpegBaseURL } from "../../../lib/r2-assets";
 
 type OutputFormat = "wav" | "mp3";
@@ -39,7 +39,9 @@ const buildSilenceFilter = (mode: TrimMode, thresholdDb: number, minSilenceSec: 
 const DEFAULT_UI = {
   pickTitle: "选择音频文件",
   pickFile: "选择文件",
+  replaceFile: "点击替换音频",
   clear: "清空",
+  dropReplaceHint: "支持拖拽新音频到此区域直接替换",
   firstLoadHint: "提示：首次加载 ffmpeg.wasm 需要下载核心文件（较大），可能耗时；全程在浏览器本地处理，不上传服务器。",
   ffmpegReady: "FFmpeg 已就绪",
   ffmpegLoading: "加载中...",
@@ -91,7 +93,6 @@ function AudioSilenceTrimmerInner() {
   const config = useOptionalToolConfig("audio-silence-trimmer");
   const ui: Ui = { ...DEFAULT_UI, ...((config?.ui ?? {}) as Partial<Ui>) };
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const logRef = useRef<string[]>([]);
 
@@ -165,10 +166,9 @@ function AudioSilenceTrimmerInner() {
     setDownloadName(`${base}.trim.${outputFormat}`);
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) pick(selected);
-  };
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    onFile: pick,
+  });
 
   useEffect(() => {
     if (!file) return;
@@ -224,7 +224,6 @@ function AudioSilenceTrimmerInner() {
       URL.revokeObjectURL(downloadUrl);
       setDownloadUrl(null);
     }
-    if (inputRef.current) inputRef.current.value = "";
   };
 
   return (
@@ -259,14 +258,23 @@ function AudioSilenceTrimmerInner() {
         </div>
 
         <div className="mt-6">
-          <input ref={inputRef} type="file" accept="audio/*,video/*" className="hidden" onChange={onChange} />
-          <div className="flex flex-wrap items-center gap-2">
+          <input ref={inputRef} type="file" accept="audio/*,video/*" className="hidden" onChange={handleInputChange} />
+          <div
+            className={`flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed p-4 transition ${
+              isDragging
+                ? "border-slate-400 bg-slate-50/60"
+                : "border-slate-200 bg-slate-50/80"
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
-              {ui.pickFile}
+              {file ? ui.replaceFile : ui.pickFile}
             </button>
             <button
               type="button"
@@ -281,6 +289,7 @@ function AudioSilenceTrimmerInner() {
                 <span className="text-slate-500">({(file.size / 1024).toFixed(1)} KB)</span>
               </div>
             )}
+            <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
           </div>
         </div>
 
@@ -403,4 +412,3 @@ function AudioSilenceTrimmerInner() {
     </div>
   );
 }
-

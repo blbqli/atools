@@ -22,17 +22,39 @@ export async function generateMetadata({
 
   const config = getToolConfig(slug, locale);
   const canonical = `/${locale}/tools/${slug}`;
+  const isEn = locale === "en-us";
+  const title = isEn ? `${config.name} | Pure Tools` : `${config.name} | ATools 纯粹工具站`;
+  const descriptionBase = config.seoDescription || config.description;
+  const description = isEn
+    ? `${descriptionBase} Built for fast in-browser processing with zero uploads, privacy-first defaults, and machine-readable metadata that improves search and AI retrieval quality.`
+    : `${descriptionBase} 支持纯前端本地处理、零上传更安心，并配有清晰语义与结构化元数据，提升搜索与 AI 大模型检索引用效率。`;
+  const keywords = Array.from(
+    new Set([
+      ...(config.keywords ?? []),
+      ...(isEn
+        ? ["free online tools", "web tools", "local processing", "privacy-first", "Pure Tools"]
+        : ["免费在线工具", "ATools", "纯粹工具站", "纯前端工具", "零上传工具", "本地处理"]),
+    ]),
+  );
 
   return {
-    title: config.name,
-    description: config.seoDescription || config.description,
-    keywords: config.keywords?.join(",") || "",
+    title: {
+      absolute: title,
+    },
+    description,
+    keywords,
     manifest: `/${locale}/tools/${slug}/manifest.webmanifest`,
     openGraph: {
-      title: config.name,
-      description: config.seoDescription || config.description,
+      title,
+      description,
       type: "website",
       url: canonical,
+      locale: isEn ? "en_US" : "zh_CN",
+    },
+    twitter: {
+      card: "summary_large_image",
+      title,
+      description,
     },
     alternates: {
       canonical,

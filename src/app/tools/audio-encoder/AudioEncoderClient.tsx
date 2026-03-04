@@ -1,11 +1,11 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 import { getFFmpegBaseURL } from "../../../lib/r2-assets";
 
 type OutputFormat = "mp3" | "wav" | "m4a" | "ogg" | "flac";
@@ -34,7 +34,9 @@ const SAMPLE_RATE_MAX = 384000;
 const DEFAULT_UI = {
   pickTitle: "选择音频文件",
   pickFile: "选择文件",
+  replaceFile: "点击替换音频",
   clear: "清空",
+  dropReplaceHint: "支持拖拽新音频到此区域直接替换",
   firstLoadHint: "提示：首次加载 ffmpeg.wasm 需要下载核心文件（较大），可能耗时；全程在浏览器本地处理，不上传服务器。",
   file: "文件",
   ffmpegReady: "FFmpeg 已就绪",
@@ -133,7 +135,6 @@ function AudioEncoderInner() {
   const config = useOptionalToolConfig("audio-encoder");
   const ui: AudioEncoderUi = { ...DEFAULT_UI, ...((config?.ui ?? {}) as Partial<AudioEncoderUi>) };
 
-  const inputRef = useRef<HTMLInputElement>(null);
   const ffmpegRef = useRef<FFmpeg | null>(null);
   const logRef = useRef<string[]>([]);
 
@@ -213,10 +214,9 @@ function AudioEncoderInner() {
     setDownloadName(`${base}.${outputFormat}`);
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) pick(selected);
-  };
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    onFile: pick,
+  });
 
   useEffect(() => {
     if (!file) return;
@@ -332,15 +332,24 @@ function AudioEncoderInner() {
 
   return (
     <div className="mt-8 glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div className="text-sm font-semibold text-slate-900">{ui.pickTitle}</div>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
             >
-              {ui.pickFile}
+              {file ? ui.replaceFile : ui.pickFile}
             </button>
             <button
               type="button"
@@ -350,8 +359,9 @@ function AudioEncoderInner() {
             >
               {ui.clear}
             </button>
-            <input ref={inputRef} type="file" accept="audio/*" className="hidden" onChange={onChange} />
+            <input ref={inputRef} type="file" accept="audio/*" className="hidden" onChange={handleInputChange} />
           </div>
+          <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
         </div>
 
         <div className="mt-4 rounded-3xl bg-slate-50 p-5 ring-1 ring-slate-200 text-xs text-slate-600">

@@ -32,7 +32,9 @@ const DEFAULT_UI = {
   currentImage: "当前图片：",
   inversion: "反色尝试",
   inversionRecommended: "attemptBoth（推荐）",
-  chooseAgain: "重新选择",
+  replaceImage: "点击替换图片",
+  clear: "清空",
+  dropReplaceHint: "支持拖拽新图片到此区域直接替换",
   preview: "预览",
   previewHint: "提示：识别结果的定位框会以绿色描边显示。",
   resultTitle: "解析结果",
@@ -176,6 +178,22 @@ export default function QrDecoderClient() {
     setIsDragging(false);
   };
 
+  const openFilePicker = () => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.value = "";
+    fileInputRef.current.click();
+  };
+
+  const resetWorkspace = () => {
+    setFile(null);
+    setResult(null);
+    setError(null);
+    setBitmap((prev) => {
+      if (prev) prev.close();
+      return null;
+    });
+  };
+
   const canCopy = useMemo(() => result?.ok === true && result.data.trim().length > 0, [result]);
 
   const copy = async () => {
@@ -186,6 +204,13 @@ export default function QrDecoderClient() {
   return (
     <ToolPageLayout toolSlug="qr-decoder" maxWidthClassName="max-w-5xl">
       <div className="mt-8 glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleFileChange}
+        />
         {!file ? (
           <div
             className={`relative flex h-64 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300 ${
@@ -196,21 +221,23 @@ export default function QrDecoderClient() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={openFilePicker}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
             <div className="text-sm font-medium text-slate-700">{ui.dropTitle}</div>
             <div className="mt-1 text-xs text-slate-500">{ui.dropSubtitle}</div>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50/80 p-4">
+            <div
+              className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+                isDragging
+                  ? "border-blue-400 bg-blue-50/50"
+                  : "border-slate-200 bg-slate-50/80"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
               <div className="text-sm text-slate-700">
                 <span className="font-semibold text-slate-900">{ui.currentImage}</span>
                 {file.name}
@@ -236,20 +263,20 @@ export default function QrDecoderClient() {
                 </label>
                 <button
                   type="button"
-                  onClick={() => {
-                    setFile(null);
-                    setResult(null);
-                    setError(null);
-                    setBitmap((prev) => {
-                      if (prev) prev.close();
-                      return null;
-                    });
-                  }}
+                  onClick={openFilePicker}
                   className="rounded-xl bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
                 >
-                  {ui.chooseAgain}
+                  {ui.replaceImage}
+                </button>
+                <button
+                  type="button"
+                  onClick={resetWorkspace}
+                  className="rounded-xl bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                >
+                  {ui.clear}
                 </button>
               </div>
+              <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
             </div>
 
             <div className="grid gap-6 lg:grid-cols-[1fr_360px]">

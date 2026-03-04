@@ -5,9 +5,9 @@ export const dynamic = "force-static";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "纯粹工具站",
-    short_name: "纯粹工具站",
-    description: "一个纯前端工具集合站点。",
+    name: "ATools 纯粹工具站",
+    short_name: "ATools",
+    description: "ATools 纯粹工具站：上百款免费在线工具，绝大多数纯前端本地处理、零上传、即开即用。",
     start_url: `/${DEFAULT_LOCALE}`,
     display: "standalone",
     lang: "zh-CN",

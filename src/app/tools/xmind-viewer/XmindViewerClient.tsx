@@ -4,12 +4,21 @@ import type { ChangeEvent } from "react";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { PDFDocument } from "pdf-lib";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
 import XmindMindMapCanvas from "./XmindMindMapCanvas";
 import type { ViewStateBundle, XmindMindMapCanvasHandle } from "./XmindMindMapCanvas";
 import { getTheme, themes } from "./themes";
-import type { MindMapLayoutMode, MindMapNode, MindMapSheet, MindMapThemeId } from "./types";
+import type {
+  MindMapBoundary,
+  MindMapLayoutMode,
+  MindMapNode,
+  MindMapRelationship,
+  MindMapSheet,
+  MindMapThemeId,
+} from "./types";
 
 type TopicNode = {
+  id?: string;
   title?: string;
   labels?: string[];
   notes?: { plain?: { content?: string } };
@@ -26,6 +35,8 @@ type Sheet = {
   title?: string;
   rootTopic?: TopicNode;
   structureClass?: string;
+  relationships?: MindMapRelationship[];
+  boundaries?: MindMapBoundary[];
   [key: string]: unknown;
 };
 
@@ -33,7 +44,13 @@ type ParsedXmind = {
   entries: string[];
   sheets: Sheet[];
   source: string | null;
-  parseError: string | null;
+  parseErrorKey:
+    | "invalid_zip"
+    | "content_json_parse_failed"
+    | "content_json_sheet_not_found"
+    | "content_xml_parse_failed"
+    | "content_entry_not_found"
+    | null;
 };
 
 const formatBytes = (bytes: number) => {
@@ -188,16 +205,157 @@ type DraftPayload = {
 };
 
 const DRAFT_STORAGE_KEY = "atools:xmind-viewer:draft:v1";
+const DEFAULT_DROP_REPLACE_HINT = "支持拖拽新 .xmind 到此区域直接替换";
+type XmindViewerUi = {
+  untitled: string;
+  newNode: string;
+  centerTopic: string;
+  sheetPrefix: string;
+  newCanvasNamePrompt: string;
+  renameCanvasPrompt: string;
+  duplicateCanvasPrompt: string;
+  copiedSuffix: string;
+  keepOneCanvasAlert: string;
+  deleteCanvasConfirm: string;
+  fileExtHint: string;
+  parseFailed: string;
+  copied: string;
+  copyFailed: string;
+  exportPngFailed: string;
+  exportSvgFailed: string;
+  exportPdfFailed: string;
+  expand: string;
+  collapse: string;
+  collapseAll: string;
+  expandAll: string;
+  openFile: string;
+  dropTip: string;
+  chooseFile: string;
+  replaceFile: string;
+  copyOutline: string;
+  downloadOutline: string;
+  clear: string;
+  parsing: string;
+  error: string;
+  sheetTotalPrefix: string;
+  sheetTotalSuffix: string;
+  newCanvas: string;
+  rename: string;
+  duplicate: string;
+  delete: string;
+  layoutTitle: string;
+  themeTitle: string;
+  themePrefix: string;
+  undo: string;
+  redo: string;
+  collapseExpand: string;
+  exportPng: string;
+  exportSvg: string;
+  exportPdf: string;
+  exportXmind: string;
+  panelCanvas: string;
+  panelLayout: string;
+  panelTheme: string;
+  panelExport: string;
+  panelEdit: string;
+  panelNode: string;
+  relationTitle: string;
+  relationTarget: string;
+  relationLabel: string;
+  relationAdd: string;
+  relationRemove: string;
+  relationEmpty: string;
+  relationSelfBlocked: string;
+  relationExists: string;
+  boundaryTitle: string;
+  boundaryLabel: string;
+  boundaryAdd: string;
+  boundaryRemove: string;
+  create: string;
+  moveUp: string;
+  moveDown: string;
+  nodeTitlePlaceholder: string;
+  childNode: string;
+  siblingNode: string;
+  currentNode: string;
+  noNodeSelected: string;
+  nodeEditor: string;
+  selectNodeTip: string;
+  nodeTitleLabel: string;
+  inputNodeTitle: string;
+  addChildNode: string;
+  addSiblingNode: string;
+  deleteNode: string;
+  rootNodeTip: string;
+  nodeEditTip: string;
+  fileInfo: string;
+  fileName: string;
+  fileSize: string;
+  fileStatus: string;
+  statusParsing: string;
+  statusFailed: string;
+  statusParsed: string;
+  statusIdle: string;
+  zipEntries: string;
+  parseSource: string;
+  noteBlock: string;
+  outlinePreview: string;
+  currentSheet: string;
+  outlinePlaceholder: string;
+  tutorial: string;
+  tutorial1: string;
+  tutorial2: string;
+  tutorial3: string;
+  tutorial4: string;
+  tutorial5: string;
+  faq: string;
+  faqFormat: string;
+  faqFormatDesc: string;
+  faqNoContent: string;
+  faqNoContentDesc: string;
+  privacy: string;
+  privacyDesc: string;
+  draftDetected: string;
+  draftPrompt: string;
+  restoreDraft: string;
+  ignoreDraft: string;
+  deleteDraft: string;
+  layoutBalanced: string;
+  layoutRight: string;
+  layoutLeft: string;
+  layoutUp: string;
+  layoutDown: string;
+  layoutDownCompact: string;
+  layoutDownCompact2: string;
+  parseErrors: {
+    invalid_zip: string;
+    content_json_parse_failed: string;
+    content_json_sheet_not_found: string;
+    content_xml_parse_failed: string;
+    content_entry_not_found: string;
+  };
+};
 
 const cloneValue = <T,>(value: T): T => {
   if (typeof structuredClone === "function") return structuredClone(value) as T;
   return JSON.parse(JSON.stringify(value)) as T;
 };
 
+const isEditableTarget = (target: EventTarget | null): boolean => {
+  const element = target instanceof HTMLElement ? target : null;
+  if (!element) return false;
+  if (element.isContentEditable) return true;
+  return Boolean(
+    element.closest("input, textarea, select, [contenteditable='true'], [contenteditable='plaintext-only']"),
+  );
+};
+
 const normalizeEditorSheets = (sheets: MindMapSheet[]): MindMapSheet[] =>
   sheets.map((sheet) => ({
     ...sheet,
     themeId: (sheet as Partial<MindMapSheet>).themeId ?? "classicLight",
+    relationships: normalizeRelationships((sheet as Partial<MindMapSheet>).relationships),
+    boundaries: normalizeBoundaries((sheet as Partial<MindMapSheet>).boundaries),
   }));
 
 const getDraftFromStorage = (): DraftPayload | null => {
@@ -480,6 +638,7 @@ const toTopicNode = (rawTopic: unknown, topicsById: Record<string, unknown>, see
   if (detached.length > 0) resultChildren.detached = detached;
 
   return {
+    id: rawId ?? undefined,
     title: titleRaw.trim() || "(无标题)",
     labels,
     notes: noteContent ? { plain: { content: noteContent } } : undefined,
@@ -493,7 +652,12 @@ const ATTOOLS_EXTENSION_PROVIDER = "atools.site";
 const extractAtoolsExtensionData = (
   rawTopic: unknown,
   topicsById: Record<string, unknown>,
-): { layoutMode?: MindMapLayoutMode; themeId?: MindMapThemeId } => {
+): {
+  layoutMode?: MindMapLayoutMode;
+  themeId?: MindMapThemeId;
+  relationships?: MindMapRelationship[];
+  boundaries?: MindMapBoundary[];
+} => {
   const resolved = resolveTopicValue(rawTopic, topicsById);
   if (!isRecord(resolved)) return {};
   const extensionsValue = resolved.extensions;
@@ -508,12 +672,16 @@ const extractAtoolsExtensionData = (
       const record = parsed as Record<string, unknown>;
       const layoutMode = typeof record.layoutMode === "string" ? (record.layoutMode as MindMapLayoutMode) : undefined;
       const themeId = typeof record.themeId === "string" ? (record.themeId as MindMapThemeId) : undefined;
-      return { layoutMode, themeId };
+      const relationships = normalizeRelationships(record.relationships);
+      const boundaries = normalizeBoundaries(record.boundaries);
+      return { layoutMode, themeId, relationships, boundaries };
     }
     if (isRecord(content)) {
       const layoutMode = typeof content.layoutMode === "string" ? (content.layoutMode as MindMapLayoutMode) : undefined;
       const themeId = typeof content.themeId === "string" ? (content.themeId as MindMapThemeId) : undefined;
-      return { layoutMode, themeId };
+      const relationships = normalizeRelationships(content.relationships);
+      const boundaries = normalizeBoundaries(content.boundaries);
+      return { layoutMode, themeId, relationships, boundaries };
     }
   }
   return {};
@@ -552,16 +720,22 @@ const normalizeSheetsFromContentJson = (content: unknown, topicsById: Record<str
         : typeof resolvedRootRecord?.structureClass === "string"
           ? resolvedRootRecord.structureClass
           : undefined;
-    const { layoutMode, themeId } = rootRef ? extractAtoolsExtensionData(rootRef, topicsById) : {};
+    const { layoutMode, themeId, relationships: extensionRelationships, boundaries: extensionBoundaries } = rootRef
+      ? extractAtoolsExtensionData(rootRef, topicsById)
+      : {};
     const legacyThemeId = typeof sheetRecord.atoolsThemeId === "string" ? (sheetRecord.atoolsThemeId as MindMapThemeId) : undefined;
     const legacyLayoutMode =
       typeof sheetRecord.structureClass === "string" && sheetRecord.structureClass.startsWith("atools:layout:")
         ? (sheetRecord.structureClass.slice("atools:layout:".length) as MindMapLayoutMode)
         : undefined;
+    const relationships = normalizeRelationships(sheetRecord.relationships);
+    const boundaries = normalizeBoundaries(sheetRecord.boundaries);
 
     return {
       title,
       rootTopic,
+      relationships: relationships.length > 0 ? relationships : extensionRelationships ?? [],
+      boundaries: boundaries.length > 0 ? boundaries : extensionBoundaries ?? [],
       structureClass,
       atoolsLayoutMode: layoutMode ?? legacyLayoutMode,
       atoolsThemeId: themeId ?? legacyThemeId,
@@ -615,6 +789,7 @@ const parseTopicXml = (topicEl: Element): TopicNode => {
   if (detached.length > 0) children.detached = detached;
 
   return {
+    id: topicEl.getAttribute("id") ?? undefined,
     title,
     labels: labels.length > 0 ? labels : undefined,
     notes: noteContent ? { plain: { content: noteContent } } : undefined,
@@ -654,13 +829,115 @@ const mindMapNodeToLines = (topic: MindMapNode, indent: number): string[] => {
   return lines;
 };
 
+const normalizeRelationships = (value: unknown): MindMapRelationship[] => {
+  if (!Array.isArray(value)) return [];
+  const result: MindMapRelationship[] = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const item = value[index];
+    if (!isRecord(item)) continue;
+    const fromId =
+      typeof item.end1Id === "string"
+        ? item.end1Id
+        : typeof item.fromId === "string"
+          ? item.fromId
+          : typeof item.sourceId === "string"
+            ? item.sourceId
+            : "";
+    const toId =
+      typeof item.end2Id === "string"
+        ? item.end2Id
+        : typeof item.toId === "string"
+          ? item.toId
+          : typeof item.targetId === "string"
+            ? item.targetId
+            : "";
+    if (!fromId || !toId || fromId === toId) continue;
+    const id =
+      typeof item.id === "string" && item.id.trim()
+        ? item.id
+        : `${fromId}:${toId}:${index}`;
+    const title =
+      typeof item.title === "string"
+        ? item.title
+        : typeof item.label === "string"
+          ? item.label
+          : undefined;
+    result.push({ id, fromId, toId, title: title?.trim() || undefined });
+  }
+  return result;
+};
+
+const normalizeBoundaries = (value: unknown): MindMapBoundary[] => {
+  if (!Array.isArray(value)) return [];
+  const result: MindMapBoundary[] = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const item = value[index];
+    if (!isRecord(item)) continue;
+    const nodeId =
+      typeof item.nodeId === "string"
+        ? item.nodeId
+        : typeof item.topicId === "string"
+          ? item.topicId
+          : typeof item.targetId === "string"
+            ? item.targetId
+            : "";
+    if (!nodeId) continue;
+    const id =
+      typeof item.id === "string" && item.id.trim()
+        ? item.id
+        : `boundary:${nodeId}:${index}`;
+    const title =
+      typeof item.title === "string"
+        ? item.title
+        : typeof item.name === "string"
+          ? item.name
+          : typeof item.label === "string"
+            ? item.label
+            : undefined;
+    result.push({ id, nodeId, title: title?.trim() || undefined });
+  }
+  return result;
+};
+
+const collectNodeIds = (node: MindMapNode | null): Set<string> => {
+  const ids = new Set<string>();
+  const walk = (current: MindMapNode | null) => {
+    if (!current) return;
+    ids.add(current.id);
+    for (const child of current.children) walk(child);
+  };
+  walk(node);
+  return ids;
+};
+
+const filterRelationshipsByNodeIds = (
+  relationships: MindMapRelationship[] | undefined,
+  nodeIds: Set<string>,
+): MindMapRelationship[] => {
+  if (!relationships || relationships.length === 0) return [];
+  return relationships.filter(
+    (relation) =>
+      relation.fromId !== relation.toId &&
+      nodeIds.has(relation.fromId) &&
+      nodeIds.has(relation.toId),
+  );
+};
+
+const filterBoundariesByNodeIds = (
+  boundaries: MindMapBoundary[] | undefined,
+  nodeIds: Set<string>,
+): MindMapBoundary[] => {
+  if (!boundaries || boundaries.length === 0) return [];
+  return boundaries.filter((boundary) => nodeIds.has(boundary.nodeId));
+};
+
 const topicNodeToMindMapNode = (topic: TopicNode, createId: () => string): MindMapNode => {
   const attached = topic.children?.attached ?? [];
   const detached = topic.children?.detached ?? [];
   const children = [...attached, ...detached].map((child) => topicNodeToMindMapNode(child, createId));
 
   return {
-    id: createId(),
+    id: topic.id ?? createId(),
     title: (topic.title ?? "").trim() || "(无标题)",
     labels: topic.labels && topic.labels.length > 0 ? [...topic.labels] : undefined,
     notes: topic.notes?.plain?.content ? { plain: { content: topic.notes.plain.content } } : undefined,
@@ -669,11 +946,57 @@ const topicNodeToMindMapNode = (topic: TopicNode, createId: () => string): MindM
   };
 };
 
-const cloneMindMapNodeWithNewIds = (node: MindMapNode, createId: () => string): MindMapNode => ({
-  ...node,
-  id: createId(),
-  children: node.children.map((child) => cloneMindMapNodeWithNewIds(child, createId)),
-});
+const cloneMindMapNodeWithNewIds = (
+  node: MindMapNode,
+  createId: () => string,
+  idMap: Map<string, string>,
+): MindMapNode => {
+  const nextId = createId();
+  idMap.set(node.id, nextId);
+  return {
+    ...node,
+    id: nextId,
+    children: node.children.map((child) => cloneMindMapNodeWithNewIds(child, createId, idMap)),
+  };
+};
+
+const remapRelationships = (
+  relationships: MindMapRelationship[] | undefined,
+  idMap: Map<string, string>,
+): MindMapRelationship[] => {
+  if (!relationships || relationships.length === 0) return [];
+  const remapped: MindMapRelationship[] = [];
+  for (const relation of relationships) {
+    const fromId = idMap.get(relation.fromId);
+    const toId = idMap.get(relation.toId);
+    if (!fromId || !toId || fromId === toId) continue;
+    remapped.push({
+      ...relation,
+      id: `${fromId}:${toId}:${relation.id}`,
+      fromId,
+      toId,
+    });
+  }
+  return remapped;
+};
+
+const remapBoundaries = (
+  boundaries: MindMapBoundary[] | undefined,
+  idMap: Map<string, string>,
+): MindMapBoundary[] => {
+  if (!boundaries || boundaries.length === 0) return [];
+  const remapped: MindMapBoundary[] = [];
+  for (const boundary of boundaries) {
+    const nodeId = idMap.get(boundary.nodeId);
+    if (!nodeId) continue;
+    remapped.push({
+      ...boundary,
+      id: `${nodeId}:${boundary.id}`,
+      nodeId,
+    });
+  }
+  return remapped;
+};
 
 const setCollapseForAll = (node: MindMapNode, collapsed: boolean): MindMapNode => ({
   ...node,
@@ -688,30 +1011,43 @@ const hasAnyExpandedBranch = (node: MindMapNode): boolean => {
 
 const normalizeToMindMapSheets = (sheets: Sheet[], createId: () => string): MindMapSheet[] => {
   if (sheets.length === 0) {
+    const rootTopic = createNodeWithTitle(createId(), "中心主题");
     return [
       {
         id: createId(),
         title: "Sheet 1",
-        rootTopic: createNodeWithTitle(createId(), "中心主题"),
+        rootTopic,
         layoutMode: "balanced",
         themeId: "classicLight",
+        relationships: [],
+        boundaries: [],
       },
     ];
   }
 
-  return sheets.map((sheet, index) => ({
-    id: createId(),
-    title: extractSheetTitle(sheet, index),
-    rootTopic: sheet.rootTopic ? topicNodeToMindMapNode(sheet.rootTopic, createId) : createNodeWithTitle(createId(), "中心主题"),
-    layoutMode:
-      typeof (sheet as Record<string, unknown>).atoolsLayoutMode === "string"
-        ? ((sheet as Record<string, unknown>).atoolsLayoutMode as MindMapLayoutMode)
-        : structureClassToLayoutMode(sheet.structureClass),
-    themeId:
-      typeof (sheet as Record<string, unknown>).atoolsThemeId === "string"
-        ? ((sheet as Record<string, unknown>).atoolsThemeId as MindMapThemeId)
-        : "classicLight",
-  }));
+  return sheets.map((sheet, index) => {
+    const rootTopic = sheet.rootTopic
+      ? topicNodeToMindMapNode(sheet.rootTopic, createId)
+      : createNodeWithTitle(createId(), "中心主题");
+    const nodeIds = collectNodeIds(rootTopic);
+    const rawRelationships = normalizeRelationships((sheet as Record<string, unknown>).relationships);
+    const rawBoundaries = normalizeBoundaries((sheet as Record<string, unknown>).boundaries);
+    return {
+      id: createId(),
+      title: extractSheetTitle(sheet, index),
+      rootTopic,
+      layoutMode:
+        typeof (sheet as Record<string, unknown>).atoolsLayoutMode === "string"
+          ? ((sheet as Record<string, unknown>).atoolsLayoutMode as MindMapLayoutMode)
+          : structureClassToLayoutMode(sheet.structureClass),
+      themeId:
+        typeof (sheet as Record<string, unknown>).atoolsThemeId === "string"
+          ? ((sheet as Record<string, unknown>).atoolsThemeId as MindMapThemeId)
+          : "classicLight",
+      relationships: filterRelationshipsByNodeIds(rawRelationships, nodeIds),
+      boundaries: filterBoundariesByNodeIds(rawBoundaries, nodeIds),
+    };
+  });
 };
 
 const parseXmind = async (file: File): Promise<ParsedXmind> => {
@@ -720,7 +1056,7 @@ const parseXmind = async (file: File): Promise<ParsedXmind> => {
   try {
     unzipped = unzipSync(raw);
   } catch {
-    return { entries: [], sheets: [], source: null, parseError: "文件不是有效的 .xmind（zip）或已损坏。" };
+    return { entries: [], sheets: [], source: null, parseErrorKey: "invalid_zip" };
   }
   const entryNames = Object.keys(unzipped).sort((a, b) => a.localeCompare(b, "en"));
 
@@ -733,29 +1069,41 @@ const parseXmind = async (file: File): Promise<ParsedXmind> => {
         entries: entryNames,
         sheets: [],
         source: contentJsonKey,
-        parseError: "已找到 content.json，但解析失败（文件可能损坏或编码异常）。",
+        parseErrorKey: "content_json_parse_failed",
       };
     }
     const topicsById = buildTopicsById(parsed);
     const normalizedSheets = normalizeSheetsFromContentJson(parsed, topicsById);
     const sheets =
       normalizedSheets.length > 0
-        ? normalizedSheets
-        : asSheets(parsed).map((sheet, index) => ({
-            title: extractSheetTitle(sheet, index),
-            rootTopic: sheet.rootTopic ? toTopicNode(sheet.rootTopic, topicsById, new Set()) : { title: "中心主题" },
-            structureClass:
-              typeof (sheet as Sheet).structureClass === "string" ? (sheet as Sheet).structureClass : undefined,
-          }));
+      ? normalizedSheets
+        : asSheets(parsed).map((sheet, index) => {
+            const rootRef = extractRootTopicRef(sheet);
+            const { layoutMode, themeId, relationships: extensionRelationships, boundaries: extensionBoundaries } =
+              rootRef ? extractAtoolsExtensionData(rootRef, topicsById) : {};
+            const sheetRecord = sheet as Record<string, unknown>;
+            const relationships = normalizeRelationships(sheetRecord.relationships);
+            const boundaries = normalizeBoundaries(sheetRecord.boundaries);
+            return {
+              title: extractSheetTitle(sheet, index),
+              rootTopic: rootRef ? toTopicNode(rootRef, topicsById, new Set()) : { title: "中心主题" },
+              relationships: relationships.length > 0 ? relationships : extensionRelationships ?? [],
+              boundaries: boundaries.length > 0 ? boundaries : extensionBoundaries ?? [],
+              structureClass:
+                typeof (sheet as Sheet).structureClass === "string" ? (sheet as Sheet).structureClass : undefined,
+              atoolsLayoutMode: layoutMode,
+              atoolsThemeId: themeId,
+            };
+          });
     if (sheets.length === 0) {
       return {
         entries: entryNames,
         sheets: [],
         source: contentJsonKey,
-        parseError: "已找到 content.json，但未识别出 Sheet 数据（可能是格式差异）。",
+        parseErrorKey: "content_json_sheet_not_found",
       };
     }
-    return { entries: entryNames, sheets, source: contentJsonKey, parseError: null };
+    return { entries: entryNames, sheets, source: contentJsonKey, parseErrorKey: null };
   }
 
   const contentXmlKey = entryNames.find((name) => name.toLowerCase().endsWith("content.xml")) ?? null;
@@ -767,21 +1115,22 @@ const parseXmind = async (file: File): Promise<ParsedXmind> => {
         entries: entryNames,
         sheets: [],
         source: contentXmlKey,
-        parseError: "已找到 content.xml，但解析失败（可能是格式差异或文件损坏）。",
+        parseErrorKey: "content_xml_parse_failed",
       };
     }
-    return { entries: entryNames, sheets, source: contentXmlKey, parseError: null };
+    return { entries: entryNames, sheets, source: contentXmlKey, parseErrorKey: null };
   }
 
   return {
     entries: entryNames,
     sheets: [],
     source: null,
-    parseError: "未找到 content.json 或 content.xml（可能不是 XMind 文件或格式暂不支持）。",
+    parseErrorKey: "content_entry_not_found",
   };
 };
 
 export default function XmindViewerClient() {
+  const providedConfig = useOptionalToolConfig("xmind-viewer");
   const inputRef = useRef<HTMLInputElement>(null);
   const canvasHandleRef = useRef<XmindMindMapCanvasHandle>(null);
   const idCounterRef = useRef(0);
@@ -795,6 +1144,9 @@ export default function XmindViewerClient() {
   const [activeSheetId, setActiveSheetId] = useState<string | null>(null);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
   const [editingTitle, setEditingTitle] = useState("");
+  const [relationTargetId, setRelationTargetId] = useState("");
+  const [relationTitleInput, setRelationTitleInput] = useState("");
+  const [boundaryTitleInput, setBoundaryTitleInput] = useState("");
   const [canvasViewResetKey, setCanvasViewResetKey] = useState(0);
   const copyHintTimerRef = useRef<number | null>(null);
   const titleEditSessionRef = useRef<{ nodeId: string | null; hasPushedHistory: boolean }>({
@@ -810,6 +1162,7 @@ export default function XmindViewerClient() {
   const autosaveTimerRef = useRef<number | null>(null);
 
   const sheetViewByIdRef = useRef<Record<string, ViewStateBundle>>({});
+  const ui = useMemo(() => providedConfig?.ui as XmindViewerUi, [providedConfig?.ui]);
 
   const createId = useCallback(() => {
     idCounterRef.current += 1;
@@ -949,36 +1302,96 @@ export default function XmindViewerClient() {
   const selectedNode = selectedContext?.node ?? null;
   const selectedNodeIsRoot = selectedContext?.parent === null;
   const selectedNodeHasChildren = (selectedNode?.children.length ?? 0) > 0;
+  const selectedNodeBoundary = useMemo(() => {
+    if (!activeSheet?.boundaries || !selectedNodeId) return null;
+    return activeSheet.boundaries.find((boundary) => boundary.nodeId === selectedNodeId) ?? null;
+  }, [activeSheet?.boundaries, selectedNodeId]);
+
+  const nodeTitleById = useMemo(() => {
+    const map = new Map<string, string>();
+    const walk = (node: MindMapNode | null) => {
+      if (!node) return;
+      map.set(node.id, node.title || ui.untitled);
+      for (const child of node.children) walk(child);
+    };
+    walk(activeSheet?.rootTopic ?? null);
+    return map;
+  }, [activeSheet?.rootTopic, ui.untitled]);
+
+  const relationTargetOptions = useMemo(() => {
+    if (!activeSheet?.rootTopic || !selectedNodeId) return [];
+    const options: Array<{ id: string; title: string }> = [];
+    const walk = (node: MindMapNode) => {
+      if (node.id !== selectedNodeId) options.push({ id: node.id, title: node.title || ui.untitled });
+      for (const child of node.children) walk(child);
+    };
+    walk(activeSheet.rootTopic);
+    return options;
+  }, [activeSheet?.rootTopic, selectedNodeId, ui.untitled]);
+
+  const selectedNodeRelationships = useMemo(() => {
+    if (!activeSheet?.relationships || !selectedNodeId) return [];
+    return activeSheet.relationships
+      .filter((relation) => relation.fromId === selectedNodeId || relation.toId === selectedNodeId)
+      .map((relation) => {
+        const targetId = relation.fromId === selectedNodeId ? relation.toId : relation.fromId;
+        return {
+          ...relation,
+          targetId,
+          targetTitle: nodeTitleById.get(targetId) ?? ui.untitled,
+        };
+      });
+  }, [activeSheet?.relationships, nodeTitleById, selectedNodeId, ui.untitled]);
+
+  const relationExists = useMemo(() => {
+    if (!activeSheet?.relationships || !selectedNodeId || !relationTargetId) return false;
+    return activeSheet.relationships.some(
+      (relation) =>
+        (relation.fromId === selectedNodeId && relation.toId === relationTargetId) ||
+        (relation.fromId === relationTargetId && relation.toId === selectedNodeId),
+    );
+  }, [activeSheet?.relationships, relationTargetId, selectedNodeId]);
+
+  const relationGuardText = useMemo(() => {
+    if (!selectedNodeId || !relationTargetId) return "";
+    if (selectedNodeId === relationTargetId) return ui.relationSelfBlocked;
+    if (relationExists) return ui.relationExists;
+    return "";
+  }, [relationExists, relationTargetId, selectedNodeId, ui.relationExists, ui.relationSelfBlocked]);
 
   const collapseAction = useMemo(() => {
     if (!activeSheet?.rootTopic) return null;
     const canToggleSelected = Boolean(selectedNodeId && selectedNodeHasChildren);
     if (canToggleSelected) {
       return {
-        label: selectedNode?.collapsed ? "展开" : "折叠",
+        label: selectedNode?.collapsed ? ui.expand : ui.collapse,
         mode: "selected" as const,
       };
     }
 
     const shouldCollapse = hasAnyExpandedBranch(activeSheet.rootTopic);
     return {
-      label: shouldCollapse ? "全部折叠" : "全部展开",
+      label: shouldCollapse ? ui.collapseAll : ui.expandAll,
       mode: shouldCollapse ? ("collapse-all" as const) : ("expand-all" as const),
     };
-  }, [activeSheet?.rootTopic, selectedNode?.collapsed, selectedNodeHasChildren, selectedNodeId]);
+  }, [activeSheet?.rootTopic, selectedNode?.collapsed, selectedNodeHasChildren, selectedNodeId, ui.collapse, ui.collapseAll, ui.expand, ui.expandAll]);
 
   const outline = useMemo(() => {
     if (!activeSheet?.rootTopic) return "";
     const lines: string[] = [];
     lines.push(`# ${activeSheet.title.trim() || "Sheet"}`);
     lines.push(...mindMapNodeToLines(activeSheet.rootTopic, 0));
-    return lines.join("\n").trim();
-  }, [activeSheet]);
+    const text = lines.join("\n").trim();
+    return text.replaceAll("(无标题)", ui.untitled);
+  }, [activeSheet, ui.untitled]);
 
   useEffect(() => {
     setEditingTitle(selectedNode?.title ?? "");
     titleEditSessionRef.current = { nodeId: selectedNode?.id ?? null, hasPushedHistory: false };
-  }, [selectedNode?.id, selectedNode?.title]);
+    setRelationTargetId("");
+    setRelationTitleInput("");
+    setBoundaryTitleInput(selectedNodeBoundary?.title ?? "");
+  }, [selectedNode?.id, selectedNode?.title, selectedNodeBoundary?.id, selectedNodeBoundary?.title]);
 
   const applyActiveSheetUpdate = useCallback(
     (updater: (sheet: MindMapSheet) => MindMapSheet, options?: { recordHistory?: boolean }) => {
@@ -1078,8 +1491,8 @@ export default function XmindViewerClient() {
   );
 
   const createNewSheet = useCallback(() => {
-    const defaultTitle = `画布 ${editorSheets.length + 1}`;
-    const rawTitle = window.prompt("新建画布名称", defaultTitle);
+    const defaultTitle = `${ui.sheetPrefix} ${editorSheets.length + 1}`;
+    const rawTitle = window.prompt(ui.newCanvasNamePrompt, defaultTitle);
     if (!rawTitle) return;
     const title = rawTitle.trim();
     if (!title) return;
@@ -1087,9 +1500,11 @@ export default function XmindViewerClient() {
     const nextSheet: MindMapSheet = {
       id: createId(),
       title,
-      rootTopic: createNodeWithTitle(createId(), "中心主题"),
+      rootTopic: createNodeWithTitle(createId(), ui.centerTopic),
       layoutMode: activeSheet?.layoutMode ?? "balanced",
       themeId: activeSheet?.themeId ?? "classicLight",
+      relationships: [],
+      boundaries: [],
     };
 
     pushHistory({ sheets: editorSheets, activeSheetId, selectedNodeId });
@@ -1104,6 +1519,9 @@ export default function XmindViewerClient() {
     editorSheets,
     pushHistory,
     selectedNodeId,
+    ui.centerTopic,
+    ui.newCanvasNamePrompt,
+    ui.sheetPrefix,
     switchActiveSheet,
   ]);
 
@@ -1111,52 +1529,55 @@ export default function XmindViewerClient() {
     if (!activeSheetId) return;
     const current = editorSheets.find((sheet) => sheet.id === activeSheetId);
     if (!current) return;
-    const rawTitle = window.prompt("重命名画布", current.title);
+    const rawTitle = window.prompt(ui.renameCanvasPrompt, current.title);
     if (!rawTitle) return;
     const title = rawTitle.trim();
     if (!title) return;
 
     pushHistory({ sheets: editorSheets, activeSheetId, selectedNodeId });
     setEditorSheets((prev) => prev.map((sheet) => (sheet.id === activeSheetId ? { ...sheet, title } : sheet)));
-  }, [activeSheetId, editorSheets, pushHistory, selectedNodeId]);
+  }, [activeSheetId, editorSheets, pushHistory, selectedNodeId, ui.renameCanvasPrompt]);
 
   const duplicateActiveSheet = useCallback(() => {
     if (!activeSheetId) return;
     const current = editorSheets.find((sheet) => sheet.id === activeSheetId);
     if (!current) return;
 
-    const nextTitle = `${current.title} 副本`;
-    const rawTitle = window.prompt("复制画布名称", nextTitle);
+    const nextTitle = `${current.title}${ui.copiedSuffix}`;
+    const rawTitle = window.prompt(ui.duplicateCanvasPrompt, nextTitle);
     if (!rawTitle) return;
     const title = rawTitle.trim();
     if (!title) return;
 
+    const idMap = new Map<string, string>();
     const clonedRoot = current.rootTopic
-      ? cloneMindMapNodeWithNewIds(current.rootTopic, createId)
-      : createNodeWithTitle(createId(), "中心主题");
+      ? cloneMindMapNodeWithNewIds(current.rootTopic, createId, idMap)
+      : createNodeWithTitle(createId(), ui.centerTopic);
     const nextSheet: MindMapSheet = {
       ...current,
       id: createId(),
       title,
       rootTopic: clonedRoot,
       themeId: current.themeId ?? "classicLight",
+      relationships: remapRelationships(current.relationships, idMap),
+      boundaries: remapBoundaries(current.boundaries, idMap),
     };
 
     pushHistory({ sheets: editorSheets, activeSheetId, selectedNodeId });
     setEditorSheets((prev) => [...prev, nextSheet]);
     switchActiveSheet(nextSheet.id);
     setSelectedNodeId(nextSheet.rootTopic?.id ?? null);
-  }, [activeSheetId, createId, editorSheets, pushHistory, selectedNodeId, switchActiveSheet]);
+  }, [activeSheetId, createId, editorSheets, pushHistory, selectedNodeId, switchActiveSheet, ui.centerTopic, ui.copiedSuffix, ui.duplicateCanvasPrompt]);
 
   const deleteActiveSheet = useCallback(() => {
     if (!activeSheetId) return;
     if (editorSheets.length <= 1) {
-      window.alert("至少保留一个画布。");
+      window.alert(ui.keepOneCanvasAlert);
       return;
     }
     const sheet = editorSheets.find((item) => item.id === activeSheetId);
     if (!sheet) return;
-    const ok = window.confirm(`确认删除画布「${sheet.title}」？`);
+    const ok = window.confirm(`${ui.deleteCanvasConfirm} "${sheet.title}"?`);
     if (!ok) return;
 
     pushHistory({ sheets: editorSheets, activeSheetId, selectedNodeId });
@@ -1167,7 +1588,7 @@ export default function XmindViewerClient() {
     const nextActiveId = nextActive?.id ?? null;
     switchActiveSheet(nextActiveId);
     setSelectedNodeId(nextActive?.rootTopic?.id ?? null);
-  }, [activeSheetId, activeSheetIndex, editorSheets, pushHistory, selectedNodeId, switchActiveSheet]);
+  }, [activeSheetId, activeSheetIndex, editorSheets, pushHistory, selectedNodeId, switchActiveSheet, ui.deleteCanvasConfirm, ui.keepOneCanvasAlert]);
 
   const moveActiveSheet = useCallback(
     (direction: -1 | 1) => {
@@ -1195,12 +1616,12 @@ export default function XmindViewerClient() {
       const [nextRoot] = mapNodeById(sheet.rootTopic, targetId, (node) => ({
         ...node,
         collapsed: false,
-        children: [...node.children, createNodeWithTitle(nextId)],
+        children: [...node.children, createNodeWithTitle(nextId, ui.newNode)],
       }));
       return { ...sheet, rootTopic: nextRoot };
     });
     setSelectedNodeId(nextId);
-  }, [activeSheet?.rootTopic, applyActiveSheetUpdate, createId, selectedNodeId]);
+  }, [activeSheet?.rootTopic, applyActiveSheetUpdate, createId, selectedNodeId, ui.newNode]);
 
   const addSiblingNode = useCallback(() => {
     if (!activeSheet?.rootTopic || !selectedNodeId) return;
@@ -1214,14 +1635,14 @@ export default function XmindViewerClient() {
       if (!sheet.rootTopic) return sheet;
       const [nextRoot] = mapNodeById(sheet.rootTopic, parentId, (parentNode) => {
         const nextChildren = [...parentNode.children];
-        nextChildren.splice(insertIndex, 0, createNodeWithTitle(nextId));
+        nextChildren.splice(insertIndex, 0, createNodeWithTitle(nextId, ui.newNode));
         return { ...parentNode, collapsed: false, children: nextChildren };
       });
       return { ...sheet, rootTopic: nextRoot };
     });
 
     setSelectedNodeId(nextId);
-  }, [activeSheet?.rootTopic, applyActiveSheetUpdate, createId, selectedNodeId]);
+  }, [activeSheet?.rootTopic, applyActiveSheetUpdate, createId, selectedNodeId, ui.newNode]);
 
   const deleteSelectedNode = useCallback(() => {
     if (!activeSheet?.rootTopic || !selectedNodeId) return;
@@ -1233,7 +1654,13 @@ export default function XmindViewerClient() {
       const result = removeNodeById(sheet.rootTopic, selectedNodeId);
       if (!result.removed) return sheet;
       nextSelectedId = result.parentId ?? sheet.rootTopic.id;
-      return { ...sheet, rootTopic: result.node };
+      const nodeIds = collectNodeIds(result.node);
+      return {
+        ...sheet,
+        rootTopic: result.node,
+        relationships: filterRelationshipsByNodeIds(sheet.relationships, nodeIds),
+        boundaries: filterBoundariesByNodeIds(sheet.boundaries, nodeIds),
+      };
     });
 
     setSelectedNodeId(nextSelectedId);
@@ -1294,10 +1721,192 @@ export default function XmindViewerClient() {
     [activeSheet?.rootTopic, applyActiveSheetUpdate],
   );
 
+  const addRelationship = useCallback(() => {
+    if (!selectedNodeId || !relationTargetId || selectedNodeId === relationTargetId) return;
+    const normalizedTitle = relationTitleInput.trim() || undefined;
+
+    applyActiveSheetUpdate((sheet) => {
+      const existing = sheet.relationships ?? [];
+      const duplicate = existing.some(
+        (relation) =>
+          (relation.fromId === selectedNodeId && relation.toId === relationTargetId) ||
+          (relation.fromId === relationTargetId && relation.toId === selectedNodeId),
+      );
+      if (duplicate) return sheet;
+      return {
+        ...sheet,
+        relationships: [
+          ...existing,
+          {
+            id: createId(),
+            fromId: selectedNodeId,
+            toId: relationTargetId,
+            title: normalizedTitle,
+          },
+        ],
+      };
+    });
+
+    setRelationTargetId("");
+    setRelationTitleInput("");
+  }, [applyActiveSheetUpdate, createId, relationTargetId, relationTitleInput, selectedNodeId]);
+
+  const removeRelationship = useCallback(
+    (relationId: string) => {
+      applyActiveSheetUpdate((sheet) => ({
+        ...sheet,
+        relationships: (sheet.relationships ?? []).filter((relation) => relation.id !== relationId),
+      }));
+    },
+    [applyActiveSheetUpdate],
+  );
+
+  const addBoundary = useCallback(() => {
+    if (!selectedNodeId || selectedNodeBoundary) return;
+    const normalizedTitle = boundaryTitleInput.trim() || undefined;
+    applyActiveSheetUpdate((sheet) => {
+      const boundaries = sheet.boundaries ?? [];
+      if (boundaries.some((boundary) => boundary.nodeId === selectedNodeId)) return sheet;
+      return {
+        ...sheet,
+        boundaries: [
+          ...boundaries,
+          {
+            id: createId(),
+            nodeId: selectedNodeId,
+            title: normalizedTitle,
+          },
+        ],
+      };
+    });
+  }, [applyActiveSheetUpdate, boundaryTitleInput, createId, selectedNodeBoundary, selectedNodeId]);
+
+  const updateBoundaryTitle = useCallback(() => {
+    if (!selectedNodeId || !selectedNodeBoundary) return;
+    const normalizedTitle = boundaryTitleInput.trim() || undefined;
+    const currentTitle = selectedNodeBoundary.title?.trim() || undefined;
+    if (currentTitle === normalizedTitle) return;
+    applyActiveSheetUpdate((sheet) => {
+      const boundaries = sheet.boundaries ?? [];
+      let changed = false;
+      const nextBoundaries = boundaries.map((boundary) => {
+        if (boundary.nodeId !== selectedNodeId) return boundary;
+        const previousTitle = boundary.title?.trim() || undefined;
+        if (previousTitle === normalizedTitle) return boundary;
+        changed = true;
+        return { ...boundary, title: normalizedTitle };
+      });
+      if (!changed) return sheet;
+      return { ...sheet, boundaries: nextBoundaries };
+    });
+  }, [applyActiveSheetUpdate, boundaryTitleInput, selectedNodeBoundary, selectedNodeId]);
+
+  const removeBoundary = useCallback(() => {
+    if (!selectedNodeId || !selectedNodeBoundary) return;
+    applyActiveSheetUpdate((sheet) => {
+      const boundaries = sheet.boundaries ?? [];
+      const nextBoundaries = boundaries.filter((boundary) => boundary.nodeId !== selectedNodeId);
+      if (nextBoundaries.length === boundaries.length) return sheet;
+      return { ...sheet, boundaries: nextBoundaries };
+    });
+    setBoundaryTitleInput("");
+  }, [applyActiveSheetUpdate, selectedNodeBoundary, selectedNodeId]);
+
+  useEffect(() => {
+    if (editorSheets.length === 0) return;
+
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.defaultPrevented) return;
+      if (isEditableTarget(event.target)) return;
+
+      const key = event.key.toLowerCase();
+      const hasMod = event.metaKey || event.ctrlKey;
+      const canvas = canvasHandleRef.current;
+
+      if (hasMod && key === "z") {
+        event.preventDefault();
+        if (event.shiftKey) {
+          if (canRedo) redo();
+        } else if (canUndo) {
+          undo();
+        }
+        return;
+      }
+
+      if (hasMod && key === "y") {
+        event.preventDefault();
+        if (canRedo) redo();
+        return;
+      }
+
+      if (hasMod && (key === "=" || key === "+")) {
+        event.preventDefault();
+        canvas?.zoomByFactor(1.1);
+        return;
+      }
+
+      if (hasMod && key === "-") {
+        event.preventDefault();
+        canvas?.zoomByFactor(0.9);
+        return;
+      }
+
+      if (hasMod && key === "0") {
+        event.preventDefault();
+        canvas?.fitToView();
+        return;
+      }
+
+      if (hasMod && event.shiftKey && key === "f") {
+        event.preventDefault();
+        canvas?.toggleFullscreen();
+        return;
+      }
+
+      if (event.repeat && (key === "tab" || key === "enter" || key === "delete" || key === "backspace")) return;
+
+      if (key === "tab") {
+        event.preventDefault();
+        addChildNode();
+        return;
+      }
+
+      if (key === "enter") {
+        event.preventDefault();
+        addSiblingNode();
+        return;
+      }
+
+      if (key === "delete" || key === "backspace") {
+        event.preventDefault();
+        deleteSelectedNode();
+        return;
+      }
+
+      if (key === " ") {
+        event.preventDefault();
+        runCollapseAction();
+      }
+    };
+
+    window.addEventListener("keydown", onKeyDown);
+    return () => window.removeEventListener("keydown", onKeyDown);
+  }, [
+    addChildNode,
+    addSiblingNode,
+    canRedo,
+    canUndo,
+    deleteSelectedNode,
+    editorSheets.length,
+    redo,
+    runCollapseAction,
+    undo,
+  ]);
+
   const runParse = async (selected: File) => {
     const looksLikeXmind = /\.xmind$/i.test(selected.name);
     if (!looksLikeXmind) {
-      setError("提示：文件后缀不是 .xmind，但仍会尝试解析（如果是改名文件也可以）。");
+      setError(ui.fileExtHint);
     }
     setFile(selected);
     setParsed(null);
@@ -1310,8 +1919,8 @@ export default function XmindViewerClient() {
     try {
       const next = await parseXmind(selected);
       setParsed(next);
-      if (next.parseError) {
-        setError(next.parseError);
+      if (next.parseErrorKey) {
+        setError(ui.parseErrors[next.parseErrorKey]);
         setEditorSheets([]);
         setActiveSheetId(null);
         setSelectedNodeId(null);
@@ -1330,7 +1939,7 @@ export default function XmindViewerClient() {
 
       if (looksLikeXmind) setError(null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "解析失败，请确认文件是 .xmind。");
+      setError(err instanceof Error ? err.message : ui.parseFailed);
     } finally {
       setIsLoading(false);
     }
@@ -1340,15 +1949,22 @@ export default function XmindViewerClient() {
     const selected = e.target.files?.[0];
     if (!selected) return;
     await runParse(selected);
+    e.target.value = "";
+  };
+
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
   };
 
   const copy = async () => {
     if (!outline) return;
     try {
       await navigator.clipboard.writeText(outline);
-      setCopyHint("已复制");
+      setCopyHint(ui.copied);
     } catch {
-      setCopyHint("复制失败（请检查浏览器权限/HTTPS 环境）");
+      setCopyHint(ui.copyFailed);
     } finally {
       if (copyHintTimerRef.current) window.clearTimeout(copyHintTimerRef.current);
       copyHintTimerRef.current = window.setTimeout(() => setCopyHint(null), 1500);
@@ -1379,9 +1995,9 @@ export default function XmindViewerClient() {
       const suffix = activeSheet ? `-${sanitizeFilename(activeSheet.title)}` : "";
       downloadBlob(`${exportBaseName}${suffix}.png`, blob);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "导出 PNG 失败");
+      setError(err instanceof Error ? err.message : ui.exportPngFailed);
     }
-  }, [activeSheet, exportBaseName]);
+  }, [activeSheet, exportBaseName, ui.exportPngFailed]);
 
   const exportSvg = useCallback(() => {
     const canvas = canvasHandleRef.current;
@@ -1394,9 +2010,9 @@ export default function XmindViewerClient() {
         new Blob([svg], { type: "image/svg+xml;charset=utf-8" }),
       );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "导出 SVG 失败");
+      setError(err instanceof Error ? err.message : ui.exportSvgFailed);
     }
-  }, [activeSheet, exportBaseName]);
+  }, [activeSheet, exportBaseName, ui.exportSvgFailed]);
 
   const exportPdf = useCallback(async () => {
     const canvas = canvasHandleRef.current;
@@ -1415,9 +2031,9 @@ export default function XmindViewerClient() {
       const suffix = activeSheet ? `-${sanitizeFilename(activeSheet.title)}` : "";
       downloadBlob(`${exportBaseName}${suffix}.pdf`, new Blob([pdfBuffer], { type: "application/pdf" }));
     } catch (err) {
-      setError(err instanceof Error ? err.message : "导出 PDF 失败");
+      setError(err instanceof Error ? err.message : ui.exportPdfFailed);
     }
-  }, [activeSheet, exportBaseName]);
+  }, [activeSheet, exportBaseName, ui.exportPdfFailed]);
 
   const exportXmind = useCallback(() => {
     const sheets = editorSheets.length > 0 ? editorSheets : null;
@@ -1444,10 +2060,26 @@ export default function XmindViewerClient() {
       if (attached.length > 0) topic.children = { attached };
 
       if (options?.isRoot && options.sheet) {
+        const extensionPayload = {
+          version: 1,
+          layoutMode: options.sheet.layoutMode,
+          themeId: options.sheet.themeId,
+          relationships: (options.sheet.relationships ?? []).map((relation) => ({
+            id: relation.id,
+            fromId: relation.fromId,
+            toId: relation.toId,
+            title: relation.title ?? "",
+          })),
+          boundaries: (options.sheet.boundaries ?? []).map((boundary) => ({
+            id: boundary.id,
+            nodeId: boundary.nodeId,
+            title: boundary.title ?? "",
+          })),
+        };
         topic.extensions = [
           {
             provider: ATTOOLS_EXTENSION_PROVIDER,
-            content: JSON.stringify({ version: 1, layoutMode: options.sheet.layoutMode, themeId: options.sheet.themeId }),
+            content: JSON.stringify(extensionPayload),
           },
         ];
       }
@@ -1459,6 +2091,18 @@ export default function XmindViewerClient() {
       id: sheet.id,
       title: sheet.title,
       rootTopic: sheet.rootTopic ? nodeToXmindTopic(sheet.rootTopic, { isRoot: true, sheet }) : { id: createZipId(), title: "中心主题" },
+      relationships: (sheet.relationships ?? []).map((relation) => ({
+        id: relation.id || createZipId(),
+        end1Id: relation.fromId,
+        end2Id: relation.toId,
+        title: relation.title ?? "",
+        style: createStyle(),
+      })),
+      boundaries: (sheet.boundaries ?? []).map((boundary) => ({
+        id: boundary.id || createZipId(),
+        nodeId: boundary.nodeId,
+        title: boundary.title ?? "",
+      })),
       style: createStyle(),
       topicPositioning: "fixed",
     }));
@@ -1506,8 +2150,8 @@ export default function XmindViewerClient() {
           <div className="mb-6 rounded-3xl bg-amber-50 p-5 ring-1 ring-amber-200">
             <div className="flex flex-wrap items-start justify-between gap-4">
               <div>
-                <div className="text-sm font-semibold text-amber-900">检测到上次未完成的本地草稿</div>
-                <div className="mt-1 text-xs text-amber-800">是否恢复继续编辑？（草稿仅保存在本地浏览器）</div>
+                <div className="text-sm font-semibold text-amber-900">{ui.draftDetected}</div>
+                <div className="mt-1 text-xs text-amber-800">{ui.draftPrompt}</div>
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <button
@@ -1515,21 +2159,21 @@ export default function XmindViewerClient() {
                   onClick={restoreDraft}
                   className="rounded-2xl bg-amber-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-amber-700"
                 >
-                  恢复草稿
+                  {ui.restoreDraft}
                 </button>
                 <button
                   type="button"
                   onClick={() => setDraftStatus("dismissed")}
                   className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-amber-900 ring-1 ring-amber-200 transition hover:bg-amber-100"
                 >
-                  忽略
+                  {ui.ignoreDraft}
                 </button>
                 <button
                   type="button"
                   onClick={deleteDraft}
                   className="rounded-2xl bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
                 >
-                  删除草稿
+                  {ui.deleteDraft}
                 </button>
               </div>
             </div>
@@ -1567,19 +2211,16 @@ export default function XmindViewerClient() {
         >
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <div className="text-sm font-semibold text-slate-900">打开 .xmind 文件</div>
-              <div className="mt-1 text-xs text-slate-500">拖拽到此处或点击选择文件（本地解析，不上传）</div>
+              <div className="text-sm font-semibold text-slate-900">{ui.openFile}</div>
+              <div className="mt-1 text-xs text-slate-500">{ui.dropTip || DEFAULT_DROP_REPLACE_HINT}</div>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <button
                 type="button"
-                onClick={() => {
-                  if (inputRef.current) inputRef.current.value = "";
-                  inputRef.current?.click();
-                }}
+                onClick={openFilePicker}
                 className="rounded-2xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
-                选择文件
+                {file ? ui.replaceFile : ui.chooseFile}
               </button>
               <button
                 type="button"
@@ -1587,7 +2228,7 @@ export default function XmindViewerClient() {
                 onClick={() => void copy()}
                 className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
               >
-                复制大纲
+                {ui.copyOutline}
               </button>
               <button
                 type="button"
@@ -1599,7 +2240,7 @@ export default function XmindViewerClient() {
                 }}
                 className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
               >
-                下载大纲
+                {ui.downloadOutline}
               </button>
               <button
                 type="button"
@@ -1607,7 +2248,7 @@ export default function XmindViewerClient() {
                 onClick={clear}
                 className="rounded-2xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50 disabled:opacity-60"
               >
-                清除
+                {ui.clear}
               </button>
               <input ref={inputRef} type="file" accept=".xmind" className="hidden" onChange={onChange} />
             </div>
@@ -1615,11 +2256,11 @@ export default function XmindViewerClient() {
 
           {(isLoading || error || copyHint) && (
             <div className="mt-4 flex flex-wrap items-center gap-3 text-xs">
-              {isLoading && <div className="text-slate-600">解析中…</div>}
+              {isLoading && <div className="text-slate-600">{ui.parsing}</div>}
               {copyHint && <div className="text-slate-600" aria-live="polite">{copyHint}</div>}
               {error && (
                 <div className="text-rose-600" aria-live="polite">
-                  错误：{error}
+                  {ui.error}: {error}
                 </div>
               )}
             </div>
@@ -1629,8 +2270,11 @@ export default function XmindViewerClient() {
         {editorSheets.length > 0 && activeSheet && (
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 rounded-3xl bg-white p-5 ring-1 ring-slate-200">
             <div className="text-sm text-slate-700">
-              <span className="font-semibold text-slate-900">Sheet</span>{" "}
-              <span className="text-slate-500">（共 {editorSheets.length} 个）</span>
+              <span className="font-semibold text-slate-900">{ui.sheetTotalPrefix}</span>{" "}
+              <span className="text-slate-500">
+                ({editorSheets.length}
+                {ui.sheetTotalSuffix ? ` ${ui.sheetTotalSuffix}` : ""})
+              </span>
             </div>
             <div className="flex flex-wrap items-center gap-2">
               <select
@@ -1653,21 +2297,21 @@ export default function XmindViewerClient() {
                 onClick={createNewSheet}
                 className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
-                新建画布
+                {ui.newCanvas}
               </button>
               <button
                 type="button"
                 onClick={renameActiveSheet}
                 className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
               >
-                重命名
+                {ui.rename}
               </button>
               <button
                 type="button"
                 onClick={duplicateActiveSheet}
                 className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
               >
-                复制
+                {ui.duplicate}
               </button>
               <button
                 type="button"
@@ -1675,7 +2319,7 @@ export default function XmindViewerClient() {
                 disabled={editorSheets.length <= 1}
                 className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-60"
               >
-                删除
+                {ui.delete}
               </button>
               <button
                 type="button"
@@ -1698,26 +2342,26 @@ export default function XmindViewerClient() {
                 value={activeSheet.layoutMode}
                 onChange={(e) => setSheetLayout(e.target.value as MindMapLayoutMode)}
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none"
-                title="布局模式"
+                title={ui.layoutTitle}
               >
-                <option value="balanced">布局：左右均衡</option>
-                <option value="right">布局：向右</option>
-                <option value="left">布局：向左</option>
-                <option value="up">布局：向上（树形）</option>
-                <option value="down">布局：向下（树形）</option>
-                <option value="downCompact">布局：向下紧凑</option>
-                <option value="downCompact2">布局：向下紧凑2</option>
+                <option value="balanced">{ui.layoutBalanced}</option>
+                <option value="right">{ui.layoutRight}</option>
+                <option value="left">{ui.layoutLeft}</option>
+                <option value="up">{ui.layoutUp}</option>
+                <option value="down">{ui.layoutDown}</option>
+                <option value="downCompact">{ui.layoutDownCompact}</option>
+                <option value="downCompact2">{ui.layoutDownCompact2}</option>
               </select>
 
               <select
                 value={activeSheet.themeId}
                 onChange={(e) => setSheetTheme(e.target.value as MindMapThemeId)}
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none"
-                title="主题"
+                title={ui.themeTitle}
               >
                 {Object.values(themes).map((theme) => (
                   <option key={theme.id} value={theme.id}>
-                    主题：{theme.name}
+                    {ui.themePrefix}: {theme.name}
                   </option>
                 ))}
               </select>
@@ -1728,7 +2372,7 @@ export default function XmindViewerClient() {
                 onClick={undo}
                 className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
               >
-                撤销
+                {ui.undo}
               </button>
               <button
                 type="button"
@@ -1736,7 +2380,7 @@ export default function XmindViewerClient() {
                 onClick={redo}
                 className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
               >
-                重做
+                {ui.redo}
               </button>
               <button
                 type="button"
@@ -1744,7 +2388,7 @@ export default function XmindViewerClient() {
                 onClick={runCollapseAction}
                 className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
               >
-                {collapseAction?.label ?? "折叠/展开"}
+                {collapseAction?.label ?? ui.collapseExpand}
               </button>
 
               <button
@@ -1752,28 +2396,28 @@ export default function XmindViewerClient() {
                 onClick={() => void exportPng()}
                 className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
               >
-                导出 PNG
+                {ui.exportPng}
               </button>
               <button
                 type="button"
                 onClick={exportSvg}
                 className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
               >
-                导出 SVG
+                {ui.exportSvg}
               </button>
               <button
                 type="button"
                 onClick={() => void exportPdf()}
                 className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
               >
-                导出 PDF
+                {ui.exportPdf}
               </button>
               <button
                 type="button"
                 onClick={exportXmind}
                 className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
               >
-                导出 .xmind
+                {ui.exportXmind}
               </button>
             </div>
           </div>
@@ -1785,16 +2429,19 @@ export default function XmindViewerClient() {
             rootTopic={activeSheet?.rootTopic ?? null}
             layoutMode={activeSheet?.layoutMode ?? "balanced"}
             theme={activeTheme}
+            relationships={activeSheet?.relationships ?? []}
+            boundaries={activeSheet?.boundaries ?? []}
             selectedNodeId={selectedNodeId}
             onSelectNode={setSelectedNodeId}
             onToggleCollapse={toggleCollapse}
             onMoveNode={moveNode}
             viewResetKey={canvasViewResetKey}
+            isEnglish={providedConfig?.lang?.toLowerCase().startsWith("en") ?? false}
             fullscreenSidebar={
               activeSheet ? (
                 <div className="space-y-3">
                   <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
-                    <div className="text-xs font-semibold text-slate-700">画布</div>
+                    <div className="text-xs font-semibold text-slate-700">{ui.panelCanvas}</div>
                     <select
                       value={activeSheetId ?? ""}
                       onChange={(e) => {
@@ -1836,21 +2483,21 @@ export default function XmindViewerClient() {
                         onClick={createNewSheet}
                         className="rounded-2xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
                       >
-                        新建
+                        {ui.create}
                       </button>
                       <button
                         type="button"
                         onClick={renameActiveSheet}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200"
                       >
-                        重命名
+                        {ui.rename}
                       </button>
                       <button
                         type="button"
                         onClick={duplicateActiveSheet}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200"
                       >
-                        复制
+                        {ui.duplicate}
                       </button>
                       <button
                         type="button"
@@ -1858,7 +2505,7 @@ export default function XmindViewerClient() {
                         disabled={editorSheets.length <= 1}
                         className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-60"
                       >
-                        删除
+                        {ui.delete}
                       </button>
                       <button
                         type="button"
@@ -1866,7 +2513,7 @@ export default function XmindViewerClient() {
                         disabled={activeSheetIndex <= 0}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
-                        上移
+                        {ui.moveUp}
                       </button>
                       <button
                         type="button"
@@ -1874,36 +2521,36 @@ export default function XmindViewerClient() {
                         disabled={activeSheetIndex < 0 || activeSheetIndex >= editorSheets.length - 1}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
-                        下移
+                        {ui.moveDown}
                       </button>
                     </div>
                   </div>
 
                   <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
-                    <div className="text-xs font-semibold text-slate-700">布局</div>
+                    <div className="text-xs font-semibold text-slate-700">{ui.panelLayout}</div>
                     <select
                       value={activeSheet.layoutMode}
                       onChange={(e) => setSheetLayout(e.target.value as MindMapLayoutMode)}
                       className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none"
-                      title="布局模式"
+                      title={ui.layoutTitle}
                     >
-                      <option value="balanced">左右均衡</option>
-                      <option value="right">向右</option>
-                      <option value="left">向左</option>
-                      <option value="up">向上</option>
-                      <option value="down">向下</option>
-                      <option value="downCompact">向下紧凑</option>
-                      <option value="downCompact2">向下紧凑2</option>
+                      <option value="balanced">{ui.layoutBalanced}</option>
+                      <option value="right">{ui.layoutRight}</option>
+                      <option value="left">{ui.layoutLeft}</option>
+                      <option value="up">{ui.layoutUp}</option>
+                      <option value="down">{ui.layoutDown}</option>
+                      <option value="downCompact">{ui.layoutDownCompact}</option>
+                      <option value="downCompact2">{ui.layoutDownCompact2}</option>
                     </select>
                   </div>
 
                   <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
-                    <div className="text-xs font-semibold text-slate-700">主题</div>
+                    <div className="text-xs font-semibold text-slate-700">{ui.panelTheme}</div>
                     <select
                       value={activeSheet.themeId}
                       onChange={(e) => setSheetTheme(e.target.value as MindMapThemeId)}
                       className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none"
-                      title="主题"
+                      title={ui.themeTitle}
                     >
                       {Object.values(themes).map((theme) => (
                         <option key={theme.id} value={theme.id}>
@@ -1914,7 +2561,7 @@ export default function XmindViewerClient() {
                   </div>
 
                   <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
-                    <div className="text-xs font-semibold text-slate-700">导出</div>
+                    <div className="text-xs font-semibold text-slate-700">{ui.panelExport}</div>
                     <div className="mt-2 grid grid-cols-2 gap-2">
                       <button
                         type="button"
@@ -1948,7 +2595,7 @@ export default function XmindViewerClient() {
                   </div>
 
                   <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
-                    <div className="text-xs font-semibold text-slate-700">编辑</div>
+                    <div className="text-xs font-semibold text-slate-700">{ui.panelEdit}</div>
                     <div className="mt-2 grid grid-cols-3 gap-2">
                       <button
                         type="button"
@@ -1956,7 +2603,7 @@ export default function XmindViewerClient() {
                         onClick={undo}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
-                        撤销
+                        {ui.undo}
                       </button>
                       <button
                         type="button"
@@ -1964,7 +2611,7 @@ export default function XmindViewerClient() {
                         onClick={redo}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
-                        重做
+                        {ui.redo}
                       </button>
                       <button
                         type="button"
@@ -1972,13 +2619,13 @@ export default function XmindViewerClient() {
                         onClick={runCollapseAction}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
-                        {collapseAction?.label ?? "折叠/展开"}
+                        {collapseAction?.label ?? ui.collapseExpand}
                       </button>
                     </div>
                   </div>
 
                   <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
-                    <div className="text-xs font-semibold text-slate-700">节点</div>
+                    <div className="text-xs font-semibold text-slate-700">{ui.panelNode}</div>
                     <input
                       value={editingTitle}
                       onChange={(event) => {
@@ -1987,14 +2634,14 @@ export default function XmindViewerClient() {
                         updateSelectedNodeTitle(nextTitle);
                       }}
                       onBlur={() => {
-                        const normalized = editingTitle.trim() || "(无标题)";
+                        const normalized = editingTitle.trim() || ui.untitled;
                         if (normalized !== editingTitle) {
                           setEditingTitle(normalized);
                           updateSelectedNodeTitle(normalized);
                         }
                       }}
                       className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none"
-                      placeholder="节点标题"
+                      placeholder={ui.nodeTitlePlaceholder}
                     />
                     <div className="mt-2 grid grid-cols-3 gap-2">
                       <button
@@ -2002,7 +2649,7 @@ export default function XmindViewerClient() {
                         onClick={addChildNode}
                         className="rounded-2xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
                       >
-                        子节点
+                        {ui.childNode}
                       </button>
                       <button
                         type="button"
@@ -2010,7 +2657,7 @@ export default function XmindViewerClient() {
                         disabled={selectedNodeIsRoot}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
-                        同级
+                        {ui.siblingNode}
                       </button>
                       <button
                         type="button"
@@ -2018,11 +2665,69 @@ export default function XmindViewerClient() {
                         disabled={selectedNodeIsRoot}
                         className="rounded-2xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
                       >
-                        删除
+                        {ui.delete}
                       </button>
                     </div>
                     <div className="mt-2 text-[11px] text-slate-500">
-                      {selectedNode ? `当前：${selectedNode.title.slice(0, 30)}` : "未选中节点"}
+                      {selectedNode ? `${ui.currentNode}: ${selectedNode.title.slice(0, 30)}` : ui.noNodeSelected}
+                    </div>
+                    <div className="mt-3 rounded-2xl bg-slate-50 p-2 ring-1 ring-slate-200">
+                      <div className="text-[11px] font-semibold text-slate-700">{ui.boundaryTitle}</div>
+                      <input
+                        value={boundaryTitleInput}
+                        onChange={(event) => setBoundaryTitleInput(event.target.value)}
+                        onBlur={updateBoundaryTitle}
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none"
+                        placeholder={ui.boundaryLabel}
+                      />
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={addBoundary}
+                          disabled={!selectedNodeId || Boolean(selectedNodeBoundary)}
+                          className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                        >
+                          {ui.boundaryAdd}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={removeBoundary}
+                          disabled={!selectedNodeBoundary}
+                          className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+                        >
+                          {ui.boundaryRemove}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-3 rounded-2xl bg-slate-50 p-2 ring-1 ring-slate-200">
+                      <div className="text-[11px] font-semibold text-slate-700">{ui.relationTitle}</div>
+                      <select
+                        value={relationTargetId}
+                        onChange={(event) => setRelationTargetId(event.target.value)}
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none"
+                      >
+                        <option value="">{ui.relationTarget}</option>
+                        {relationTargetOptions.map((option) => (
+                          <option key={option.id} value={option.id}>
+                            {option.title.slice(0, 60)}
+                          </option>
+                        ))}
+                      </select>
+                      <input
+                        value={relationTitleInput}
+                        onChange={(event) => setRelationTitleInput(event.target.value)}
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none"
+                        placeholder={ui.relationLabel}
+                      />
+                      <button
+                        type="button"
+                        onClick={addRelationship}
+                        disabled={!relationTargetId || relationExists}
+                        className="mt-2 w-full rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                      >
+                        {ui.relationAdd}
+                      </button>
+                      {relationGuardText ? <div className="mt-1 text-[11px] text-amber-700">{relationGuardText}</div> : null}
                     </div>
                   </div>
                 </div>
@@ -2035,13 +2740,13 @@ export default function XmindViewerClient() {
           <div className="space-y-4">
             {activeSheet && (
               <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
-                <div className="text-sm font-semibold text-slate-900">节点编辑</div>
+                <div className="text-sm font-semibold text-slate-900">{ui.nodeEditor}</div>
                 {!selectedNode ? (
-                  <div className="mt-3 text-sm text-slate-500">请选择一个节点开始编辑。</div>
+                  <div className="mt-3 text-sm text-slate-500">{ui.selectNodeTip}</div>
                 ) : (
                   <>
                     <label className="mt-3 block text-xs font-semibold text-slate-700">
-                      节点标题
+                      {ui.nodeTitleLabel}
                       <input
                         value={editingTitle}
                         onChange={(event) => {
@@ -2050,14 +2755,14 @@ export default function XmindViewerClient() {
                           updateSelectedNodeTitle(nextTitle);
                         }}
                         onBlur={() => {
-                          const normalized = editingTitle.trim() || "(无标题)";
+                          const normalized = editingTitle.trim() || ui.untitled;
                           if (normalized !== editingTitle) {
                             setEditingTitle(normalized);
                             updateSelectedNodeTitle(normalized);
                           }
                         }}
                         className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none"
-                        placeholder="输入节点标题"
+                        placeholder={ui.inputNodeTitle}
                       />
                     </label>
 
@@ -2067,7 +2772,7 @@ export default function XmindViewerClient() {
                         onClick={addChildNode}
                         className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                       >
-                        添加子节点
+                        {ui.addChildNode}
                       </button>
                       <button
                         type="button"
@@ -2075,7 +2780,7 @@ export default function XmindViewerClient() {
                         disabled={selectedNodeIsRoot}
                         className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
-                        添加同级
+                        {ui.addSiblingNode}
                       </button>
                       <button
                         type="button"
@@ -2086,7 +2791,7 @@ export default function XmindViewerClient() {
                         disabled={!selectedNodeHasChildren}
                         className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
-                        {selectedNode.collapsed ? "展开" : "折叠"}
+                        {selectedNode.collapsed ? ui.expand : ui.collapse}
                       </button>
                       <button
                         type="button"
@@ -2094,12 +2799,101 @@ export default function XmindViewerClient() {
                         disabled={selectedNodeIsRoot}
                         className="rounded-2xl bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
                       >
-                        删除节点
+                        {ui.deleteNode}
                       </button>
                     </div>
 
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="text-xs font-semibold text-slate-700">{ui.boundaryTitle}</div>
+                      <div className="mt-2 grid gap-2">
+                        <input
+                          value={boundaryTitleInput}
+                          onChange={(event) => setBoundaryTitleInput(event.target.value)}
+                          onBlur={updateBoundaryTitle}
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
+                          placeholder={ui.boundaryLabel}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={addBoundary}
+                            disabled={!selectedNodeId || Boolean(selectedNodeBoundary)}
+                            className="rounded-2xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                          >
+                            {ui.boundaryAdd}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={removeBoundary}
+                            disabled={!selectedNodeBoundary}
+                            className="rounded-2xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+                          >
+                            {ui.boundaryRemove}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="text-xs font-semibold text-slate-700">{ui.relationTitle}</div>
+                      <div className="mt-2 grid gap-2">
+                        <select
+                          value={relationTargetId}
+                          onChange={(event) => setRelationTargetId(event.target.value)}
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
+                        >
+                          <option value="">{ui.relationTarget}</option>
+                          {relationTargetOptions.map((option) => (
+                            <option key={option.id} value={option.id}>
+                              {option.title.slice(0, 80)}
+                            </option>
+                          ))}
+                        </select>
+                        <input
+                          value={relationTitleInput}
+                          onChange={(event) => setRelationTitleInput(event.target.value)}
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
+                          placeholder={ui.relationLabel}
+                        />
+                        <button
+                          type="button"
+                          onClick={addRelationship}
+                          disabled={!relationTargetId || relationExists}
+                          className="rounded-2xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                        >
+                          {ui.relationAdd}
+                        </button>
+                        {relationGuardText ? <div className="text-xs text-amber-700">{relationGuardText}</div> : null}
+                      </div>
+
+                      <div className="mt-3 space-y-2">
+                        {selectedNodeRelationships.length === 0 ? (
+                          <div className="text-xs text-slate-500">{ui.relationEmpty}</div>
+                        ) : (
+                          selectedNodeRelationships.map((relation) => (
+                            <div
+                              key={relation.id}
+                              className="flex items-center justify-between gap-2 rounded-xl bg-white px-3 py-2 text-xs text-slate-700 ring-1 ring-slate-200"
+                            >
+                              <div className="min-w-0">
+                                <div className="truncate font-semibold text-slate-900">{relation.targetTitle}</div>
+                                {relation.title ? <div className="truncate text-slate-500">{relation.title}</div> : null}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeRelationship(relation.id)}
+                                className="rounded-xl bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
+                              >
+                                {ui.relationRemove}
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
+                    </div>
+
                     <div className="mt-3 text-xs text-slate-500">
-                      {selectedNodeIsRoot ? "根节点不能删除，也不能添加同级节点。" : "可编辑选中节点，并进行增删改与折叠。"}
+                      {selectedNodeIsRoot ? ui.rootNodeTip : ui.nodeEditTip}
                     </div>
                   </>
                 )}
@@ -2107,17 +2901,19 @@ export default function XmindViewerClient() {
             )}
 
             <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
-              <div className="text-sm font-semibold text-slate-900">文件信息</div>
+              <div className="text-sm font-semibold text-slate-900">{ui.fileInfo}</div>
               <div className="mt-3 text-sm text-slate-700">
-                <div>文件名：{file?.name ?? "-"}</div>
-                <div className="mt-1">大小：{file ? formatBytes(file.size) : "-"}</div>
-                <div className="mt-1">状态：{isLoading ? "解析中..." : error ? "解析失败" : parsed ? "已解析" : "未解析"}</div>
+                <div>{ui.fileName}: {file?.name ?? "-"}</div>
+                <div className="mt-1">{ui.fileSize}: {file ? formatBytes(file.size) : "-"}</div>
+                <div className="mt-1">
+                  {ui.fileStatus}: {isLoading ? ui.statusParsing : error ? ui.statusFailed : parsed ? ui.statusParsed : ui.statusIdle}
+                </div>
               </div>
               {parsed && (
                 <div className="mt-4">
-                  <div className="text-xs font-semibold text-slate-900">压缩包条目</div>
+                  <div className="text-xs font-semibold text-slate-900">{ui.zipEntries}</div>
                   <div className="mt-2 text-xs text-slate-500">
-                    解析来源：<code className="font-mono">{parsed.source ?? "-"}</code>
+                    {ui.parseSource}: <code className="font-mono">{parsed.source ?? "-"}</code>
                   </div>
                   <div className="mt-2 max-h-44 overflow-auto rounded-2xl bg-slate-50 p-3 text-xs text-slate-600 ring-1 ring-slate-200">
                     {parsed.entries.join("\n")}
@@ -2127,23 +2923,22 @@ export default function XmindViewerClient() {
             </div>
 
             <div className="rounded-3xl bg-slate-50 p-5 ring-1 ring-slate-200 text-xs text-slate-500">
-              说明：.xmind 本质是 zip 文件。当前版本支持解析 <code className="font-mono">content.json</code>（新格式）与{" "}
-              <code className="font-mono">content.xml</code>（旧格式），支持在 Canvas 中进行基础编辑。
+              {ui.noteBlock}
             </div>
           </div>
 
           <div className="space-y-4">
             <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
               <div className="flex items-center justify-between gap-3">
-                <div className="text-sm font-semibold text-slate-900">大纲预览</div>
+                <div className="text-sm font-semibold text-slate-900">{ui.outlinePreview}</div>
                 <div className="text-xs text-slate-500">
-                  {activeSheet ? `当前：${activeSheet.title}` : "-"}
+                  {activeSheet ? `${ui.currentSheet}: ${activeSheet.title}` : "-"}
                 </div>
               </div>
               <textarea
                 value={outline}
                 readOnly
-                placeholder="解析后的大纲会显示在这里…"
+                placeholder={ui.outlinePlaceholder}
                 className="mt-4 h-96 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-xs text-slate-900 outline-none"
               />
             </div>
@@ -2153,35 +2948,30 @@ export default function XmindViewerClient() {
 
       <div className="grid gap-6 lg:grid-cols-2">
         <div className="rounded-3xl bg-white p-6 ring-1 ring-slate-200">
-          <div className="text-base font-semibold text-slate-900">使用教程</div>
+          <div className="text-base font-semibold text-slate-900">{ui.tutorial}</div>
           <ol className="mt-4 list-decimal space-y-2 pl-5 text-sm text-slate-700">
-            <li>拖拽或选择一个 <code className="font-mono">.xmind</code> 文件（文件仅在本地浏览器解析，不会上传）。</li>
-            <li>如果文件包含多个 Sheet，可在上方下拉框切换。</li>
-            <li>Canvas 支持：点击节点选中、点击 +/- 折叠展开、拖拽平移、滚轮缩放、双击自适应。</li>
-            <li>在左侧「节点编辑」中可改标题、增删节点；支持撤销/重做；编辑会自动保存为本地草稿。</li>
-            <li>在「大纲预览」中复制或下载 Markdown，方便粘贴到 Obsidian/Notion/飞书文档等。</li>
+            <li>{ui.tutorial1}</li>
+            <li>{ui.tutorial2}</li>
+            <li>{ui.tutorial3}</li>
+            <li>{ui.tutorial4}</li>
+            <li>{ui.tutorial5}</li>
           </ol>
         </div>
 
         <div className="rounded-3xl bg-white p-6 ring-1 ring-slate-200">
-          <div className="text-base font-semibold text-slate-900">兼容性与常见问题</div>
+          <div className="text-base font-semibold text-slate-900">{ui.faq}</div>
               <div className="mt-4 space-y-3 text-sm text-slate-700">
                 <div>
-                  <div className="font-semibold text-slate-900">支持格式</div>
-                  <div className="mt-1 text-slate-600">
-                    支持 <code className="font-mono">content.json</code>（较新 XMind）与 <code className="font-mono">content.xml</code>（较旧 XMind 8/Classic）。
-                    若仍提示无法解析，可尝试在 XMind 中另存为兼容格式后再打开。
-                  </div>
+                  <div className="font-semibold text-slate-900">{ui.faqFormat}</div>
+                  <div className="mt-1 text-slate-600">{ui.faqFormatDesc}</div>
                 </div>
             <div>
-              <div className="font-semibold text-slate-900">为什么看不到内容？</div>
-              <div className="mt-1 text-slate-600">
-                可能是文件格式较旧、或压缩包内缺少 <code className="font-mono">content.json</code>。你可以先查看左侧「压缩包条目」确认包含哪些文件。
-              </div>
+              <div className="font-semibold text-slate-900">{ui.faqNoContent}</div>
+              <div className="mt-1 text-slate-600">{ui.faqNoContentDesc}</div>
             </div>
             <div>
-              <div className="font-semibold text-slate-900">隐私说明</div>
-              <div className="mt-1 text-slate-600">解析与渲染在本地完成，页面不上传思维导图内容。</div>
+              <div className="font-semibold text-slate-900">{ui.privacy}</div>
+              <div className="mt-1 text-slate-600">{ui.privacyDesc}</div>
             </div>
           </div>
         </div>

@@ -64,6 +64,7 @@ export default function PdfPageExtractorClient() {
   const [pdf, setPdf] = useState<LoadedPdf | null>(null);
   const [pagesInput, setPagesInput] = useState("1-");
   const [mode, setMode] = useState<Mode>("single");
+  const [isDragging, setIsDragging] = useState(false);
 
   const [isWorking, setIsWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -95,8 +96,7 @@ export default function PdfPageExtractorClient() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
+  const loadPdfFile = async (file: File) => {
     if (!file) return;
     setError(null);
     cleanupUrls();
@@ -112,6 +112,36 @@ export default function PdfPageExtractorClient() {
       setPdf(null);
       setError(e instanceof Error ? e.message : DEFAULT_UI.errParseFailed);
     }
+  };
+
+  const handleFileChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    await loadPdfFile(file);
+    event.target.value = "";
+  };
+
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (file) void loadPdfFile(file);
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const run = async (ui: Ui) => {
@@ -173,13 +203,22 @@ export default function PdfPageExtractorClient() {
           <div className="w-full px-4">
             <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">{ui.hint}</div>
 
-            <div className="mt-5 flex flex-wrap items-center gap-2">
+            <div
+              className={`mt-5 flex flex-wrap items-center gap-2 rounded-2xl border-2 border-dashed p-4 transition ${
+                isDragging
+                  ? "border-slate-400 bg-slate-50/60"
+                  : "border-slate-200 bg-slate-50/80"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={openFilePicker}
                 className="rounded-md bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
               >
-                {ui.pick}
+                {pdf ? "点击替换 PDF" : ui.pick}
               </button>
               <button
                 type="button"
@@ -195,6 +234,7 @@ export default function PdfPageExtractorClient() {
                 className="hidden"
                 onChange={handleFileChange}
               />
+              <div className="w-full text-[11px] text-slate-500">支持拖拽新 PDF 到此区域直接替换。</div>
             </div>
 
             {pdf ? (

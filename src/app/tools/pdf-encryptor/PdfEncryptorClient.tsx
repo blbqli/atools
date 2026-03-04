@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
@@ -14,7 +14,11 @@ const DEFAULT_UI = {
   inputTitle: "输入",
   outputTitle: "输出",
   pickPdf: "选择 PDF",
+  replacePdf: "替换 PDF",
   pickEncrypted: "选择加密 JSON",
+  replaceEncrypted: "替换加密 JSON",
+  dropHintEncrypt: "支持点击上传 PDF 或拖拽 PDF 到此区域替换。",
+  dropHintDecrypt: "支持点击上传 JSON 或拖拽 JSON 到此区域替换。",
   password: "密码",
   iterations: "迭代次数",
   run: "执行",
@@ -58,6 +62,7 @@ function PdfEncryptorInner() {
   const [jsonText, setJsonText] = useState("");
 
   const [isWorking, setIsWorking] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [outputText, setOutputText] = useState("");
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -82,8 +87,13 @@ function PdfEncryptorInner() {
     return jsonText.trim().length > 0;
   }, [jsonText, mode, password, pdfFile]);
 
-  const onPdfChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
+  const handlePdfFile = (selected: File) => {
+    const isPdfType = selected.type === "application/pdf";
+    const isPdfExt = selected.name.toLowerCase().endsWith(".pdf");
+    if (!isPdfType && !isPdfExt) {
+      setError("请选择 PDF 文件");
+      return;
+    }
     if (!selected) return;
     resetOutput();
     setPdfFile(selected);
@@ -91,12 +101,59 @@ function PdfEncryptorInner() {
     setDownloadName(`${base}.pdf.enc.json`);
   };
 
+  const onPdfChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    handlePdfFile(selected);
+  };
+
+  const handleJsonFile = async (selected: File) => {
+    const isJsonType = selected.type === "application/json";
+    const isJsonExt = selected.name.toLowerCase().endsWith(".json");
+    if (!isJsonType && !isJsonExt) {
+      setError("请选择 JSON 文件");
+      return;
+    }
+    resetOutput();
+    try {
+      const text = await selected.text();
+      setJsonText(text);
+    } catch {
+      setError("读取 JSON 文件失败");
+    }
+  };
+
   const onJsonFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (!selected) return;
-    resetOutput();
-    const text = await selected.text();
-    setJsonText(text);
+    await handleJsonFile(selected);
+  };
+
+  const openActivePicker = () => {
+    if (mode === "encrypt") pdfRef.current?.click();
+    else jsonRef.current?.click();
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (!selected) return;
+    if (mode === "encrypt") {
+      handlePdfFile(selected);
+    } else {
+      void handleJsonFile(selected);
+    }
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const runEncrypt = async () => {
@@ -208,44 +265,56 @@ function PdfEncryptorInner() {
             <div className="text-sm font-semibold text-slate-900">{ui.inputTitle}</div>
 
             <div className="mt-4 space-y-3">
-              {mode === "encrypt" ? (
-                <>
-                  <input ref={pdfRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={onPdfChange} />
-                  <button
-                    type="button"
-                    onClick={() => pdfRef.current?.click()}
-                    className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-                  >
-                    {ui.pickPdf}
-                  </button>
-                  {pdfFile && (
-                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
-                      <div className="font-medium text-slate-900">{pdfFile.name}</div>
-                      <div className="mt-1 text-xs text-slate-600">{(pdfFile.size / 1024).toFixed(1)} KB</div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <input ref={jsonRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => void onJsonFileChange(e)} />
-                  <button
-                    type="button"
-                    onClick={() => jsonRef.current?.click()}
-                    className="w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                  >
-                    {ui.pickEncrypted}
-                  </button>
-                  <label className="block text-sm text-slate-700">
-                    {ui.inputJson}
-                    <textarea
-                      value={jsonText}
-                      onChange={(e) => setJsonText(e.target.value)}
-                      className="mt-2 h-44 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
-                      placeholder={ui.jsonPlaceholder}
-                    />
-                  </label>
-                </>
-              )}
+              <div
+                className={`rounded-2xl border-2 border-dashed p-3 transition ${
+                  isDragging ? "border-slate-400 bg-slate-50/80" : "border-slate-200 bg-slate-50/80"
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                {mode === "encrypt" ? (
+                  <>
+                    <input ref={pdfRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={onPdfChange} />
+                    <button
+                      type="button"
+                      onClick={openActivePicker}
+                      className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                    >
+                      {pdfFile ? ui.replacePdf : ui.pickPdf}
+                    </button>
+                    {pdfFile && (
+                      <div className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
+                        <div className="font-medium text-slate-900">{pdfFile.name}</div>
+                        <div className="mt-1 text-xs text-slate-600">{(pdfFile.size / 1024).toFixed(1)} KB</div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <input ref={jsonRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => void onJsonFileChange(e)} />
+                    <button
+                      type="button"
+                      onClick={openActivePicker}
+                      className="w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      {jsonText.trim() ? ui.replaceEncrypted : ui.pickEncrypted}
+                    </button>
+                    <label className="mt-3 block text-sm text-slate-700">
+                      {ui.inputJson}
+                      <textarea
+                        value={jsonText}
+                        onChange={(e) => setJsonText(e.target.value)}
+                        className="mt-2 h-44 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
+                        placeholder={ui.jsonPlaceholder}
+                      />
+                    </label>
+                  </>
+                )}
+                <div className="mt-2 text-[11px] text-slate-500">
+                  {mode === "encrypt" ? ui.dropHintEncrypt : ui.dropHintDecrypt}
+                </div>
+              </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block text-sm text-slate-700">

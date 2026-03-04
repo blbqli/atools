@@ -791,6 +791,33 @@ const SealExtractorClient: FC = () => {
     setIsDragging(false);
   };
 
+  const openFilePicker = () => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.value = "";
+    fileInputRef.current.click();
+  };
+
+  const resetWorkspace = () => {
+    extractSeqRef.current += 1;
+    if (extractDebounceRef.current) {
+      window.clearTimeout(extractDebounceRef.current);
+      extractDebounceRef.current = null;
+    }
+    cleanupUrls();
+    setFile(null);
+    setOriginalUrl(null);
+    setIsCropModalOpen(false);
+    setOriginalSize(null);
+    setResultSize(null);
+    setCropRect(null);
+    cropDraftRef.current = null;
+    cropPointerRef.current = null;
+    setCropEnabled(false);
+    setError(null);
+    setIsProcessing(false);
+    setIsDragging(false);
+  };
+
   const handleSensitivityChange = (event: ChangeEvent<HTMLInputElement>) => {
     const value = Number(event.target.value);
     setSensitivity(value);
@@ -1175,6 +1202,13 @@ const SealExtractorClient: FC = () => {
 	      )}
 
 	      <div className="glass-card overflow-hidden rounded-3xl p-8 shadow-xl">
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            className="hidden"
+            onChange={handleFileChange}
+          />
 	        {!file ? (
 	          <div
 	            className={`relative flex h-64 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300 ${
@@ -1185,15 +1219,8 @@ const SealExtractorClient: FC = () => {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={openFilePicker}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
             <div className="mb-4 rounded-full bg-rose-50 p-4">
               <svg
                 className="h-8 w-8 text-rose-500"
@@ -1217,30 +1244,33 @@ const SealExtractorClient: FC = () => {
             </p>
           </div>
         ) : (
-          <div className="space-y-8">
-            <div className="flex flex-col gap-4 rounded-xl bg-slate-50/80 p-4 backdrop-blur-sm md:flex-row md:items-center md:justify-between">
-              <div className="flex flex-wrap items-center gap-3">
-	                <button
-	                  onClick={() => {
-	                    cleanupUrls();
-	                    setFile(null);
-		                    setOriginalUrl(null);
-		                    replaceResultUrl(null);
-		                    replaceCroppedPreviewUrl(null);
-		                    setIsCropModalOpen(false);
-		                    setOriginalSize(null);
-		                    setResultSize(null);
-		                    setCropRect(null);
-	                    cropDraftRef.current = null;
-	                    cropPointerRef.current = null;
-	                    setCropEnabled(false);
-	                    setError(null);
-	                  }}
-	                  className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900"
-	                >
-                  重新选择图片
-                </button>
-                <div className="h-6 w-px bg-slate-200" />
+	          <div className="space-y-8">
+	            <div
+                className={`flex flex-col gap-4 rounded-xl border-2 border-dashed p-4 backdrop-blur-sm transition md:flex-row md:items-center md:justify-between ${
+                  isDragging
+                    ? "border-rose-400 bg-rose-50/50"
+                    : "border-slate-200 bg-slate-50/80"
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+	              <div className="flex flex-wrap items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={openFilePicker}
+                    className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    点击替换图片
+                  </button>
+                  <button
+                    type="button"
+                    onClick={resetWorkspace}
+                    className="rounded-lg bg-white px-4 py-2 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:text-slate-900"
+                  >
+                    清空
+                  </button>
+	                <div className="h-6 w-px bg-slate-200" />
                 <div className="flex items-center gap-2 text-sm">
                   <span className="text-slate-500">提取模式：</span>
                   <div className="inline-flex rounded-full bg-white p-1 shadow-sm">
@@ -1516,10 +1546,13 @@ const SealExtractorClient: FC = () => {
                     {sensitivity}%
                   </span>
                 </div>
+	              </div>
+	            </div>
+              <div className="text-[11px] text-slate-500">
+                支持拖拽新印章图片到此区域直接替换
               </div>
-            </div>
 
-            <div className="grid gap-8 md:grid-cols-2">
+	            <div className="grid gap-8 md:grid-cols-2">
 	              <div className="group relative overflow-hidden rounded-2xl bg-slate-100">
 	                <div className="absolute left-4 top-4 z-10 rounded-lg bg-black/50 px-3 py-1 text-xs font-medium text-white backdrop-blur-md">
 	                  {cropEnabled && cropRect ? "截取预览" : "原图"}

@@ -26,9 +26,12 @@ const clamp = (v: number, min: number, max: number) => Math.min(max, Math.max(mi
 
 const DEFAULT_UI = {
   selectImages: "选择图片",
+  addImages: "追加图片",
+  replaceImages: "点击替换全部",
   sortByName: "按文件名排序",
   clear: "清空",
   selectedCount: "已选 {count} 张",
+  dropReplaceHint: "支持拖拽图片到此区域直接替换全部已选图片",
   generating: "生成中…",
   generateSpriteSheet: "生成雪碧图",
   inputImages: "输入图片",
@@ -78,6 +81,7 @@ function SpriteSheetGeneratorInner() {
   const ui: SpriteSheetGeneratorUi = { ...DEFAULT_UI, ...((config?.ui ?? {}) as Partial<SpriteSheetGeneratorUi>) };
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const pickerModeRef = useRef<"append" | "replace">("append");
 
   const [items, setItems] = useState<Item[]>([]);
   const [padding, setPadding] = useState(2);
@@ -85,6 +89,7 @@ function SpriteSheetGeneratorInner() {
   const [bg, setBg] = useState<"transparent" | "white">("transparent");
 
   const [isWorking, setIsWorking] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const [sheetUrl, setSheetUrl] = useState<string | null>(null);
@@ -101,6 +106,9 @@ function SpriteSheetGeneratorInner() {
   }, [items, sheetUrl]);
 
   const totalCount = items.length;
+  const revokeItemUrls = (target: Item[]) => {
+    for (const it of target) URL.revokeObjectURL(it.url);
+  };
 
   const resetOutput = () => {
     setError(null);
@@ -111,7 +119,7 @@ function SpriteSheetGeneratorInner() {
     setSheetUrl(null);
   };
 
-  const pick = async (files: File[]) => {
+  const pick = async (files: File[], mode: "append" | "replace" = "append") => {
     resetOutput();
     const next: Item[] = [];
     for (const f of files) {
@@ -124,7 +132,13 @@ function SpriteSheetGeneratorInner() {
         setError(e instanceof Error ? e.message : ui.readImageError);
       }
     }
-    setItems((prev) => [...prev, ...next]);
+    setItems((prev) => {
+      if (mode === "replace") {
+        revokeItemUrls(prev);
+        return next;
+      }
+      return [...prev, ...next];
+    });
     if (files.length > 0) {
       const base = files[0].name.replace(/\.[^.]+$/, "") || "sprite";
       setSheetName(`${base}.sprite.png`);
@@ -133,7 +147,33 @@ function SpriteSheetGeneratorInner() {
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    if (files.length > 0) void pick(files);
+    if (files.length > 0) void pick(files, pickerModeRef.current);
+  };
+
+  const openFilePicker = (mode: "append" | "replace") => {
+    if (!inputRef.current) return;
+    pickerModeRef.current = mode;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(event.dataTransfer.files ?? []);
+    if (files.length > 0) {
+      void pick(files, totalCount > 0 ? "replace" : "append");
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const remove = (id: string) => {
@@ -146,7 +186,7 @@ function SpriteSheetGeneratorInner() {
   };
 
   const clear = () => {
-    for (const it of items) URL.revokeObjectURL(it.url);
+    revokeItemUrls(items);
     setItems([]);
     resetOutput();
     if (inputRef.current) inputRef.current.value = "";
@@ -259,16 +299,34 @@ function SpriteSheetGeneratorInner() {
   return (
     <div className="w-full px-4">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div className="flex flex-wrap items-center gap-2">
             <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={onChange} />
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={() => openFilePicker("append")}
               className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
-              {ui.selectImages}
+              {totalCount > 0 ? ui.addImages : ui.selectImages}
             </button>
+            {totalCount > 0 && (
+              <button
+                type="button"
+                onClick={() => openFilePicker("replace")}
+                className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+              >
+                {ui.replaceImages}
+              </button>
+            )}
             <button
               type="button"
               onClick={sortByName}
@@ -295,6 +353,7 @@ function SpriteSheetGeneratorInner() {
           >
             {isWorking ? ui.generating : ui.generateSpriteSheet}
           </button>
+          <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
         </div>
 
         {error && (

@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
@@ -10,6 +10,8 @@ type Delimiter = "," | ";" | "\t";
 const DEFAULT_UI = {
   pasteOrUpload: "粘贴 CSV 或上传文件",
   upload: "选择 CSV 文件",
+  replaceUpload: "替换 CSV 文件",
+  dropHint: "支持点击上传与拖拽上传 CSV，拖拽可直接替换当前内容。",
   clear: "清空",
   hasHeader: "首行是表头",
   delimiter: "分隔符",
@@ -128,6 +130,8 @@ function CsvVisualizerInner() {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const [raw, setRaw] = useState("");
+  const [uploadedFileName, setUploadedFileName] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [hasHeader, setHasHeader] = useState(true);
   const [delimiterMode, setDelimiterMode] = useState<"auto" | Delimiter>("auto");
   const [selectedX, setSelectedX] = useState<string>("__index__");
@@ -280,16 +284,44 @@ function CsvVisualizerInner() {
 
   const clearAll = () => {
     setRaw("");
+    setUploadedFileName(null);
     setSelectedX("__index__");
     setSelectedY("");
     if (fileRef.current) fileRef.current.value = "";
   };
 
+  const loadCsvFile = async (f: File) => {
+    const isCsvMime = f.type === "text/csv";
+    const isCsvExt = f.name.toLowerCase().endsWith(".csv");
+    if (!isCsvMime && !isCsvExt) return;
+    const text = await f.text();
+    setRaw(text);
+    setUploadedFileName(f.name);
+  };
+
   const onUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    const text = await f.text();
-    setRaw(text);
+    await loadCsvFile(f);
+    e.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const f = event.dataTransfer.files?.[0];
+    if (!f) return;
+    void loadCsvFile(f);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   return (
@@ -314,37 +346,50 @@ function CsvVisualizerInner() {
               placeholder="a,b,c\n1,2,3\n4,5,6"
               className="h-52 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
             />
-            <div className="flex flex-wrap items-center gap-2">
-              <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => void onUpload(e)} />
-              <button
-                type="button"
-                onClick={() => fileRef.current?.click()}
-                className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-              >
-                {ui.upload}
-              </button>
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                <input
-                  type="checkbox"
-                  checked={hasHeader}
-                  onChange={(e) => setHasHeader(e.target.checked)}
-                  className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
-                />
-                {ui.hasHeader}
-              </label>
-              <label className="flex items-center gap-2 text-sm text-slate-700">
-                {ui.delimiter}
-                <select
-                  value={delimiterMode}
-                  onChange={(e) => setDelimiterMode(e.target.value as "auto" | Delimiter)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
+            <div
+              className={`rounded-2xl border-2 border-dashed p-3 transition ${
+                isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <input ref={fileRef} type="file" accept=".csv,text/csv" className="hidden" onChange={(e) => void onUpload(e)} />
+                <button
+                  type="button"
+                  onClick={() => fileRef.current?.click()}
+                  className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
                 >
-                  <option value="auto">{ui.auto}</option>
-                  <option value=",">{ui.comma}</option>
-                  <option value=";">{ui.semicolon}</option>
-                  <option value="\t">{ui.tab}</option>
-                </select>
-              </label>
+                  {uploadedFileName ? ui.replaceUpload : ui.upload}
+                </button>
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  <input
+                    type="checkbox"
+                    checked={hasHeader}
+                    onChange={(e) => setHasHeader(e.target.checked)}
+                    className="h-4 w-4 rounded border-slate-300 text-blue-600 focus:ring-blue-500"
+                  />
+                  {ui.hasHeader}
+                </label>
+                <label className="flex items-center gap-2 text-sm text-slate-700">
+                  {ui.delimiter}
+                  <select
+                    value={delimiterMode}
+                    onChange={(e) => setDelimiterMode(e.target.value as "auto" | Delimiter)}
+                    className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
+                  >
+                    <option value="auto">{ui.auto}</option>
+                    <option value=",">{ui.comma}</option>
+                    <option value=";">{ui.semicolon}</option>
+                    <option value="\t">{ui.tab}</option>
+                  </select>
+                </label>
+              </div>
+              <div className="mt-2 text-[11px] text-slate-500">
+                {ui.dropHint}
+                {uploadedFileName ? ` 当前文件：${uploadedFileName}` : ""}
+              </div>
             </div>
             {error && (
               <div className="rounded-2xl bg-rose-50 px-4 py-3 text-sm text-rose-800 ring-1 ring-rose-100">

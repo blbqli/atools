@@ -12,7 +12,9 @@ type DenoisePreset = "no-denoise" | "denoise3x" | "conservative";
 type Ui = {
   hint: string;
   pick: string;
+  replace: string;
   clear: string;
+  dropReplaceHint: string;
   mode: string;
   modeRealCugan: string;
   modeResize: string;
@@ -47,7 +49,9 @@ type Ui = {
 const DEFAULT_UI: Ui = {
   hint: "图片超分辨率提升：优先使用 RealCUGAN（WebAssembly，本地 CPU 运行），不上传图片；若环境不支持则使用高质量缩放作为兼容方案。",
   pick: "选择图片",
+  replace: "点击替换图片",
   clear: "清空",
+  dropReplaceHint: "支持拖拽新图片到此区域直接替换",
   mode: "模式",
   modeRealCugan: "RealCUGAN（AI超分）",
   modeResize: "高质量缩放（兼容）",
@@ -240,6 +244,7 @@ function Inner({ ui }: { ui: Ui }) {
   const [loadingRuntime, setLoadingRuntime] = useState(false);
   const [isWorking, setIsWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [progressPct, setProgressPct] = useState<number | null>(null);
   const [etaSeconds, setEtaSeconds] = useState<number | null>(null);
 
@@ -331,6 +336,29 @@ function Inner({ ui }: { ui: Ui }) {
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (f) void pick(f);
+  };
+
+  const openFilePicker = () => {
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const selected = event.dataTransfer.files?.[0];
+    if (selected) void pick(selected);
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const process = async () => {
@@ -504,15 +532,24 @@ function Inner({ ui }: { ui: Ui }) {
         <div className="rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">{ui.hint}</div>
 
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
+          <div
+            className={`rounded-3xl border-2 border-dashed bg-white p-5 transition ${
+              isDragging
+                ? "border-slate-400 bg-slate-50/60"
+                : "border-slate-200"
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
             <div className="flex flex-wrap items-center gap-2">
               <input ref={inputRef} type="file" accept="image/*" className="hidden" onChange={onChange} />
               <button
                 type="button"
-                onClick={() => inputRef.current?.click()}
+                onClick={openFilePicker}
                 className="rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
               >
-                {ui.pick}
+                {file ? ui.replace : ui.pick}
               </button>
               <button
                 type="button"
@@ -522,6 +559,7 @@ function Inner({ ui }: { ui: Ui }) {
                 {ui.clear}
               </button>
             </div>
+            <div className="mt-2 text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
 
             {fileInfo ? <div className="mt-3 text-xs text-slate-600">{fileInfo}</div> : null}
 

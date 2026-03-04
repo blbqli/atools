@@ -21,6 +21,9 @@ const makeId = () => Math.random().toString(16).slice(2);
 
 const DEFAULT_UI = {
   selectImages: "选择图片",
+  addImages: "追加图片",
+  replaceImages: "替换图片",
+  dropReplaceHint: "支持拖拽图片到此区域直接替换（会清空当前列表）",
   sortByName: "按文件名排序",
   clear: "清空",
   selectedCount: "已选 {count} 张",
@@ -112,6 +115,7 @@ function ImageToPdfInner() {
   const ui: ImageToPdfUi = { ...DEFAULT_UI, ...((config?.ui ?? {}) as Partial<ImageToPdfUi>) };
 
   const inputRef = useRef<HTMLInputElement>(null);
+  const pendingReplaceRef = useRef(false);
 
   const [items, setItems] = useState<Item[]>([]);
   const [pageSize, setPageSize] = useState<PageSizePreset>("a4");
@@ -123,6 +127,7 @@ function ImageToPdfInner() {
 
   const [isWorking, setIsWorking] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [downloadName, setDownloadName] = useState<string>("images.pdf");
 
@@ -135,8 +140,13 @@ function ImageToPdfInner() {
 
   const totalCount = items.length;
 
-  const pick = async (files: File[]) => {
+  const pick = async (files: File[], options: { replace?: boolean } = {}) => {
+    const shouldReplace = options.replace === true;
     setError(null);
+    if (downloadUrl) {
+      URL.revokeObjectURL(downloadUrl);
+      setDownloadUrl(null);
+    }
     const next: Item[] = [];
     for (const f of files) {
       const url = URL.createObjectURL(f);
@@ -148,7 +158,13 @@ function ImageToPdfInner() {
         setError(e instanceof Error ? e.message : ui.readImageError);
       }
     }
-    setItems((prev) => [...prev, ...next]);
+    setItems((prev) => {
+      if (shouldReplace) {
+        for (const item of prev) URL.revokeObjectURL(item.url);
+        return next;
+      }
+      return [...prev, ...next];
+    });
     if (files.length > 0) {
       const base = files[0].name.replace(/\.[^.]+$/, "") || "images";
       setDownloadName(`${base}.pdf`);
@@ -157,7 +173,35 @@ function ImageToPdfInner() {
 
   const onChange = (e: ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files ?? []);
-    if (files.length > 0) void pick(files);
+    const shouldReplace = pendingReplaceRef.current;
+    pendingReplaceRef.current = false;
+    if (files.length > 0) void pick(files, { replace: shouldReplace });
+  };
+
+  const openFilePicker = (replace: boolean) => {
+    pendingReplaceRef.current = replace;
+    if (!inputRef.current) return;
+    inputRef.current.value = "";
+    inputRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const files = Array.from(event.dataTransfer.files ?? []);
+    if (files.length > 0) {
+      void pick(files, { replace: items.length > 0 });
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const remove = (id: string) => {
@@ -288,16 +332,34 @@ function ImageToPdfInner() {
   return (
     <div className="w-full px-4">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-blue-400 bg-blue-50/50"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div className="flex flex-wrap items-center gap-2">
             <input ref={inputRef} type="file" accept="image/*" multiple className="hidden" onChange={onChange} />
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={() => openFilePicker(false)}
               className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
-              {ui.selectImages}
+              {items.length > 0 ? ui.addImages : ui.selectImages}
             </button>
+            {items.length > 0 && (
+              <button
+                type="button"
+                onClick={() => openFilePicker(true)}
+                className="rounded-2xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 ring-1 ring-slate-200 transition hover:bg-slate-50"
+              >
+                {ui.replaceImages}
+              </button>
+            )}
             <button
               type="button"
               onClick={sortByName}
@@ -334,6 +396,9 @@ function ImageToPdfInner() {
             >
               {isWorking ? ui.generating : ui.generatePdf}
             </button>
+          </div>
+          <div className="w-full text-[11px] text-slate-500">
+            {items.length > 0 ? ui.dropReplaceHint : ui.selectImagesHint}
           </div>
         </div>
 

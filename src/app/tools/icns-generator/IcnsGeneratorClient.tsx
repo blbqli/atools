@@ -260,6 +260,12 @@ const IcnsGeneratorClient: FC = () => {
     setIsDragging(false);
   };
 
+  const openFilePicker = () => {
+    if (!fileInputRef.current) return;
+    fileInputRef.current.value = "";
+    fileInputRef.current.click();
+  };
+
   const handleGenerate = async () => {
     if (!file) {
       setError("请先选择一张用于生成图标的图片。");
@@ -355,11 +361,11 @@ const IcnsGeneratorClient: FC = () => {
           onDragLeave={handleDragLeave}
           role="button"
           tabIndex={0}
-          onClick={() => fileInputRef.current?.click()}
+          onClick={openFilePicker}
           onKeyDown={(event) => {
             if (event.key === "Enter" || event.key === " ") {
               event.preventDefault();
-              fileInputRef.current?.click();
+              openFilePicker();
             }
           }}
         >
@@ -374,7 +380,7 @@ const IcnsGeneratorClient: FC = () => {
             <span className="text-xl"></span>
           </div>
           <p className="text-sm font-medium text-slate-900">
-            拖拽图片到此处，或点击选择文件
+            {file ? "拖拽图片到此处，或点击替换文件" : "拖拽图片到此处，或点击选择文件"}
           </p>
           <p className="mt-2 text-[11px] text-slate-500">
             支持 PNG、JPG、WebP 等格式，单张图片建议不超过 30MB。
@@ -447,10 +453,17 @@ const IcnsGeneratorClient: FC = () => {
               <div className="mt-3 flex flex-wrap items-center gap-3">
                 <button
                   type="button"
+                  onClick={openFilePicker}
+                  className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:scale-95"
+                >
+                  点击替换图片
+                </button>
+                <button
+                  type="button"
                   onClick={handleReset}
                   className="rounded-md border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 transition hover:bg-slate-50 active:scale-95"
                 >
-                  重新选择图片
+                  清空
                 </button>
                 <button
                   type="button"

@@ -21,6 +21,8 @@ const DEFAULT_OPTIONS: OptimizeOptions = {
 
 const DEFAULT_UI = {
   uploadSvg: "上传 SVG",
+  replaceSvg: "点击替换 SVG",
+  dropReplaceHint: "支持拖拽新 SVG 到此区域直接替换。",
   copyOptimizedResult: "复制优化结果",
   download: "下载 {filename}",
   inputSvg: "输入 SVG",
@@ -100,6 +102,8 @@ function SvgOptimizerInner() {
   const [raw, setRaw] = useState<string>(ui.defaultSvgExample);
   const [options, setOptions] = useState<OptimizeOptions>(DEFAULT_OPTIONS);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+  const [sourceFileName, setSourceFileName] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [downloadName, setDownloadName] = useState<string>(ui.downloadFilename);
 
@@ -153,31 +157,72 @@ function SvgOptimizerInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [optimized]);
 
+  const loadSvgFile = async (f: File) => {
+    const text = await f.text();
+    setRaw(text);
+    setSourceFileName(f.name);
+    const base = f.name.replace(/\.[^.]+$/, "") || "optimized";
+    setDownloadName(`${base}.optimized.svg`);
+  };
+
   const onFile = async (e: ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
-    const text = await f.text();
-    setRaw(text);
-    const base = f.name.replace(/\.[^.]+$/, "") || "optimized";
-    setDownloadName(`${base}.optimized.svg`);
+    await loadSvgFile(f);
+    e.target.value = "";
+  };
+
+  const openFilePicker = () => {
+    if (!fileRef.current) return;
+    fileRef.current.value = "";
+    fileRef.current.click();
+  };
+
+  const handleDrop = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const f = event.dataTransfer.files?.[0];
+    if (f) {
+      void loadSvgFile(f);
+    }
+  };
+
+  const handleDragOver = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: React.DragEvent) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   return (
     <div className="w-full px-4">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div
+          className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+            isDragging
+              ? "border-slate-400 bg-slate-50/60"
+              : "border-slate-200 bg-slate-50/80"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
           <div className="flex flex-wrap items-center gap-2">
             <input ref={fileRef} type="file" accept="image/svg+xml,.svg" className="hidden" onChange={(e) => void onFile(e)} />
             <button
               type="button"
-              onClick={() => fileRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
             >
-              {ui.uploadSvg}
+              {sourceFileName ? ui.replaceSvg : ui.uploadSvg}
             </button>
             <div className="rounded-2xl bg-slate-50 px-4 py-2 text-xs text-slate-600 ring-1 ring-slate-200">
               {stats.before}B → {stats.after}B ({stats.before > 0 ? `${Math.round(stats.ratio * 100)}%` : "-"})
             </div>
+            {sourceFileName && <div className="text-xs text-slate-600">{sourceFileName}</div>}
           </div>
 
           <div className="flex flex-wrap items-center gap-2">
@@ -199,6 +244,7 @@ function SvgOptimizerInner() {
               </a>
             )}
           </div>
+          <div className="w-full text-[11px] text-slate-500">{ui.dropReplaceHint}</div>
         </div>
 
         <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,360px)]">

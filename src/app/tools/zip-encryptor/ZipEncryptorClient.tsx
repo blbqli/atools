@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { unzipSync, zipSync } from "fflate";
 import { useEffect, useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
@@ -16,7 +16,11 @@ const DEFAULT_UI = {
   outputJsonTitle: "加密输出 JSON",
   outputZipTitle: "输出 ZIP",
   pickFiles: "选择多个文件（将打包为 ZIP）",
+  replaceFiles: "替换文件列表",
   pickEncrypted: "选择加密 JSON",
+  replaceEncrypted: "替换加密 JSON",
+  dropHintEncrypt: "支持点击上传或拖拽文件；拖拽会替换当前文件列表。",
+  dropHintDecrypt: "支持点击上传或拖拽 JSON；拖拽会替换当前 JSON 内容。",
   jsonLabel: "JSON",
   password: "密码",
   iterations: "迭代次数",
@@ -78,6 +82,7 @@ function ZipEncryptorInner() {
   const [jsonText, setJsonText] = useState("");
 
   const [isWorking, setIsWorking] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [outputText, setOutputText] = useState("");
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
@@ -104,20 +109,63 @@ function ZipEncryptorInner() {
     return jsonText.trim().length > 0;
   }, [files.length, jsonText, mode, password]);
 
-  const onFilesChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const picked = Array.from(e.target.files ?? []);
+  const applyFiles = (picked: File[]) => {
     if (picked.length === 0) return;
     resetOutput();
     setFiles(picked);
     setDownloadName(`archive.${Date.now()}.zip.enc.json`);
   };
 
-  const onJsonFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (!selected) return;
+  const onFilesChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const picked = Array.from(e.target.files ?? []);
+    applyFiles(picked);
+    e.target.value = "";
+  };
+
+  const applyJsonFile = async (selected: File) => {
+    const isJsonType = selected.type === "application/json";
+    const isJsonExt = selected.name.toLowerCase().endsWith(".json");
+    if (!isJsonType && !isJsonExt) {
+      setError("请选择 JSON 文件");
+      return;
+    }
     resetOutput();
     const text = await selected.text();
     setJsonText(text);
+  };
+
+  const onJsonFileChange = async (e: ChangeEvent<HTMLInputElement>) => {
+    const selected = e.target.files?.[0];
+    if (!selected) return;
+    await applyJsonFile(selected);
+    e.target.value = "";
+  };
+
+  const openActivePicker = () => {
+    if (mode === "encrypt") filesRef.current?.click();
+    else jsonRef.current?.click();
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const dropped = Array.from(event.dataTransfer.files ?? []);
+    if (!dropped.length) return;
+    if (mode === "encrypt") {
+      applyFiles(dropped);
+    } else {
+      void applyJsonFile(dropped[0]);
+    }
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
   };
 
   const packZip = async (picked: File[]): Promise<Uint8Array> => {
@@ -247,51 +295,63 @@ function ZipEncryptorInner() {
           <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
             <div className="text-sm font-semibold text-slate-900">{ui.inputTitle}</div>
             <div className="mt-4 space-y-3">
-              {mode === "encrypt" ? (
-                <>
-                  <input ref={filesRef} type="file" multiple className="hidden" onChange={onFilesChange} />
-                  <button
-                    type="button"
-                    onClick={() => filesRef.current?.click()}
-                    className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
-                  >
-                    {ui.pickFiles}
-                  </button>
-                  {files.length > 0 && (
-                    <div className="rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
-                      {ui.selectedFilesTemplate.replace("{count}", String(files.length))}
-                      <div className="mt-2 max-h-28 overflow-auto text-xs text-slate-600">
-                        {files.slice(0, 50).map((f) => (
-                          <div key={f.name} className="flex items-center justify-between gap-2">
-                            <span className="truncate">{f.name}</span>
-                            <span className="shrink-0">{(f.size / 1024).toFixed(1)} KB</span>
-                          </div>
-                        ))}
+              <div
+                className={`rounded-2xl border-2 border-dashed p-3 transition ${
+                  isDragging ? "border-slate-400 bg-slate-50/80" : "border-slate-200 bg-slate-50/80"
+                }`}
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                onDragLeave={handleDragLeave}
+              >
+                {mode === "encrypt" ? (
+                  <>
+                    <input ref={filesRef} type="file" multiple className="hidden" onChange={onFilesChange} />
+                    <button
+                      type="button"
+                      onClick={openActivePicker}
+                      className="w-full rounded-2xl bg-blue-600 px-5 py-3 text-sm font-semibold text-white transition hover:bg-blue-700"
+                    >
+                      {files.length > 0 ? ui.replaceFiles : ui.pickFiles}
+                    </button>
+                    {files.length > 0 && (
+                      <div className="mt-3 rounded-2xl bg-white px-4 py-3 text-sm text-slate-700 ring-1 ring-slate-200">
+                        {ui.selectedFilesTemplate.replace("{count}", String(files.length))}
+                        <div className="mt-2 max-h-28 overflow-auto text-xs text-slate-600">
+                          {files.slice(0, 50).map((f) => (
+                            <div key={f.name} className="flex items-center justify-between gap-2">
+                              <span className="truncate">{f.name}</span>
+                              <span className="shrink-0">{(f.size / 1024).toFixed(1)} KB</span>
+                            </div>
+                          ))}
+                        </div>
                       </div>
-                    </div>
-                  )}
-                </>
-              ) : (
-                <>
-                  <input ref={jsonRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => void onJsonFileChange(e)} />
-                  <button
-                    type="button"
-                    onClick={() => jsonRef.current?.click()}
-                    className="w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
-                  >
-                    {ui.pickEncrypted}
-                  </button>
-                  <label className="block text-sm text-slate-700">
-                    {ui.jsonLabel}
-                    <textarea
-                      value={jsonText}
-                      onChange={(e) => setJsonText(e.target.value)}
-                      className="mt-2 h-44 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
-                      placeholder={ui.jsonPlaceholder}
-                    />
-                  </label>
-                </>
-              )}
+                    )}
+                  </>
+                ) : (
+                  <>
+                    <input ref={jsonRef} type="file" accept="application/json,.json" className="hidden" onChange={(e) => void onJsonFileChange(e)} />
+                    <button
+                      type="button"
+                      onClick={openActivePicker}
+                      className="w-full rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white transition hover:bg-slate-800"
+                    >
+                      {jsonText.trim() ? ui.replaceEncrypted : ui.pickEncrypted}
+                    </button>
+                    <label className="mt-3 block text-sm text-slate-700">
+                      {ui.jsonLabel}
+                      <textarea
+                        value={jsonText}
+                        onChange={(e) => setJsonText(e.target.value)}
+                        className="mt-2 h-44 w-full resize-none rounded-2xl border border-slate-200 bg-white px-4 py-3 font-mono text-xs text-slate-900 outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-400/30"
+                        placeholder={ui.jsonPlaceholder}
+                      />
+                    </label>
+                  </>
+                )}
+                <div className="mt-2 text-[11px] text-slate-500">
+                  {mode === "encrypt" ? ui.dropHintEncrypt : ui.dropHintDecrypt}
+                </div>
+              </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
                 <label className="block text-sm text-slate-700">

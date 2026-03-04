@@ -1,8 +1,15 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { zip } from "fflate";
+import {
+  exportCanvasToImageBlob,
+  getImageExportExtension,
+  getImageExportLabel,
+  IMAGE_EXPORT_FORMATS,
+  type ImageExportFormat,
+} from "@/lib/image-export";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 type Rect = { x: number; y: number; w: number; h: number };
 type CropRegion = { id: string; rect: Rect };
@@ -36,10 +43,10 @@ export default function ImageCropperClient() {
   const [file, setFile] = useState<File | null>(null);
   const [bitmap, setBitmap] = useState<ImageBitmap | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [isSelecting, setIsSelecting] = useState(false);
   const [isPanning, setIsPanning] = useState(false);
   const [mode, setMode] = useState<"select" | "pan">("select");
+  const [outputFormat, setOutputFormat] = useState<ImageExportFormat>("png");
 
   const [selection, setSelection] = useState<Rect | null>(null); // original pixels (current/draft)
   const [activeRegionId, setActiveRegionId] = useState<string | null>(null);
@@ -49,7 +56,6 @@ export default function ImageCropperClient() {
   const [zipUrl, setZipUrl] = useState<string | null>(null);
   const [zipSize, setZipSize] = useState<number | null>(null);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const baseCanvasRef = useRef<HTMLCanvasElement>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement>(null);
   const displayRectRef = useRef<Rect | null>(null); // view rect during selection
@@ -95,6 +101,20 @@ export default function ImageCropperClient() {
     zipUrlRef.current = null;
     setZipUrl(null);
     setZipSize(null);
+  };
+
+  const resetWorkspace = () => {
+    setFile(null);
+    setSelection(null);
+    setError(null);
+    cleanupResults();
+    setActiveRegionId(null);
+    setRegions([]);
+    setViewport({ zoom: 1, panX: 0, panY: 0 });
+    setBitmap((prev) => {
+      if (prev) prev.close();
+      return null;
+    });
   };
 
   useEffect(() => {
@@ -313,26 +333,17 @@ export default function ImageCropperClient() {
     });
   };
 
-  const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
-    const selected = event.target.files?.[0];
-    if (selected) void processFile(selected);
-  };
+  const { inputRef: fileInputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } =
+    useFileDropzone({
+      onFile: (selected) => {
+        void processFile(selected);
+      },
+    });
 
-  const handleDrop = (event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragging(false);
-    const selected = event.dataTransfer.files?.[0];
-    if (selected) void processFile(selected);
-  };
-
-  const handleDragOver = (event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (event: React.DragEvent) => {
-    event.preventDefault();
-    setIsDragging(false);
+  const handleOutputFormatChange = (format: ImageExportFormat) => {
+    if (format === outputFormat) return;
+    setOutputFormat(format);
+    cleanupResults();
   };
 
   const toViewPoint = (event: React.PointerEvent) => {
@@ -425,7 +436,7 @@ export default function ImageCropperClient() {
     displayRectRef.current = null;
   };
 
-  const cropRectToPngBlob = async (rect: Rect) => {
+  const cropRectToBlob = async (rect: Rect, format: ImageExportFormat) => {
     if (!bitmap) return null;
     const normalized = normalizeRect(rect);
     if (normalized.w < 1 || normalized.h < 1) return null;
@@ -442,8 +453,7 @@ export default function ImageCropperClient() {
     ctx.imageSmoothingEnabled = true;
     ctx.imageSmoothingQuality = "high";
     ctx.drawImage(bitmap, x, y, w, h, 0, 0, w, h);
-    const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, "image/png", 1));
-    return blob;
+    return exportCanvasToImageBlob(canvas, format);
   };
 
   const exportCurrent = async () => {
@@ -453,14 +463,19 @@ export default function ImageCropperClient() {
     }
     setError(null);
     cleanupResults();
-    const blob = await cropRectToPngBlob(selection);
-    if (!blob) {
-      setError("导出失败");
-      return;
+    try {
+      const blob = await cropRectToBlob(selection, outputFormat);
+      if (!blob) {
+        setError("导出失败");
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const baseName = file ? file.name.replace(/\.[^.]+$/, "") : "image";
+      const extension = getImageExportExtension(outputFormat);
+      setResults([{ id: createId(), url, size: blob.size, filename: `cropped-${baseName}.${extension}` }]);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "导出失败");
     }
-    const url = URL.createObjectURL(blob);
-    const baseName = file ? file.name.replace(/\\.[^.]+$/, "") : "image";
-    setResults([{ id: createId(), url, size: blob.size, filename: `cropped-${baseName}.png` }]);
   };
 
   const exportAll = async () => {
@@ -470,25 +485,30 @@ export default function ImageCropperClient() {
     }
     setError(null);
     cleanupResults();
-    const baseName = file ? file.name.replace(/\\.[^.]+$/, "") : "image";
-    const nextResults: CropResult[] = [];
-    for (let index = 0; index < regions.length; index += 1) {
-      const region = regions[index];
-      const blob = await cropRectToPngBlob(region.rect);
-      if (!blob) continue;
-      const url = URL.createObjectURL(blob);
-      nextResults.push({
-        id: region.id,
-        url,
-        size: blob.size,
-        filename: `cropped-${baseName}-${index + 1}.png`,
-      });
+    const baseName = file ? file.name.replace(/\.[^.]+$/, "") : "image";
+    try {
+      const extension = getImageExportExtension(outputFormat);
+      const nextResults: CropResult[] = [];
+      for (let index = 0; index < regions.length; index += 1) {
+        const region = regions[index];
+        const blob = await cropRectToBlob(region.rect, outputFormat);
+        if (!blob) continue;
+        const url = URL.createObjectURL(blob);
+        nextResults.push({
+          id: region.id,
+          url,
+          size: blob.size,
+          filename: `cropped-${baseName}-${index + 1}.${extension}`,
+        });
+      }
+      if (nextResults.length === 0) {
+        setError("导出失败");
+        return;
+      }
+      setResults(nextResults);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "导出失败");
     }
-    if (nextResults.length === 0) {
-      setError("导出失败");
-      return;
-    }
-    setResults(nextResults);
   };
 
   const exportZip = async () => {
@@ -593,6 +613,13 @@ export default function ImageCropperClient() {
       </div>
 
       <div className="mt-8 glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={handleInputChange}
+        />
         {!file ? (
           <div
             className={`relative flex h-64 cursor-pointer flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300 ${
@@ -603,21 +630,23 @@ export default function ImageCropperClient() {
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
-            onClick={() => fileInputRef.current?.click()}
+            onClick={openFilePicker}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="image/*"
-              className="hidden"
-              onChange={handleFileChange}
-            />
             <div className="text-sm font-medium text-slate-700">点击或拖拽图片到此处</div>
             <div className="mt-1 text-xs text-slate-500">支持常见图片格式</div>
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl bg-slate-50/80 p-4">
+            <div
+              className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+                isDragging
+                  ? "border-blue-400 bg-blue-50/50"
+                  : "border-slate-200 bg-slate-50/80"
+              }`}
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+            >
               <div className="text-sm text-slate-700">
                 <span className="font-semibold text-slate-900">当前图片：</span>
                 {file.name}
@@ -627,25 +656,25 @@ export default function ImageCropperClient() {
                   </span>
                 )}
               </div>
-              <button
-                type="button"
-                onClick={() => {
-                  setFile(null);
-                  setSelection(null);
-                  setError(null);
-                  cleanupResults();
-                  setActiveRegionId(null);
-                  setRegions([]);
-                  setViewport({ zoom: 1, panX: 0, panY: 0 });
-                  setBitmap((prev) => {
-                    if (prev) prev.close();
-                    return null;
-                  });
-                }}
-                className="rounded-xl bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
-              >
-                重新选择
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  type="button"
+                  onClick={openFilePicker}
+                  className="rounded-xl bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                >
+                  点击替换图片
+                </button>
+                <button
+                  type="button"
+                  onClick={resetWorkspace}
+                  className="rounded-xl bg-white px-4 py-2 text-xs font-medium text-slate-700 shadow-sm transition hover:bg-slate-50 active:scale-95"
+                >
+                  清空
+                </button>
+              </div>
+              <div className="w-full text-[11px] text-slate-500">
+                支持拖拽新图片到此区域直接替换
+              </div>
             </div>
 
             <div className="grid gap-6 xl:grid-cols-[1fr_380px]">
@@ -781,6 +810,23 @@ export default function ImageCropperClient() {
                   </div>
 
                   <div className="mt-4 flex flex-wrap items-center gap-2">
+                    <div className="inline-flex flex-wrap items-center gap-2 rounded-2xl bg-slate-100 px-2 py-1">
+                      <span className="px-2 text-xs text-slate-600">导出格式</span>
+                      {IMAGE_EXPORT_FORMATS.map((format) => (
+                        <button
+                          key={format}
+                          type="button"
+                          onClick={() => handleOutputFormatChange(format)}
+                          className={`rounded-xl px-3 py-1.5 text-xs font-semibold transition ${
+                            outputFormat === format
+                              ? "bg-blue-600 text-white shadow"
+                              : "bg-white text-slate-700 hover:bg-slate-50"
+                          }`}
+                        >
+                          {getImageExportLabel(format)}
+                        </button>
+                      ))}
+                    </div>
                     <button
                       type="button"
                       onClick={() => void exportCurrent()}
@@ -976,7 +1022,9 @@ export default function ImageCropperClient() {
                     )}
                   </div>
                   <div className="mt-3 text-xs text-slate-500">
-                    {zipSize ? `ZIP 大小：${zipSize.toLocaleString()} 字节` : "导出格式：PNG（可批量生成并打包 ZIP）"}
+                    {zipSize
+                      ? `ZIP 大小：${zipSize.toLocaleString()} 字节`
+                      : `导出格式：${getImageExportLabel(outputFormat)}（可批量生成并打包 ZIP）`}
                   </div>
                 </div>
               </div>

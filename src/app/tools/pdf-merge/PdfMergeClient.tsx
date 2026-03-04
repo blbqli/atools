@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent, FC } from "react";
+import type { ChangeEvent, DragEvent, FC } from "react";
 import { useEffect, useRef, useState } from "react";
 import { PDFDocument } from "pdf-lib";
 
@@ -25,6 +25,8 @@ const PdfMergeClient: FC = () => {
   const [pdfB, setPdfB] = useState<LoadedPdf | null>(null);
   const [mergeOrder, setMergeOrder] = useState<MergeOrder>("A-B");
   const [isMerging, setIsMerging] = useState(false);
+  const [isDraggingA, setIsDraggingA] = useState(false);
+  const [isDraggingB, setIsDraggingB] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
   const [downloadName, setDownloadName] = useState<string>("merged.pdf");
@@ -59,46 +61,76 @@ const PdfMergeClient: FC = () => {
     return null;
   };
 
+  const loadPdf = async (file: File): Promise<LoadedPdf | null> => {
+    const validationError = validatePdfFile(file);
+    if (validationError) {
+      setError(validationError);
+      return null;
+    }
+
+    setError(null);
+    cleanupDownloadUrl();
+    setDownloadUrl(null);
+
+    try {
+      const buffer = await file.arrayBuffer();
+      const bytes = new Uint8Array(buffer);
+      const pdfDoc = await PDFDocument.load(bytes);
+
+      return {
+        name: file.name,
+        size: file.size,
+        bytes,
+        pageCount: pdfDoc.getPageCount(),
+      };
+    } catch (err) {
+      setError(
+        err instanceof Error
+          ? err.message
+          : "PDF 文件解析失败，请确认文件是否正常。",
+      );
+      return null;
+    }
+  };
+
+  const assignPdfFile = async (target: "A" | "B", file: File) => {
+    const loaded = await loadPdf(file);
+    if (!loaded) return;
+    if (target === "A") {
+      setPdfA(loaded);
+    } else {
+      setPdfB(loaded);
+    }
+  };
+
   const handlePdfChange =
     (target: "A" | "B") => async (event: ChangeEvent<HTMLInputElement>) => {
       const file = event.target.files?.[0];
       if (!file) return;
-
-      const validationError = validatePdfFile(file);
-      if (validationError) {
-        setError(validationError);
-        return;
-      }
-
-      setError(null);
-      cleanupDownloadUrl();
-      setDownloadUrl(null);
-
-      try {
-        const buffer = await file.arrayBuffer();
-        const bytes = new Uint8Array(buffer);
-        const pdfDoc = await PDFDocument.load(bytes);
-
-        const loaded: LoadedPdf = {
-          name: file.name,
-          size: file.size,
-          bytes,
-          pageCount: pdfDoc.getPageCount(),
-        };
-
-        if (target === "A") {
-          setPdfA(loaded);
-        } else {
-          setPdfB(loaded);
-        }
-      } catch (err) {
-        setError(
-          err instanceof Error
-            ? err.message
-            : "PDF 文件解析失败，请确认文件是否正常。",
-        );
-      }
+      await assignPdfFile(target, file);
+      event.target.value = "";
     };
+
+  const handleDrop = (target: "A" | "B") => (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (target === "A") setIsDraggingA(false);
+    else setIsDraggingB(false);
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+    void assignPdfFile(target, file);
+  };
+
+  const handleDragOver = (target: "A" | "B") => (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (target === "A") setIsDraggingA(true);
+    else setIsDraggingB(true);
+  };
+
+  const handleDragLeave = (target: "A" | "B") => (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    if (target === "A") setIsDraggingA(false);
+    else setIsDraggingB(false);
+  };
 
   const handleMerge = async () => {
     if (!pdfA || !pdfB) {
@@ -177,7 +209,14 @@ const PdfMergeClient: FC = () => {
       </div>
 
       <div className="grid gap-6 md:grid-cols-2">
-        <div className="glass-card rounded-2xl p-4 space-y-3">
+        <div
+          className={`glass-card rounded-2xl border-2 border-dashed p-4 space-y-3 transition ${
+            isDraggingA ? "border-slate-400 bg-slate-50/70" : "border-slate-200"
+          }`}
+          onDrop={handleDrop("A")}
+          onDragOver={handleDragOver("A")}
+          onDragLeave={handleDragLeave("A")}
+        >
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">
@@ -192,7 +231,7 @@ const PdfMergeClient: FC = () => {
               onClick={() => inputARef.current?.click()}
               className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
             >
-              选择 PDF 1
+              {pdfA ? "替换 PDF 1" : "选择 PDF 1"}
             </button>
             <input
               ref={inputARef}
@@ -202,6 +241,7 @@ const PdfMergeClient: FC = () => {
               onChange={handlePdfChange("A")}
             />
           </div>
+          <p className="text-[11px] text-slate-500">支持点击上传与拖拽上传；拖拽到此区域可替换 PDF 1。</p>
           {pdfA && (
             <div className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600">
               <div className="flex items-center justify-between">
@@ -219,7 +259,14 @@ const PdfMergeClient: FC = () => {
           )}
         </div>
 
-        <div className="glass-card rounded-2xl p-4 space-y-3">
+        <div
+          className={`glass-card rounded-2xl border-2 border-dashed p-4 space-y-3 transition ${
+            isDraggingB ? "border-slate-400 bg-slate-50/70" : "border-slate-200"
+          }`}
+          onDrop={handleDrop("B")}
+          onDragOver={handleDragOver("B")}
+          onDragLeave={handleDragLeave("B")}
+        >
           <div className="flex items-center justify-between gap-3">
             <div>
               <h2 className="text-sm font-semibold text-slate-900">
@@ -234,7 +281,7 @@ const PdfMergeClient: FC = () => {
               onClick={() => inputBRef.current?.click()}
               className="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-medium text-white shadow-sm transition hover:bg-slate-800 active:scale-95"
             >
-              选择 PDF 2
+              {pdfB ? "替换 PDF 2" : "选择 PDF 2"}
             </button>
             <input
               ref={inputBRef}
@@ -244,6 +291,7 @@ const PdfMergeClient: FC = () => {
               onChange={handlePdfChange("B")}
             />
           </div>
+          <p className="text-[11px] text-slate-500">支持点击上传与拖拽上传；拖拽到此区域可替换 PDF 2。</p>
           {pdfB && (
             <div className="mt-2 rounded-xl bg-slate-50 px-3 py-2 text-xs text-slate-600">
               <div className="flex items-center justify-between">

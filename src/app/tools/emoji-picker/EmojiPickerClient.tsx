@@ -103,8 +103,9 @@ const uniqByEmoji = (items: Array<{ emoji: string; codepoint: number }>) => {
 };
 
 const loadRecent = (): string[] => {
+  if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(RECENT_KEY);
+    const raw = window.localStorage.getItem(RECENT_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw) as unknown;
     if (!Array.isArray(parsed)) return [];
@@ -115,8 +116,9 @@ const loadRecent = (): string[] => {
 };
 
 const saveRecent = (items: string[]) => {
+  if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(RECENT_KEY, JSON.stringify(items.slice(0, 48)));
+    window.localStorage.setItem(RECENT_KEY, JSON.stringify(items.slice(0, 48)));
   } catch {
     // ignore
   }

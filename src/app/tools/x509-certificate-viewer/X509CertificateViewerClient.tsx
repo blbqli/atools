@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, DragEvent } from "react";
 import { X509Certificate } from "@peculiar/x509";
 import { useMemo, useRef, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
@@ -144,6 +144,7 @@ function X509CertificateViewerInner() {
   const fileRef = useRef<HTMLInputElement>(null);
   const [input, setInput] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [manualError, setManualError] = useState<string | null>(null);
 
   const [activeIndex, setActiveIndex] = useState(0);
@@ -179,8 +180,7 @@ function X509CertificateViewerInner() {
 
   const error = manualError ?? parsed.error;
 
-  const onUpload = async (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  const loadCertificateFile = async (file: File) => {
     if (!file) return;
     setFileName(file.name);
     setManualError(null);
@@ -200,6 +200,31 @@ function X509CertificateViewerInner() {
     }
   };
 
+  const onUpload = async (e: ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    await loadCertificateFile(file);
+    e.target.value = "";
+  };
+
+  const handleDrop = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+    const file = event.dataTransfer.files?.[0];
+    if (!file) return;
+    void loadCertificateFile(file);
+  };
+
+  const handleDragOver = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (event: DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
+    setIsDragging(false);
+  };
+
   const copy = async (text: string) => {
     await navigator.clipboard.writeText(text);
   };
@@ -215,45 +240,55 @@ function X509CertificateViewerInner() {
   return (
     <div className="w-full px-4">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="flex flex-wrap items-center gap-2">
-            <input ref={fileRef} type="file" accept=".pem,.cer,.crt,.der,application/x-x509-ca-cert,application/pkix-cert" className="hidden" onChange={(e) => void onUpload(e)} />
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
-            >
-              {ui.uploadCertificate}
-            </button>
-            <button
-              type="button"
-              onClick={clear}
-              className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
-            >
-              {ui.clear}
-            </button>
-            {fileName && <div className="text-sm text-slate-600">{ui.fileLabel}{fileName}</div>}
+        <div
+          className={`rounded-2xl border-2 border-dashed p-3 transition ${
+            isDragging ? "border-slate-400 bg-slate-50/70" : "border-slate-200 bg-slate-50/70"
+          }`}
+          onDrop={handleDrop}
+          onDragOver={handleDragOver}
+          onDragLeave={handleDragLeave}
+        >
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex flex-wrap items-center gap-2">
+              <input ref={fileRef} type="file" accept=".pem,.cer,.crt,.der,application/x-x509-ca-cert,application/pkix-cert" className="hidden" onChange={(e) => void onUpload(e)} />
+              <button
+                type="button"
+                onClick={() => fileRef.current?.click()}
+                className="rounded-2xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-blue-700"
+              >
+                {fileName ? "替换证书文件" : ui.uploadCertificate}
+              </button>
+              <button
+                type="button"
+                onClick={clear}
+                className="rounded-2xl bg-slate-100 px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+              >
+                {ui.clear}
+              </button>
+              {fileName && <div className="text-sm text-slate-600">{ui.fileLabel}{fileName}</div>}
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {activeRaw && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void copy(activeRaw.toString("pem"))}
+                    className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                  >
+                    {ui.copyPem}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void copy(JSON.stringify(active, null, 2))}
+                    className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
+                  >
+                    {ui.copyJson}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {activeRaw && (
-              <>
-                <button
-                  type="button"
-                  onClick={() => void copy(activeRaw.toString("pem"))}
-                  className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
-                >
-                  {ui.copyPem}
-                </button>
-                <button
-                  type="button"
-                  onClick={() => void copy(JSON.stringify(active, null, 2))}
-                  className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
-                >
-                  {ui.copyJson}
-                </button>
-              </>
-            )}
-          </div>
+          <div className="mt-2 text-[11px] text-slate-500">支持点击上传与拖拽上传证书文件，拖拽可直接替换当前内容。</div>
         </div>
 
         <div className="mt-4 rounded-2xl bg-slate-50 px-4 py-3 text-xs text-slate-600 ring-1 ring-slate-200">

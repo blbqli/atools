@@ -1,9 +1,9 @@
 "use client";
 
-import type { ChangeEvent } from "react";
 import { PDFDocument } from "pdf-lib";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import ToolPageLayout from "../../../components/ToolPageLayout";
+import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
 const toArrayBuffer = (bytes: Uint8Array): ArrayBuffer => {
   const copy = new Uint8Array(bytes.byteLength);
@@ -24,8 +24,6 @@ const formatBytes = (bytes: number): string => {
 };
 
 export default function PdfCompressorClient() {
-  const inputRef = useRef<HTMLInputElement>(null);
-
   const [file, setFile] = useState<File | null>(null);
   const [useObjectStreams, setUseObjectStreams] = useState(true);
   const [isWorking, setIsWorking] = useState(false);
@@ -63,10 +61,9 @@ export default function PdfCompressorClient() {
     setDownloadName(`${base}.compressed.pdf`);
   };
 
-  const onChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) pick(selected);
-  };
+  const { inputRef, isDragging, handleInputChange, handleDrop, handleDragOver, handleDragLeave, openFilePicker } = useFileDropzone({
+    onFile: pick,
+  });
 
   const compress = async () => {
     if (!file) return;
@@ -97,18 +94,28 @@ export default function PdfCompressorClient() {
     <ToolPageLayout toolSlug="pdf-compressor">
       <div className="w-full px-4">
         <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
+          <div
+            className={`flex flex-wrap items-center justify-between gap-3 rounded-2xl border-2 border-dashed p-4 transition ${
+              isDragging
+                ? "border-slate-400 bg-slate-50/60"
+                : "border-slate-200 bg-slate-50/80"
+            }`}
+            onDrop={handleDrop}
+            onDragOver={handleDragOver}
+            onDragLeave={handleDragLeave}
+          >
             <div className="text-sm text-slate-700">
               说明：这是“轻量压缩”（重写/优化结构），不做图片重采样与重编码，体积不一定变小。
             </div>
             <button
               type="button"
-              onClick={() => inputRef.current?.click()}
+              onClick={openFilePicker}
               className="rounded-xl bg-slate-100 px-3 py-2 text-sm font-medium text-slate-800 transition hover:bg-slate-200"
             >
-              选择 PDF
+              {file ? "点击替换 PDF" : "选择 PDF"}
             </button>
-            <input ref={inputRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={onChange} />
+            <input ref={inputRef} type="file" accept="application/pdf,.pdf" className="hidden" onChange={handleInputChange} />
+            <div className="w-full text-[11px] text-slate-500">支持拖拽新 PDF 到此区域直接替换</div>
           </div>
 
           {!file && (
