@@ -1,6 +1,6 @@
 "use client";
 
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { PDFDocument } from "pdf-lib";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -14,6 +14,7 @@ import type {
   MindMapNode,
   MindMapRelationship,
   MindMapSheet,
+  MindMapSummary,
   MindMapThemeId,
 } from "./types";
 
@@ -37,6 +38,7 @@ type Sheet = {
   structureClass?: string;
   relationships?: MindMapRelationship[];
   boundaries?: MindMapBoundary[];
+  summaries?: MindMapSummary[];
   [key: string]: unknown;
 };
 
@@ -83,6 +85,20 @@ type NodeContext = {
   index: number;
 };
 
+type TextViewNodeRow = {
+  id: string;
+  title: string;
+  depth: number;
+  isRoot: boolean;
+};
+
+type TextDraftRow = {
+  title: string;
+  depth: number;
+};
+
+const TEXT_VIEW_LINE_PREFIX = "- ";
+
 const createNodeWithTitle = (id: string, title = "新节点"): MindMapNode => ({
   id,
   title,
@@ -90,16 +106,108 @@ const createNodeWithTitle = (id: string, title = "新节点"): MindMapNode => ({
   collapsed: false,
 });
 
+const flattenMindMapNodeRows = (root: MindMapNode): TextViewNodeRow[] => {
+  const rows: TextViewNodeRow[] = [];
+  const walk = (node: MindMapNode, depth: number, isRoot: boolean) => {
+    rows.push({
+      id: node.id,
+      title: node.title,
+      depth,
+      isRoot,
+    });
+    for (const child of node.children) {
+      walk(child, depth + 1, false);
+    }
+  };
+  walk(root, 0, true);
+  return rows;
+};
+
+const parseTextDraftRows = (rawText: string, fallbackRootTitle: string): TextDraftRow[] => {
+  const lines = rawText.replaceAll("\r\n", "\n").split("\n");
+  const rows: TextDraftRow[] = [];
+  for (const line of lines) {
+    const leading = line.match(/^[\t ]*/)?.[0] ?? "";
+    const body = line.slice(leading.length);
+    const hasLineMarker = /^(?:[-•])(?:\s|$)/.test(body);
+    const withNoMarker = body.replace(/^(?:[-•])\s*/, "");
+    const trimmed = withNoMarker.trim();
+    if (!trimmed && !hasLineMarker) continue;
+    const indentSpaces = Array.from(leading).reduce((sum, char) => (char === "\t" ? sum + 2 : sum + 1), 0);
+    const depth = Math.max(0, Math.floor(indentSpaces / 2));
+    const title = trimmed || fallbackRootTitle;
+    rows.push({ title, depth });
+  }
+  if (rows.length === 0) {
+    rows.push({ title: fallbackRootTitle, depth: 0 });
+  }
+  rows[0] = { ...rows[0], depth: 0 };
+  return rows;
+};
+
+const applyIndentationToDraft = (
+  value: string,
+  start: number,
+  end: number,
+  outdent: boolean,
+): { value: string; start: number; end: number } => {
+  const effectiveEnd = end > start && value[end - 1] === "\n" ? end - 1 : end;
+  const lineStart = Math.max(0, value.lastIndexOf("\n", Math.max(0, start - 1)) + 1);
+  const lineEndIdx = value.indexOf("\n", effectiveEnd);
+  const lineEnd = lineEndIdx === -1 ? value.length : lineEndIdx;
+  const segment = value.slice(lineStart, lineEnd);
+  const lines = segment.split("\n");
+
+  let removedFromFirst = 0;
+  let totalDelta = 0;
+  const nextLines = lines.map((line, index) => {
+    if (!outdent) {
+      totalDelta += 2;
+      return `  ${line}`;
+    }
+    let removed = 0;
+    let nextLine = line;
+    if (nextLine.startsWith("\t")) {
+      nextLine = nextLine.slice(1);
+      removed = 1;
+    } else if (nextLine.startsWith("  ")) {
+      nextLine = nextLine.slice(2);
+      removed = 2;
+    } else if (nextLine.startsWith(" ")) {
+      nextLine = nextLine.slice(1);
+      removed = 1;
+    }
+    if (index === 0) removedFromFirst = removed;
+    totalDelta -= removed;
+    return nextLine;
+  });
+
+  const nextSegment = nextLines.join("\n");
+  const nextValue = `${value.slice(0, lineStart)}${nextSegment}${value.slice(lineEnd)}`;
+
+  if (start === end) {
+    const nextPos = outdent ? Math.max(lineStart, start - removedFromFirst) : start + 2;
+    return { value: nextValue, start: nextPos, end: nextPos };
+  }
+
+  const nextStart = Math.max(lineStart, start + (outdent ? -removedFromFirst : 2));
+  const nextEnd = Math.max(nextStart, end + totalDelta);
+  return { value: nextValue, start: nextStart, end: nextEnd };
+};
+
 const findNodeContext = (
   node: MindMapNode,
   targetId: string,
   parent: MindMapNode | null = null,
   index = -1,
+  seen: WeakSet<MindMapNode> = new WeakSet(),
 ): NodeContext | null => {
+  if (seen.has(node)) return null;
+  seen.add(node);
   if (node.id === targetId) return { node, parent, index };
   for (let childIndex = 0; childIndex < node.children.length; childIndex += 1) {
     const child = node.children[childIndex]!;
-    const nested = findNodeContext(child, targetId, node, childIndex);
+    const nested = findNodeContext(child, targetId, node, childIndex, seen);
     if (nested) return nested;
   }
   return null;
@@ -109,34 +217,42 @@ const mapNodeById = (
   node: MindMapNode,
   targetId: string,
   updater: (input: MindMapNode) => MindMapNode,
+  seen: WeakSet<MindMapNode> = new WeakSet(),
 ): [MindMapNode, boolean] => {
-  let changed = false;
-  let nextNode = node;
+  if (seen.has(node)) return [node, false];
+  seen.add(node);
 
   if (node.id === targetId) {
-    nextNode = updater(node);
-    changed = true;
+    const nextNode = updater(node);
+    return [nextNode, nextNode !== node];
   }
 
   let childChanged = false;
-  const nextChildren = nextNode.children.map((child) => {
-    const [mapped, didChange] = mapNodeById(child, targetId, updater);
+  const nextChildren = [...node.children];
+  for (let index = 0; index < node.children.length; index += 1) {
+    const child = node.children[index]!;
+    const [mapped, didChange] = mapNodeById(child, targetId, updater, seen);
     if (didChange) childChanged = true;
-    return mapped;
-  });
-
-  if (childChanged) {
-    nextNode = { ...nextNode, children: nextChildren };
-    changed = true;
+    if (didChange) {
+      nextChildren[index] = mapped;
+      break;
+    }
   }
 
-  return [changed ? nextNode : node, changed];
+  if (childChanged) {
+    return [{ ...node, children: nextChildren }, true];
+  }
+
+  return [node, false];
 };
 
 const removeNodeById = (
   node: MindMapNode,
   targetId: string,
+  seen: WeakSet<MindMapNode> = new WeakSet(),
 ): { node: MindMapNode; removed: boolean; parentId: string | null } => {
+  if (seen.has(node)) return { node, removed: false, parentId: null };
+  seen.add(node);
   for (let index = 0; index < node.children.length; index += 1) {
     const child = node.children[index]!;
     if (child.id === targetId) {
@@ -144,7 +260,7 @@ const removeNodeById = (
       return { node: { ...node, children: nextChildren }, removed: true, parentId: node.id };
     }
 
-    const nested = removeNodeById(child, targetId);
+    const nested = removeNodeById(child, targetId, seen);
     if (nested.removed) {
       const nextChildren = node.children.map((item) => (item.id === child.id ? nested.node : item));
       return { node: { ...node, children: nextChildren }, removed: true, parentId: nested.parentId };
@@ -157,7 +273,10 @@ const removeNodeById = (
 const detachNodeById = (
   node: MindMapNode,
   targetId: string,
+  seen: WeakSet<MindMapNode> = new WeakSet(),
 ): { node: MindMapNode; detached: MindMapNode | null; parentId: string | null } => {
+  if (seen.has(node)) return { node, detached: null, parentId: null };
+  seen.add(node);
   for (let index = 0; index < node.children.length; index += 1) {
     const child = node.children[index]!;
     if (child.id === targetId) {
@@ -165,7 +284,7 @@ const detachNodeById = (
       return { node: { ...node, children: nextChildren }, detached: child, parentId: node.id };
     }
 
-    const nested = detachNodeById(child, targetId);
+    const nested = detachNodeById(child, targetId, seen);
     if (nested.detached) {
       const nextChildren = node.children.map((item) => (item.id === child.id ? nested.node : item));
       return { node: { ...node, children: nextChildren }, detached: nested.detached, parentId: nested.parentId };
@@ -178,6 +297,11 @@ const detachNodeById = (
 const structureClassToLayoutMode = (structureClass: unknown): MindMapLayoutMode => {
   if (typeof structureClass !== "string") return "balanced";
   const normalized = structureClass.toLowerCase();
+  if (normalized.includes("supercompactdownvertical") || normalized.includes("super-compact-down-vertical")) {
+    return "superCompactDownVertical";
+  }
+  if (normalized.includes("supercompactright") || normalized.includes("super-compact-right")) return "superCompactRight";
+  if (normalized.includes("supercompactdown") || normalized.includes("super-compact-down")) return "superCompactDown";
   if (normalized.includes("compact2")) return "downCompact2";
   if (normalized.includes("compact")) return "downCompact";
   if (normalized.includes("up")) return "up";
@@ -198,14 +322,25 @@ type EditorSnapshot = {
   selectedNodeId: string | null;
 };
 
+type VersionSnapshot = {
+  id: string;
+  createdAt: number;
+  snapshot: EditorSnapshot;
+};
+
 type DraftPayload = {
-  version: 1;
+  version: 2;
   savedAt: number;
   editor: EditorSnapshot;
+  versionHistory: VersionSnapshot[];
 };
 
 const DRAFT_STORAGE_KEY = "atools:xmind-viewer:draft:v1";
+const VIEW_MODE_STORAGE_KEY = "atools:xmind-viewer:viewMode:v1";
+const VIEW_OVERRIDES_STORAGE_KEY = "atools:xmind-viewer:viewOverrides:v1";
 const DEFAULT_DROP_REPLACE_HINT = "支持拖拽新 .xmind 到此区域直接替换";
+const VERSION_HISTORY_LIMIT = 24;
+const VERSION_HISTORY_STORAGE_LIMIT = 10;
 type XmindViewerUi = {
   untitled: string;
   newNode: string;
@@ -259,6 +394,10 @@ type XmindViewerUi = {
   panelExport: string;
   panelEdit: string;
   panelNode: string;
+  panelHistory: string;
+  historyEmpty: string;
+  historyRollback: string;
+  historyCurrent: string;
   relationTitle: string;
   relationTarget: string;
   relationLabel: string;
@@ -271,6 +410,10 @@ type XmindViewerUi = {
   boundaryLabel: string;
   boundaryAdd: string;
   boundaryRemove: string;
+  summaryTitle: string;
+  summaryLabel: string;
+  summaryAdd: string;
+  summaryRemove: string;
   create: string;
   moveUp: string;
   moveDown: string;
@@ -302,6 +445,9 @@ type XmindViewerUi = {
   outlinePreview: string;
   currentSheet: string;
   outlinePlaceholder: string;
+  textViewTitle: string;
+  textViewShortcutHint: string;
+  textViewEmpty: string;
   tutorial: string;
   tutorial1: string;
   tutorial2: string;
@@ -327,6 +473,9 @@ type XmindViewerUi = {
   layoutDown: string;
   layoutDownCompact: string;
   layoutDownCompact2: string;
+  layoutSuperCompactDown: string;
+  layoutSuperCompactRight: string;
+  layoutSuperCompactDownVertical: string;
   parseErrors: {
     invalid_zip: string;
     content_json_parse_failed: string;
@@ -356,7 +505,36 @@ const normalizeEditorSheets = (sheets: MindMapSheet[]): MindMapSheet[] =>
     themeId: (sheet as Partial<MindMapSheet>).themeId ?? "classicLight",
     relationships: normalizeRelationships((sheet as Partial<MindMapSheet>).relationships),
     boundaries: normalizeBoundaries((sheet as Partial<MindMapSheet>).boundaries),
+    summaries: normalizeSummaries((sheet as Partial<MindMapSheet>).summaries),
   }));
+
+const normalizeEditorSnapshot = (value: unknown): EditorSnapshot | null => {
+  if (!value || typeof value !== "object") return null;
+  const record = value as Partial<EditorSnapshot>;
+  if (!Array.isArray(record.sheets)) return null;
+  return {
+    sheets: normalizeEditorSheets(cloneValue(record.sheets as MindMapSheet[])),
+    activeSheetId: typeof record.activeSheetId === "string" || record.activeSheetId === null ? record.activeSheetId : null,
+    selectedNodeId: typeof record.selectedNodeId === "string" || record.selectedNodeId === null ? record.selectedNodeId : null,
+  };
+};
+
+const normalizeVersionHistory = (value: unknown): VersionSnapshot[] => {
+  if (!Array.isArray(value)) return [];
+  const snapshots: VersionSnapshot[] = [];
+  for (const item of value) {
+    if (!item || typeof item !== "object") continue;
+    const record = item as Partial<VersionSnapshot>;
+    const snapshot = normalizeEditorSnapshot(record.snapshot);
+    if (!snapshot) continue;
+    snapshots.push({
+      id: typeof record.id === "string" && record.id ? record.id : `snapshot-${Date.now()}-${snapshots.length + 1}`,
+      createdAt: typeof record.createdAt === "number" && Number.isFinite(record.createdAt) ? record.createdAt : Date.now(),
+      snapshot,
+    });
+  }
+  return snapshots.slice(-VERSION_HISTORY_LIMIT);
+};
 
 const getDraftFromStorage = (): DraftPayload | null => {
   if (typeof window === "undefined") return null;
@@ -365,9 +543,34 @@ const getDraftFromStorage = (): DraftPayload | null => {
     if (!raw) return null;
     const parsed = JSON.parse(raw) as unknown;
     if (!parsed || typeof parsed !== "object") return null;
-    const record = parsed as Partial<DraftPayload>;
-    if (record.version !== 1 || !record.editor) return null;
-    return record as DraftPayload;
+    const record = parsed as {
+      version?: number;
+      savedAt?: unknown;
+      editor?: unknown;
+      versionHistory?: unknown;
+    };
+    const editor = normalizeEditorSnapshot(record.editor);
+    if (!editor) return null;
+
+    if (record.version === 2) {
+      return {
+        version: 2,
+        savedAt: typeof record.savedAt === "number" && Number.isFinite(record.savedAt) ? record.savedAt : Date.now(),
+        editor,
+        versionHistory: normalizeVersionHistory(record.versionHistory),
+      };
+    }
+
+    if (record.version === 1) {
+      return {
+        version: 2,
+        savedAt: typeof record.savedAt === "number" && Number.isFinite(record.savedAt) ? record.savedAt : Date.now(),
+        editor,
+        versionHistory: [],
+      };
+    }
+
+    return null;
   } catch {
     return null;
   }
@@ -657,6 +860,7 @@ const extractAtoolsExtensionData = (
   themeId?: MindMapThemeId;
   relationships?: MindMapRelationship[];
   boundaries?: MindMapBoundary[];
+  summaries?: MindMapSummary[];
 } => {
   const resolved = resolveTopicValue(rawTopic, topicsById);
   if (!isRecord(resolved)) return {};
@@ -674,14 +878,16 @@ const extractAtoolsExtensionData = (
       const themeId = typeof record.themeId === "string" ? (record.themeId as MindMapThemeId) : undefined;
       const relationships = normalizeRelationships(record.relationships);
       const boundaries = normalizeBoundaries(record.boundaries);
-      return { layoutMode, themeId, relationships, boundaries };
+      const summaries = normalizeSummaries(record.summaries);
+      return { layoutMode, themeId, relationships, boundaries, summaries };
     }
     if (isRecord(content)) {
       const layoutMode = typeof content.layoutMode === "string" ? (content.layoutMode as MindMapLayoutMode) : undefined;
       const themeId = typeof content.themeId === "string" ? (content.themeId as MindMapThemeId) : undefined;
       const relationships = normalizeRelationships(content.relationships);
       const boundaries = normalizeBoundaries(content.boundaries);
-      return { layoutMode, themeId, relationships, boundaries };
+      const summaries = normalizeSummaries(content.summaries);
+      return { layoutMode, themeId, relationships, boundaries, summaries };
     }
   }
   return {};
@@ -720,9 +926,13 @@ const normalizeSheetsFromContentJson = (content: unknown, topicsById: Record<str
         : typeof resolvedRootRecord?.structureClass === "string"
           ? resolvedRootRecord.structureClass
           : undefined;
-    const { layoutMode, themeId, relationships: extensionRelationships, boundaries: extensionBoundaries } = rootRef
-      ? extractAtoolsExtensionData(rootRef, topicsById)
-      : {};
+    const {
+      layoutMode,
+      themeId,
+      relationships: extensionRelationships,
+      boundaries: extensionBoundaries,
+      summaries: extensionSummaries,
+    } = rootRef ? extractAtoolsExtensionData(rootRef, topicsById) : {};
     const legacyThemeId = typeof sheetRecord.atoolsThemeId === "string" ? (sheetRecord.atoolsThemeId as MindMapThemeId) : undefined;
     const legacyLayoutMode =
       typeof sheetRecord.structureClass === "string" && sheetRecord.structureClass.startsWith("atools:layout:")
@@ -730,12 +940,14 @@ const normalizeSheetsFromContentJson = (content: unknown, topicsById: Record<str
         : undefined;
     const relationships = normalizeRelationships(sheetRecord.relationships);
     const boundaries = normalizeBoundaries(sheetRecord.boundaries);
+    const summaries = normalizeSummaries(sheetRecord.summaries);
 
     return {
       title,
       rootTopic,
       relationships: relationships.length > 0 ? relationships : extensionRelationships ?? [],
       boundaries: boundaries.length > 0 ? boundaries : extensionBoundaries ?? [],
+      summaries: summaries.length > 0 ? summaries : extensionSummaries ?? [],
       structureClass,
       atoolsLayoutMode: layoutMode ?? legacyLayoutMode,
       atoolsThemeId: themeId ?? legacyThemeId,
@@ -899,6 +1111,40 @@ const normalizeBoundaries = (value: unknown): MindMapBoundary[] => {
   return result;
 };
 
+const normalizeSummaries = (value: unknown): MindMapSummary[] => {
+  if (!Array.isArray(value)) return [];
+  const result: MindMapSummary[] = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const item = value[index];
+    if (!isRecord(item)) continue;
+    const nodeId =
+      typeof item.nodeId === "string"
+        ? item.nodeId
+        : typeof item.topicId === "string"
+          ? item.topicId
+          : typeof item.targetId === "string"
+            ? item.targetId
+            : typeof item.rangeNodeId === "string"
+              ? item.rangeNodeId
+              : "";
+    if (!nodeId) continue;
+    const id =
+      typeof item.id === "string" && item.id.trim()
+        ? item.id
+        : `summary:${nodeId}:${index}`;
+    const title =
+      typeof item.title === "string"
+        ? item.title
+        : typeof item.name === "string"
+          ? item.name
+          : typeof item.label === "string"
+            ? item.label
+            : undefined;
+    result.push({ id, nodeId, title: title?.trim() || undefined });
+  }
+  return result;
+};
+
 const collectNodeIds = (node: MindMapNode | null): Set<string> => {
   const ids = new Set<string>();
   const walk = (current: MindMapNode | null) => {
@@ -929,6 +1175,14 @@ const filterBoundariesByNodeIds = (
 ): MindMapBoundary[] => {
   if (!boundaries || boundaries.length === 0) return [];
   return boundaries.filter((boundary) => nodeIds.has(boundary.nodeId));
+};
+
+const filterSummariesByNodeIds = (
+  summaries: MindMapSummary[] | undefined,
+  nodeIds: Set<string>,
+): MindMapSummary[] => {
+  if (!summaries || summaries.length === 0) return [];
+  return summaries.filter((summary) => nodeIds.has(summary.nodeId));
 };
 
 const topicNodeToMindMapNode = (topic: TopicNode, createId: () => string): MindMapNode => {
@@ -998,6 +1252,24 @@ const remapBoundaries = (
   return remapped;
 };
 
+const remapSummaries = (
+  summaries: MindMapSummary[] | undefined,
+  idMap: Map<string, string>,
+): MindMapSummary[] => {
+  if (!summaries || summaries.length === 0) return [];
+  const remapped: MindMapSummary[] = [];
+  for (const summary of summaries) {
+    const nodeId = idMap.get(summary.nodeId);
+    if (!nodeId) continue;
+    remapped.push({
+      ...summary,
+      id: `${nodeId}:${summary.id}`,
+      nodeId,
+    });
+  }
+  return remapped;
+};
+
 const setCollapseForAll = (node: MindMapNode, collapsed: boolean): MindMapNode => ({
   ...node,
   collapsed: node.children.length > 0 ? collapsed : false,
@@ -1021,6 +1293,7 @@ const normalizeToMindMapSheets = (sheets: Sheet[], createId: () => string): Mind
         themeId: "classicLight",
         relationships: [],
         boundaries: [],
+        summaries: [],
       },
     ];
   }
@@ -1032,6 +1305,7 @@ const normalizeToMindMapSheets = (sheets: Sheet[], createId: () => string): Mind
     const nodeIds = collectNodeIds(rootTopic);
     const rawRelationships = normalizeRelationships((sheet as Record<string, unknown>).relationships);
     const rawBoundaries = normalizeBoundaries((sheet as Record<string, unknown>).boundaries);
+    const rawSummaries = normalizeSummaries((sheet as Record<string, unknown>).summaries);
     return {
       id: createId(),
       title: extractSheetTitle(sheet, index),
@@ -1046,6 +1320,7 @@ const normalizeToMindMapSheets = (sheets: Sheet[], createId: () => string): Mind
           : "classicLight",
       relationships: filterRelationshipsByNodeIds(rawRelationships, nodeIds),
       boundaries: filterBoundariesByNodeIds(rawBoundaries, nodeIds),
+      summaries: filterSummariesByNodeIds(rawSummaries, nodeIds),
     };
   });
 };
@@ -1079,16 +1354,23 @@ const parseXmind = async (file: File): Promise<ParsedXmind> => {
       ? normalizedSheets
         : asSheets(parsed).map((sheet, index) => {
             const rootRef = extractRootTopicRef(sheet);
-            const { layoutMode, themeId, relationships: extensionRelationships, boundaries: extensionBoundaries } =
-              rootRef ? extractAtoolsExtensionData(rootRef, topicsById) : {};
+            const {
+              layoutMode,
+              themeId,
+              relationships: extensionRelationships,
+              boundaries: extensionBoundaries,
+              summaries: extensionSummaries,
+            } = rootRef ? extractAtoolsExtensionData(rootRef, topicsById) : {};
             const sheetRecord = sheet as Record<string, unknown>;
             const relationships = normalizeRelationships(sheetRecord.relationships);
             const boundaries = normalizeBoundaries(sheetRecord.boundaries);
+            const summaries = normalizeSummaries(sheetRecord.summaries);
             return {
               title: extractSheetTitle(sheet, index),
               rootTopic: rootRef ? toTopicNode(rootRef, topicsById, new Set()) : { title: "中心主题" },
               relationships: relationships.length > 0 ? relationships : extensionRelationships ?? [],
               boundaries: boundaries.length > 0 ? boundaries : extensionBoundaries ?? [],
+              summaries: summaries.length > 0 ? summaries : extensionSummaries ?? [],
               structureClass:
                 typeof (sheet as Sheet).structureClass === "string" ? (sheet as Sheet).structureClass : undefined,
               atoolsLayoutMode: layoutMode,
@@ -1134,6 +1416,7 @@ export default function XmindViewerClient() {
   const inputRef = useRef<HTMLInputElement>(null);
   const canvasHandleRef = useRef<XmindMindMapCanvasHandle>(null);
   const idCounterRef = useRef(0);
+  const isEnglish = providedConfig?.lang?.toLowerCase().startsWith("en") ?? false;
   const [file, setFile] = useState<File | null>(null);
   const [parsed, setParsed] = useState<ParsedXmind | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -1147,8 +1430,13 @@ export default function XmindViewerClient() {
   const [relationTargetId, setRelationTargetId] = useState("");
   const [relationTitleInput, setRelationTitleInput] = useState("");
   const [boundaryTitleInput, setBoundaryTitleInput] = useState("");
+  const [summaryTitleInput, setSummaryTitleInput] = useState("");
   const [canvasViewResetKey, setCanvasViewResetKey] = useState(0);
   const copyHintTimerRef = useRef<number | null>(null);
+  const textViewTextareaRef = useRef<HTMLTextAreaElement>(null);
+  const [textViewDraft, setTextViewDraft] = useState("");
+  const [isTextViewEditing, setIsTextViewEditing] = useState(false);
+  const textViewEditSessionRef = useRef<{ hasPushedHistory: boolean }>({ hasPushedHistory: false });
   const titleEditSessionRef = useRef<{ nodeId: string | null; hasPushedHistory: boolean }>({
     nodeId: null,
     hasPushedHistory: false,
@@ -1156,6 +1444,9 @@ export default function XmindViewerClient() {
 
   const historyRef = useRef<{ past: EditorSnapshot[]; future: EditorSnapshot[] }>({ past: [], future: [] });
   const [historyTick, setHistoryTick] = useState(0);
+  const versionHistoryRef = useRef<VersionSnapshot[]>([]);
+  const snapshotCounterRef = useRef(0);
+  const [versionHistoryTick, setVersionHistoryTick] = useState(0);
 
   const [draftStatus, setDraftStatus] = useState<"idle" | "available" | "dismissed">("idle");
   const draftRef = useRef<DraftPayload | null>(null);
@@ -1163,6 +1454,40 @@ export default function XmindViewerClient() {
 
   const sheetViewByIdRef = useRef<Record<string, ViewStateBundle>>({});
   const ui = useMemo(() => providedConfig?.ui as XmindViewerUi, [providedConfig?.ui]);
+  const [viewerMode, setViewerMode] = useState<"edit" | "read">("edit");
+  const [fullscreenPrimaryView, setFullscreenPrimaryView] = useState<"mindmap" | "text">("mindmap");
+  const isReadMode = viewerMode === "read";
+  const isFullscreenTextView = fullscreenPrimaryView === "text";
+  const [viewOverridesBySheetId, setViewOverridesBySheetId] = useState<
+    Record<string, { layoutMode?: MindMapLayoutMode; themeId?: MindMapThemeId }>
+  >({});
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      const modeRaw = window.localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+      if (modeRaw === "read" || modeRaw === "edit") setViewerMode(modeRaw);
+      const overridesRaw = window.localStorage.getItem(VIEW_OVERRIDES_STORAGE_KEY);
+      if (overridesRaw) {
+        const parsedOverrides = JSON.parse(overridesRaw) as unknown;
+        if (parsedOverrides && typeof parsedOverrides === "object") {
+          setViewOverridesBySheetId(parsedOverrides as Record<string, { layoutMode?: MindMapLayoutMode; themeId?: MindMapThemeId }>);
+        }
+      }
+    } catch {
+      // ignore storage errors
+    }
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(VIEW_MODE_STORAGE_KEY, viewerMode);
+      window.localStorage.setItem(VIEW_OVERRIDES_STORAGE_KEY, JSON.stringify(viewOverridesBySheetId));
+    } catch {
+      // ignore quota errors
+    }
+  }, [viewerMode, viewOverridesBySheetId]);
 
   const createId = useCallback(() => {
     idCounterRef.current += 1;
@@ -1172,22 +1497,113 @@ export default function XmindViewerClient() {
     return `xmind-node-${idCounterRef.current}`;
   }, []);
 
-  const resetHistory = useCallback(() => {
-    historyRef.current = { past: [], future: [] };
-    setHistoryTick((prev) => prev + 1);
+  const createVersionSnapshotId = useCallback(() => {
+    snapshotCounterRef.current += 1;
+    return `snapshot-${Date.now().toString(36)}-${snapshotCounterRef.current.toString(36)}`;
   }, []);
 
-  const pushHistory = useCallback((snapshot: EditorSnapshot) => {
-    const history = historyRef.current;
-    history.past = [...history.past, cloneValue(snapshot)].slice(-80);
-    history.future = [];
+  const pushVersionSnapshot = useCallback(
+    (snapshot: EditorSnapshot, createdAt = Date.now()) => {
+      const next: VersionSnapshot = {
+        id: createVersionSnapshotId(),
+        createdAt,
+        snapshot: cloneValue(snapshot),
+      };
+      versionHistoryRef.current = [...versionHistoryRef.current, next].slice(-VERSION_HISTORY_LIMIT);
+      setVersionHistoryTick((prev) => prev + 1);
+    },
+    [createVersionSnapshotId],
+  );
+
+  const replaceVersionHistory = useCallback(
+    (versionHistory: VersionSnapshot[], fallbackSnapshot?: EditorSnapshot, fallbackSavedAt?: number) => {
+      const normalized = versionHistory
+        .map((entry) => ({
+          id: entry.id || createVersionSnapshotId(),
+          createdAt: Number.isFinite(entry.createdAt) ? entry.createdAt : Date.now(),
+          snapshot: cloneValue(entry.snapshot),
+        }))
+        .slice(-VERSION_HISTORY_LIMIT);
+
+      if (normalized.length > 0) {
+        versionHistoryRef.current = normalized;
+      } else if (fallbackSnapshot) {
+        versionHistoryRef.current = [
+          {
+            id: createVersionSnapshotId(),
+            createdAt: typeof fallbackSavedAt === "number" ? fallbackSavedAt : Date.now(),
+            snapshot: cloneValue(fallbackSnapshot),
+          },
+        ];
+      } else {
+        versionHistoryRef.current = [];
+      }
+      setVersionHistoryTick((prev) => prev + 1);
+    },
+    [createVersionSnapshotId],
+  );
+
+  const resetHistory = useCallback(() => {
+    historyRef.current = { past: [], future: [] };
+    versionHistoryRef.current = [];
     setHistoryTick((prev) => prev + 1);
+    setVersionHistoryTick((prev) => prev + 1);
   }, []);
+
+  const pushHistory = useCallback(
+    (snapshot: EditorSnapshot) => {
+      const history = historyRef.current;
+      const cloned = cloneValue(snapshot);
+      history.past = [...history.past, cloned].slice(-80);
+      history.future = [];
+      pushVersionSnapshot(cloned);
+      setHistoryTick((prev) => prev + 1);
+    },
+    [pushVersionSnapshot],
+  );
 
   const canUndo = historyTick >= 0 && historyRef.current.past.length > 0;
   const canRedo = historyTick >= 0 && historyRef.current.future.length > 0;
 
+  const versionSnapshots = useMemo(() => {
+    void versionHistoryTick;
+    return [...versionHistoryRef.current].reverse();
+  }, [versionHistoryTick]);
+
+  const formatVersionSnapshotTime = useCallback(
+    (timestamp: number) => {
+      try {
+        return new Intl.DateTimeFormat(isEnglish ? "en-US" : "zh-CN", {
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+          hour12: false,
+        }).format(timestamp);
+      } catch {
+        return new Date(timestamp).toLocaleString();
+      }
+    },
+    [isEnglish],
+  );
+
+  const rollbackToVersionSnapshot = useCallback(
+    (versionId: string) => {
+      if (isReadMode) return;
+      const target = versionHistoryRef.current.find((entry) => entry.id === versionId);
+      if (!target) return;
+      pushHistory({ sheets: editorSheets, activeSheetId, selectedNodeId });
+      setEditorSheets(normalizeEditorSheets(cloneValue(target.snapshot.sheets)));
+      setActiveSheetId(target.snapshot.activeSheetId);
+      setSelectedNodeId(target.snapshot.selectedNodeId);
+      setCanvasViewResetKey((prev) => prev + 1);
+    },
+    [activeSheetId, editorSheets, isReadMode, pushHistory, selectedNodeId],
+  );
+
   const undo = useCallback(() => {
+    if (isReadMode) return;
     const history = historyRef.current;
     if (history.past.length === 0) return;
     const previous = history.past[history.past.length - 1]!;
@@ -1200,9 +1616,10 @@ export default function XmindViewerClient() {
     setActiveSheetId(previous.activeSheetId);
     setSelectedNodeId(previous.selectedNodeId);
     setHistoryTick((prev) => prev + 1);
-  }, [activeSheetId, editorSheets, selectedNodeId]);
+  }, [activeSheetId, editorSheets, isReadMode, selectedNodeId]);
 
   const redo = useCallback(() => {
+    if (isReadMode) return;
     const history = historyRef.current;
     if (history.future.length === 0) return;
     const next = history.future[0]!;
@@ -1215,7 +1632,7 @@ export default function XmindViewerClient() {
     setActiveSheetId(next.activeSheetId);
     setSelectedNodeId(next.selectedNodeId);
     setHistoryTick((prev) => prev + 1);
-  }, [activeSheetId, editorSheets, selectedNodeId]);
+  }, [activeSheetId, editorSheets, isReadMode, selectedNodeId]);
 
   useEffect(() => {
     const draft = getDraftFromStorage();
@@ -1238,9 +1655,10 @@ export default function XmindViewerClient() {
     setSelectedNodeId(draft.editor.selectedNodeId);
     setCanvasViewResetKey((prev) => prev + 1);
     resetHistory();
+    replaceVersionHistory(draft.versionHistory, draft.editor, draft.savedAt);
     sheetViewByIdRef.current = {};
     setDraftStatus("dismissed");
-  }, [resetHistory]);
+  }, [replaceVersionHistory, resetHistory]);
 
   const deleteDraft = useCallback(() => {
     draftRef.current = null;
@@ -1253,13 +1671,18 @@ export default function XmindViewerClient() {
     if (editorSheets.length === 0) return;
     autosaveTimerRef.current = window.setTimeout(() => {
       saveDraftToStorage({
-        version: 1,
+        version: 2,
         savedAt: Date.now(),
         editor: {
           sheets: cloneValue(editorSheets),
           activeSheetId,
           selectedNodeId,
         },
+        versionHistory: versionHistoryRef.current.slice(-VERSION_HISTORY_STORAGE_LIMIT).map((entry) => ({
+          id: entry.id,
+          createdAt: entry.createdAt,
+          snapshot: cloneValue(entry.snapshot),
+        })),
       });
     }, 650);
     return () => {
@@ -1278,7 +1701,24 @@ export default function XmindViewerClient() {
     return editorSheets.find((sheet) => sheet.id === activeSheetId) ?? null;
   }, [activeSheetId, editorSheets]);
 
-  const activeTheme = useMemo(() => getTheme(activeSheet?.themeId), [activeSheet?.themeId]);
+  useEffect(() => {
+    if (activeSheet) return;
+    setFullscreenPrimaryView("mindmap");
+  }, [activeSheet]);
+
+  const activeSheetOverride = useMemo(
+    () => (activeSheetId ? viewOverridesBySheetId[activeSheetId] ?? null : null),
+    [activeSheetId, viewOverridesBySheetId],
+  );
+  const effectiveLayoutMode = useMemo<MindMapLayoutMode>(() => {
+    if (isReadMode && activeSheetOverride?.layoutMode) return activeSheetOverride.layoutMode;
+    return activeSheet?.layoutMode ?? "balanced";
+  }, [activeSheet?.layoutMode, activeSheetOverride?.layoutMode, isReadMode]);
+  const effectiveThemeId = useMemo<MindMapThemeId>(() => {
+    if (isReadMode && activeSheetOverride?.themeId) return activeSheetOverride.themeId;
+    return activeSheet?.themeId ?? "classicLight";
+  }, [activeSheet?.themeId, activeSheetOverride?.themeId, isReadMode]);
+  const activeTheme = useMemo(() => getTheme(effectiveThemeId), [effectiveThemeId]);
 
   const activeSheetIndex = useMemo(() => {
     if (!activeSheetId) return -1;
@@ -1306,6 +1746,10 @@ export default function XmindViewerClient() {
     if (!activeSheet?.boundaries || !selectedNodeId) return null;
     return activeSheet.boundaries.find((boundary) => boundary.nodeId === selectedNodeId) ?? null;
   }, [activeSheet?.boundaries, selectedNodeId]);
+  const selectedNodeSummary = useMemo(() => {
+    if (!activeSheet?.summaries || !selectedNodeId) return null;
+    return activeSheet.summaries.find((summary) => summary.nodeId === selectedNodeId) ?? null;
+  }, [activeSheet?.summaries, selectedNodeId]);
 
   const nodeTitleById = useMemo(() => {
     const map = new Map<string, string>();
@@ -1385,17 +1829,48 @@ export default function XmindViewerClient() {
     return text.replaceAll("(无标题)", ui.untitled);
   }, [activeSheet, ui.untitled]);
 
+  const textViewRows = useMemo(() => {
+    if (!activeSheet?.rootTopic) return [];
+    return flattenMindMapNodeRows(activeSheet.rootTopic);
+  }, [activeSheet?.rootTopic]);
+  const textViewText = useMemo(
+    () => textViewRows.map((row) => `${"  ".repeat(Math.min(row.depth, 24))}${TEXT_VIEW_LINE_PREFIX}${row.title}`).join("\n"),
+    [textViewRows],
+  );
+
   useEffect(() => {
     setEditingTitle(selectedNode?.title ?? "");
     titleEditSessionRef.current = { nodeId: selectedNode?.id ?? null, hasPushedHistory: false };
     setRelationTargetId("");
     setRelationTitleInput("");
     setBoundaryTitleInput(selectedNodeBoundary?.title ?? "");
-  }, [selectedNode?.id, selectedNode?.title, selectedNodeBoundary?.id, selectedNodeBoundary?.title]);
+    setSummaryTitleInput(selectedNodeSummary?.title ?? "");
+  }, [
+    selectedNode?.id,
+    selectedNode?.title,
+    selectedNodeBoundary?.id,
+    selectedNodeBoundary?.title,
+    selectedNodeSummary?.id,
+    selectedNodeSummary?.title,
+  ]);
+
+  useEffect(() => {
+    setIsTextViewEditing(false);
+    textViewEditSessionRef.current = { hasPushedHistory: false };
+  }, [activeSheet?.id]);
+
+  useEffect(() => {
+    if (isTextViewEditing) return;
+    setTextViewDraft(textViewText);
+  }, [isTextViewEditing, textViewText]);
 
   const applyActiveSheetUpdate = useCallback(
-    (updater: (sheet: MindMapSheet) => MindMapSheet, options?: { recordHistory?: boolean }) => {
+    (
+      updater: (sheet: MindMapSheet) => MindMapSheet,
+      options?: { recordHistory?: boolean; allowInReadMode?: boolean },
+    ) => {
       if (!activeSheetId) return;
+      if (isReadMode && options?.allowInReadMode !== true) return;
       setEditorSheets((prev) => {
         if (options?.recordHistory !== false) {
           pushHistory({ sheets: prev, activeSheetId, selectedNodeId });
@@ -1403,7 +1878,7 @@ export default function XmindViewerClient() {
         return prev.map((sheet) => (sheet.id === activeSheetId ? updater(sheet) : sheet));
       });
     },
-    [activeSheetId, pushHistory, selectedNodeId],
+    [activeSheetId, isReadMode, pushHistory, selectedNodeId],
   );
 
   const setSheetLayout = useCallback(
@@ -1420,8 +1895,39 @@ export default function XmindViewerClient() {
     [applyActiveSheetUpdate],
   );
 
+  const setEffectiveLayoutMode = useCallback(
+    (layoutMode: MindMapLayoutMode) => {
+      if (!activeSheetId) return;
+      if (isReadMode) {
+        setViewOverridesBySheetId((prev) => ({
+          ...prev,
+          [activeSheetId]: { ...prev[activeSheetId], layoutMode },
+        }));
+        return;
+      }
+      setSheetLayout(layoutMode);
+    },
+    [activeSheetId, isReadMode, setSheetLayout],
+  );
+
+  const setEffectiveThemeId = useCallback(
+    (themeId: MindMapThemeId) => {
+      if (!activeSheetId) return;
+      if (isReadMode) {
+        setViewOverridesBySheetId((prev) => ({
+          ...prev,
+          [activeSheetId]: { ...prev[activeSheetId], themeId },
+        }));
+        return;
+      }
+      setSheetTheme(themeId);
+    },
+    [activeSheetId, isReadMode, setSheetTheme],
+  );
+
   const updateSelectedNodeTitle = useCallback(
     (rawTitle: string) => {
+      if (isReadMode) return;
       if (!activeSheet?.rootTopic || !selectedNodeId) return;
       const normalizedTitle = rawTitle;
 
@@ -1439,7 +1945,162 @@ export default function XmindViewerClient() {
         return { ...sheet, rootTopic: nextRoot };
       }, { recordHistory });
     },
-    [activeSheet?.rootTopic, applyActiveSheetUpdate, selectedNodeId],
+    [activeSheet?.rootTopic, applyActiveSheetUpdate, isReadMode, selectedNodeId],
+  );
+
+  const applyTextViewDraft = useCallback(
+    (rawText: string) => {
+      if (isReadMode || !activeSheet?.rootTopic) return;
+      const parsedRows = parseTextDraftRows(rawText, activeSheet.rootTopic.title.trim() || ui.untitled);
+      const oldRows = textViewRows;
+      const signatureToOldIndexes = new Map<string, number[]>();
+      for (let index = 0; index < oldRows.length; index += 1) {
+        const row = oldRows[index]!;
+        const signature = `${row.depth}\u0000${row.title}`;
+        const list = signatureToOldIndexes.get(signature);
+        if (list) list.push(index);
+        else signatureToOldIndexes.set(signature, [index]);
+      }
+
+      const nextRows = parsedRows.map((row, index) => {
+        if (index === 0 && oldRows[0]) {
+          return { ...row, id: oldRows[0].id };
+        }
+        const signature = `${row.depth}\u0000${row.title}`;
+        const list = signatureToOldIndexes.get(signature);
+        if (list && list.length > 0) {
+          const matchedOldIndex = list.shift()!;
+          return { ...row, id: oldRows[matchedOldIndex]!.id };
+        }
+        return { ...row, id: createId() };
+      });
+
+      const oldText = oldRows.map((row) => `${row.depth}\u0000${row.title}`).join("\n");
+      const nextText = nextRows.map((row) => `${row.depth}\u0000${row.title}`).join("\n");
+      if (oldText === nextText) return;
+
+      const recordHistory = !textViewEditSessionRef.current.hasPushedHistory;
+      if (recordHistory) {
+        textViewEditSessionRef.current = { hasPushedHistory: true };
+      }
+
+      const existingNodeById = new Map<string, MindMapNode>();
+      const collectExistingNodes = (node: MindMapNode) => {
+        existingNodeById.set(node.id, node);
+        for (const child of node.children) collectExistingNodes(child);
+      };
+      collectExistingNodes(activeSheet.rootTopic);
+
+      const createTextNode = (id: string, title: string): MindMapNode => {
+        const existing = existingNodeById.get(id);
+        return {
+          id,
+          title,
+          children: [],
+          collapsed: existing?.collapsed ?? false,
+          labels: existing?.labels ? [...existing.labels] : undefined,
+          notes: existing?.notes?.plain?.content ? { plain: { content: existing.notes.plain.content } } : undefined,
+        };
+      };
+
+      const rootRow = nextRows[0]!;
+      const rootNode = createTextNode(rootRow.id, rootRow.title);
+      const stack: MindMapNode[] = [rootNode];
+      for (let index = 1; index < nextRows.length; index += 1) {
+        const row = nextRows[index]!;
+        const desiredDepth = Math.max(1, row.depth);
+        const depth = Math.min(desiredDepth, stack.length);
+        while (stack.length > depth) stack.pop();
+        const parent = stack[stack.length - 1] ?? rootNode;
+        const nextNode = createTextNode(row.id, row.title);
+        parent.children.push(nextNode);
+        stack.push(nextNode);
+      }
+
+      let nextNodeIds: Set<string> | null = null;
+      const rootId = rootNode.id;
+
+      applyActiveSheetUpdate((sheet) => {
+        if (!sheet.rootTopic) return sheet;
+        nextNodeIds = collectNodeIds(rootNode);
+        return {
+          ...sheet,
+          rootTopic: rootNode,
+          relationships: filterRelationshipsByNodeIds(sheet.relationships, nextNodeIds),
+          boundaries: filterBoundariesByNodeIds(sheet.boundaries, nextNodeIds),
+          summaries: filterSummariesByNodeIds(sheet.summaries, nextNodeIds),
+        };
+      }, { recordHistory });
+
+      if (nextNodeIds) {
+        setSelectedNodeId((previous) => (previous && nextNodeIds!.has(previous) ? previous : rootId));
+      }
+    },
+    [activeSheet?.rootTopic, applyActiveSheetUpdate, createId, isReadMode, textViewRows, ui.untitled],
+  );
+
+  const handleTextViewTextareaKeyDown = useCallback(
+    (event: ReactKeyboardEvent<HTMLTextAreaElement>) => {
+      if (isReadMode) return;
+      const textarea = event.currentTarget;
+      const selectionStart = textarea.selectionStart;
+      const selectionEnd = textarea.selectionEnd;
+
+      if (event.key === "Enter") {
+        event.preventDefault();
+        const lineStart = Math.max(0, textViewDraft.lastIndexOf("\n", Math.max(0, selectionStart - 1)) + 1);
+        const leading = textViewDraft.slice(lineStart, selectionStart).match(/^[\t ]*/)?.[0] ?? "";
+        const insert = `\n${leading}${TEXT_VIEW_LINE_PREFIX}`;
+        const nextValue = `${textViewDraft.slice(0, selectionStart)}${insert}${textViewDraft.slice(selectionEnd)}`;
+        const nextCaret = selectionStart + insert.length;
+        setTextViewDraft(nextValue);
+        applyTextViewDraft(nextValue);
+        window.requestAnimationFrame(() => {
+          const element = textViewTextareaRef.current;
+          if (!element) return;
+          element.setSelectionRange(nextCaret, nextCaret);
+        });
+        return;
+      }
+
+      if (event.key === "Tab") {
+        event.preventDefault();
+        const next = applyIndentationToDraft(textViewDraft, selectionStart, selectionEnd, event.shiftKey);
+        setTextViewDraft(next.value);
+        applyTextViewDraft(next.value);
+        window.requestAnimationFrame(() => {
+          const element = textViewTextareaRef.current;
+          if (!element) return;
+          element.setSelectionRange(next.start, next.end);
+        });
+      }
+    },
+    [applyTextViewDraft, isReadMode, textViewDraft],
+  );
+
+  const renameNodeFromCanvas = useCallback(
+    (nodeId: string) => {
+      if (isReadMode) return;
+      if (!activeSheet?.rootTopic) return;
+      const context = findNodeContext(activeSheet.rootTopic, nodeId);
+      if (!context) return;
+      const rawTitle = window.prompt(ui.nodeTitleLabel, context.node.title);
+      if (rawTitle === null) return;
+      const normalizedTitle = rawTitle.trim() || ui.untitled;
+
+      setSelectedNodeId(nodeId);
+      setEditingTitle(normalizedTitle);
+      titleEditSessionRef.current = { nodeId, hasPushedHistory: false };
+
+      if (normalizedTitle === context.node.title) return;
+
+      applyActiveSheetUpdate((sheet) => {
+        if (!sheet.rootTopic) return sheet;
+        const [nextRoot] = mapNodeById(sheet.rootTopic, nodeId, (node) => ({ ...node, title: normalizedTitle }));
+        return { ...sheet, rootTopic: nextRoot };
+      });
+    },
+    [activeSheet?.rootTopic, applyActiveSheetUpdate, isReadMode, ui.nodeTitleLabel, ui.untitled],
   );
 
   const toggleCollapse = useCallback(
@@ -1451,9 +2112,9 @@ export default function XmindViewerClient() {
           return { ...node, collapsed: !node.collapsed };
         });
         return { ...sheet, rootTopic: nextRoot };
-      });
+      }, { allowInReadMode: true, recordHistory: !isReadMode });
     },
-    [applyActiveSheetUpdate],
+    [applyActiveSheetUpdate, isReadMode],
   );
 
   const runCollapseAction = useCallback(() => {
@@ -1467,8 +2128,8 @@ export default function XmindViewerClient() {
     applyActiveSheetUpdate((sheet) => {
       if (!sheet.rootTopic) return sheet;
       return { ...sheet, rootTopic: setCollapseForAll(sheet.rootTopic, collapsed) };
-    });
-  }, [activeSheet?.rootTopic, applyActiveSheetUpdate, collapseAction, selectedNodeId, toggleCollapse]);
+    }, { allowInReadMode: true, recordHistory: !isReadMode });
+  }, [activeSheet?.rootTopic, applyActiveSheetUpdate, collapseAction, isReadMode, selectedNodeId, toggleCollapse]);
 
   const switchActiveSheet = useCallback(
     (nextSheetId: string | null) => {
@@ -1491,6 +2152,7 @@ export default function XmindViewerClient() {
   );
 
   const createNewSheet = useCallback(() => {
+    if (isReadMode) return;
     const defaultTitle = `${ui.sheetPrefix} ${editorSheets.length + 1}`;
     const rawTitle = window.prompt(ui.newCanvasNamePrompt, defaultTitle);
     if (!rawTitle) return;
@@ -1505,6 +2167,7 @@ export default function XmindViewerClient() {
       themeId: activeSheet?.themeId ?? "classicLight",
       relationships: [],
       boundaries: [],
+      summaries: [],
     };
 
     pushHistory({ sheets: editorSheets, activeSheetId, selectedNodeId });
@@ -1517,6 +2180,7 @@ export default function XmindViewerClient() {
     activeSheetId,
     createId,
     editorSheets,
+    isReadMode,
     pushHistory,
     selectedNodeId,
     ui.centerTopic,
@@ -1526,6 +2190,7 @@ export default function XmindViewerClient() {
   ]);
 
   const renameActiveSheet = useCallback(() => {
+    if (isReadMode) return;
     if (!activeSheetId) return;
     const current = editorSheets.find((sheet) => sheet.id === activeSheetId);
     if (!current) return;
@@ -1536,9 +2201,10 @@ export default function XmindViewerClient() {
 
     pushHistory({ sheets: editorSheets, activeSheetId, selectedNodeId });
     setEditorSheets((prev) => prev.map((sheet) => (sheet.id === activeSheetId ? { ...sheet, title } : sheet)));
-  }, [activeSheetId, editorSheets, pushHistory, selectedNodeId, ui.renameCanvasPrompt]);
+  }, [activeSheetId, editorSheets, isReadMode, pushHistory, selectedNodeId, ui.renameCanvasPrompt]);
 
   const duplicateActiveSheet = useCallback(() => {
+    if (isReadMode) return;
     if (!activeSheetId) return;
     const current = editorSheets.find((sheet) => sheet.id === activeSheetId);
     if (!current) return;
@@ -1561,15 +2227,17 @@ export default function XmindViewerClient() {
       themeId: current.themeId ?? "classicLight",
       relationships: remapRelationships(current.relationships, idMap),
       boundaries: remapBoundaries(current.boundaries, idMap),
+      summaries: remapSummaries(current.summaries, idMap),
     };
 
     pushHistory({ sheets: editorSheets, activeSheetId, selectedNodeId });
     setEditorSheets((prev) => [...prev, nextSheet]);
     switchActiveSheet(nextSheet.id);
     setSelectedNodeId(nextSheet.rootTopic?.id ?? null);
-  }, [activeSheetId, createId, editorSheets, pushHistory, selectedNodeId, switchActiveSheet, ui.centerTopic, ui.copiedSuffix, ui.duplicateCanvasPrompt]);
+  }, [activeSheetId, createId, editorSheets, isReadMode, pushHistory, selectedNodeId, switchActiveSheet, ui.centerTopic, ui.copiedSuffix, ui.duplicateCanvasPrompt]);
 
   const deleteActiveSheet = useCallback(() => {
+    if (isReadMode) return;
     if (!activeSheetId) return;
     if (editorSheets.length <= 1) {
       window.alert(ui.keepOneCanvasAlert);
@@ -1588,10 +2256,11 @@ export default function XmindViewerClient() {
     const nextActiveId = nextActive?.id ?? null;
     switchActiveSheet(nextActiveId);
     setSelectedNodeId(nextActive?.rootTopic?.id ?? null);
-  }, [activeSheetId, activeSheetIndex, editorSheets, pushHistory, selectedNodeId, switchActiveSheet, ui.deleteCanvasConfirm, ui.keepOneCanvasAlert]);
+  }, [activeSheetId, activeSheetIndex, editorSheets, isReadMode, pushHistory, selectedNodeId, switchActiveSheet, ui.deleteCanvasConfirm, ui.keepOneCanvasAlert]);
 
   const moveActiveSheet = useCallback(
     (direction: -1 | 1) => {
+      if (isReadMode) return;
       if (!activeSheetId) return;
       const index = editorSheets.findIndex((sheet) => sheet.id === activeSheetId);
       if (index < 0) return;
@@ -1604,45 +2273,66 @@ export default function XmindViewerClient() {
       nextSheets.splice(nextIndex, 0, removed!);
       setEditorSheets(nextSheets);
     },
-    [activeSheetId, editorSheets, pushHistory, selectedNodeId],
+    [activeSheetId, editorSheets, isReadMode, pushHistory, selectedNodeId],
+  );
+
+  const addChildNodeById = useCallback(
+    (targetId: string): string | null => {
+      const nextId = createId();
+      let inserted = false;
+      applyActiveSheetUpdate((sheet) => {
+        if (!sheet.rootTopic) return sheet;
+        const [nextRoot, changed] = mapNodeById(sheet.rootTopic, targetId, (node) => ({
+          ...node,
+          collapsed: false,
+          children: [...node.children, createNodeWithTitle(nextId, ui.newNode)],
+        }));
+        if (!changed) return sheet;
+        inserted = true;
+        return { ...sheet, rootTopic: nextRoot };
+      });
+      if (!inserted) return null;
+      setSelectedNodeId(nextId);
+      return nextId;
+    },
+    [applyActiveSheetUpdate, createId, ui.newNode],
+  );
+
+  const addSiblingNodeById = useCallback(
+    (nodeId: string): string | null => {
+      const nextId = createId();
+      let inserted = false;
+      applyActiveSheetUpdate((sheet) => {
+        if (!sheet.rootTopic) return sheet;
+        const context = findNodeContext(sheet.rootTopic, nodeId);
+        if (!context?.parent) return sheet;
+        const parentId = context.parent.id;
+        const insertIndex = context.index + 1;
+        const [nextRoot] = mapNodeById(sheet.rootTopic, parentId, (parentNode) => {
+          const nextChildren = [...parentNode.children];
+          nextChildren.splice(insertIndex, 0, createNodeWithTitle(nextId, ui.newNode));
+          return { ...parentNode, collapsed: false, children: nextChildren };
+        });
+        inserted = true;
+        return { ...sheet, rootTopic: nextRoot };
+      });
+      if (!inserted) return null;
+      setSelectedNodeId(nextId);
+      return nextId;
+    },
+    [applyActiveSheetUpdate, createId, ui.newNode],
   );
 
   const addChildNode = useCallback(() => {
     if (!activeSheet?.rootTopic) return;
     const targetId = selectedNodeId ?? activeSheet.rootTopic.id;
-    const nextId = createId();
-    applyActiveSheetUpdate((sheet) => {
-      if (!sheet.rootTopic) return sheet;
-      const [nextRoot] = mapNodeById(sheet.rootTopic, targetId, (node) => ({
-        ...node,
-        collapsed: false,
-        children: [...node.children, createNodeWithTitle(nextId, ui.newNode)],
-      }));
-      return { ...sheet, rootTopic: nextRoot };
-    });
-    setSelectedNodeId(nextId);
-  }, [activeSheet?.rootTopic, applyActiveSheetUpdate, createId, selectedNodeId, ui.newNode]);
+    addChildNodeById(targetId);
+  }, [activeSheet?.rootTopic, addChildNodeById, selectedNodeId]);
 
   const addSiblingNode = useCallback(() => {
-    if (!activeSheet?.rootTopic || !selectedNodeId) return;
-    const context = findNodeContext(activeSheet.rootTopic, selectedNodeId);
-    if (!context?.parent) return;
-    const parentId = context.parent.id;
-    const insertIndex = context.index + 1;
-    const nextId = createId();
-
-    applyActiveSheetUpdate((sheet) => {
-      if (!sheet.rootTopic) return sheet;
-      const [nextRoot] = mapNodeById(sheet.rootTopic, parentId, (parentNode) => {
-        const nextChildren = [...parentNode.children];
-        nextChildren.splice(insertIndex, 0, createNodeWithTitle(nextId, ui.newNode));
-        return { ...parentNode, collapsed: false, children: nextChildren };
-      });
-      return { ...sheet, rootTopic: nextRoot };
-    });
-
-    setSelectedNodeId(nextId);
-  }, [activeSheet?.rootTopic, applyActiveSheetUpdate, createId, selectedNodeId, ui.newNode]);
+    if (!selectedNodeId) return;
+    addSiblingNodeById(selectedNodeId);
+  }, [addSiblingNodeById, selectedNodeId]);
 
   const deleteSelectedNode = useCallback(() => {
     if (!activeSheet?.rootTopic || !selectedNodeId) return;
@@ -1660,6 +2350,7 @@ export default function XmindViewerClient() {
         rootTopic: result.node,
         relationships: filterRelationshipsByNodeIds(sheet.relationships, nodeIds),
         boundaries: filterBoundariesByNodeIds(sheet.boundaries, nodeIds),
+        summaries: filterSummariesByNodeIds(sheet.summaries, nodeIds),
       };
     });
 
@@ -1812,6 +2503,64 @@ export default function XmindViewerClient() {
     setBoundaryTitleInput("");
   }, [applyActiveSheetUpdate, selectedNodeBoundary, selectedNodeId]);
 
+  const addSummary = useCallback(() => {
+    if (!selectedNodeId || !selectedNodeHasChildren || selectedNodeSummary) return;
+    const normalizedTitle = summaryTitleInput.trim() || undefined;
+    applyActiveSheetUpdate((sheet) => {
+      const summaries = sheet.summaries ?? [];
+      if (summaries.some((summary) => summary.nodeId === selectedNodeId)) return sheet;
+      return {
+        ...sheet,
+        summaries: [
+          ...summaries,
+          {
+            id: createId(),
+            nodeId: selectedNodeId,
+            title: normalizedTitle,
+          },
+        ],
+      };
+    });
+  }, [
+    applyActiveSheetUpdate,
+    createId,
+    selectedNodeHasChildren,
+    selectedNodeId,
+    selectedNodeSummary,
+    summaryTitleInput,
+  ]);
+
+  const updateSummaryTitle = useCallback(() => {
+    if (!selectedNodeId || !selectedNodeSummary) return;
+    const normalizedTitle = summaryTitleInput.trim() || undefined;
+    const currentTitle = selectedNodeSummary.title?.trim() || undefined;
+    if (currentTitle === normalizedTitle) return;
+    applyActiveSheetUpdate((sheet) => {
+      const summaries = sheet.summaries ?? [];
+      let changed = false;
+      const nextSummaries = summaries.map((summary) => {
+        if (summary.nodeId !== selectedNodeId) return summary;
+        const previousTitle = summary.title?.trim() || undefined;
+        if (previousTitle === normalizedTitle) return summary;
+        changed = true;
+        return { ...summary, title: normalizedTitle };
+      });
+      if (!changed) return sheet;
+      return { ...sheet, summaries: nextSummaries };
+    });
+  }, [applyActiveSheetUpdate, selectedNodeId, selectedNodeSummary, summaryTitleInput]);
+
+  const removeSummary = useCallback(() => {
+    if (!selectedNodeId || !selectedNodeSummary) return;
+    applyActiveSheetUpdate((sheet) => {
+      const summaries = sheet.summaries ?? [];
+      const nextSummaries = summaries.filter((summary) => summary.nodeId !== selectedNodeId);
+      if (nextSummaries.length === summaries.length) return sheet;
+      return { ...sheet, summaries: nextSummaries };
+    });
+    setSummaryTitleInput("");
+  }, [applyActiveSheetUpdate, selectedNodeId, selectedNodeSummary]);
+
   useEffect(() => {
     if (editorSheets.length === 0) return;
 
@@ -1823,7 +2572,7 @@ export default function XmindViewerClient() {
       const hasMod = event.metaKey || event.ctrlKey;
       const canvas = canvasHandleRef.current;
 
-      if (hasMod && key === "z") {
+      if (!isReadMode && hasMod && key === "z") {
         event.preventDefault();
         if (event.shiftKey) {
           if (canRedo) redo();
@@ -1833,7 +2582,7 @@ export default function XmindViewerClient() {
         return;
       }
 
-      if (hasMod && key === "y") {
+      if (!isReadMode && hasMod && key === "y") {
         event.preventDefault();
         if (canRedo) redo();
         return;
@@ -1865,19 +2614,19 @@ export default function XmindViewerClient() {
 
       if (event.repeat && (key === "tab" || key === "enter" || key === "delete" || key === "backspace")) return;
 
-      if (key === "tab") {
+      if (!isReadMode && key === "tab") {
         event.preventDefault();
         addChildNode();
         return;
       }
 
-      if (key === "enter") {
+      if (!isReadMode && key === "enter") {
         event.preventDefault();
         addSiblingNode();
         return;
       }
 
-      if (key === "delete" || key === "backspace") {
+      if (!isReadMode && (key === "delete" || key === "backspace")) {
         event.preventDefault();
         deleteSelectedNode();
         return;
@@ -1898,6 +2647,7 @@ export default function XmindViewerClient() {
     canUndo,
     deleteSelectedNode,
     editorSheets.length,
+    isReadMode,
     redo,
     runCollapseAction,
     undo,
@@ -1932,9 +2682,15 @@ export default function XmindViewerClient() {
       setEditorSheets(normalizedSheets);
       const nextActiveId = normalizedSheets[0]?.id ?? null;
       setActiveSheetId(nextActiveId);
-      setSelectedNodeId(normalizedSheets[0]?.rootTopic?.id ?? null);
+      const nextSelectedNodeId = normalizedSheets[0]?.rootTopic?.id ?? null;
+      setSelectedNodeId(nextSelectedNodeId);
       setCanvasViewResetKey((prev) => prev + 1);
       resetHistory();
+      replaceVersionHistory([], {
+        sheets: cloneValue(normalizedSheets),
+        activeSheetId: nextActiveId,
+        selectedNodeId: nextSelectedNodeId,
+      });
       sheetViewByIdRef.current = {};
 
       if (looksLikeXmind) setError(null);
@@ -2036,7 +2792,18 @@ export default function XmindViewerClient() {
   }, [activeSheet, exportBaseName, ui.exportPdfFailed]);
 
   const exportXmind = useCallback(() => {
-    const sheets = editorSheets.length > 0 ? editorSheets : null;
+    const sheetsToExport = isReadMode
+      ? editorSheets.map((sheet) => {
+          const override = viewOverridesBySheetId[sheet.id];
+          if (!override) return sheet;
+          return {
+            ...sheet,
+            layoutMode: override.layoutMode ?? sheet.layoutMode,
+            themeId: override.themeId ?? sheet.themeId,
+          };
+        })
+      : editorSheets;
+    const sheets = sheetsToExport.length > 0 ? sheetsToExport : null;
     if (!sheets) return;
 
     const createZipId = (): string => {
@@ -2075,6 +2842,11 @@ export default function XmindViewerClient() {
             nodeId: boundary.nodeId,
             title: boundary.title ?? "",
           })),
+          summaries: (options.sheet.summaries ?? []).map((summary) => ({
+            id: summary.id,
+            nodeId: summary.nodeId,
+            title: summary.title ?? "",
+          })),
         };
         topic.extensions = [
           {
@@ -2103,6 +2875,11 @@ export default function XmindViewerClient() {
         nodeId: boundary.nodeId,
         title: boundary.title ?? "",
       })),
+      summaries: (sheet.summaries ?? []).map((summary) => ({
+        id: summary.id || createZipId(),
+        nodeId: summary.nodeId,
+        title: summary.title ?? "",
+      })),
       style: createStyle(),
       topicPositioning: "fixed",
     }));
@@ -2124,7 +2901,7 @@ export default function XmindViewerClient() {
 
     const zipBuffer = zip.buffer.slice(zip.byteOffset, zip.byteOffset + zip.byteLength) as ArrayBuffer;
     downloadBlob(`${exportBaseName}.xmind`, new Blob([zipBuffer], { type: "application/octet-stream" }));
-  }, [editorSheets, exportBaseName]);
+  }, [editorSheets, exportBaseName, isReadMode, viewOverridesBySheetId]);
 
   const clear = () => {
     setFile(null);
@@ -2134,6 +2911,7 @@ export default function XmindViewerClient() {
     setActiveSheetId(null);
     setSelectedNodeId(null);
     setEditingTitle("");
+    setSummaryTitleInput("");
     setCanvasViewResetKey((prev) => prev + 1);
     resetHistory();
     sheetViewByIdRef.current = {};
@@ -2142,6 +2920,183 @@ export default function XmindViewerClient() {
     setCopyHint(null);
     if (inputRef.current) inputRef.current.value = "";
   };
+
+  const toggleViewerMode = useCallback(() => {
+    setViewerMode((prev) => (prev === "read" ? "edit" : "read"));
+  }, []);
+
+  const renderVersionHistoryPanel = (panelClassName: string) => (
+    <div className={panelClassName}>
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-xs font-semibold text-slate-700">{ui.panelHistory}</div>
+        <div className="text-[11px] text-slate-500">{ui.historyCurrent}: {versionSnapshots.length + 1}</div>
+      </div>
+      <div className="mt-2 max-h-52 overflow-auto rounded-2xl bg-slate-50 p-2 ring-1 ring-slate-200">
+        {versionSnapshots.length === 0 ? (
+          <div className="px-2 py-1 text-[11px] text-slate-500">{ui.historyEmpty}</div>
+        ) : (
+          <div className="space-y-1.5">
+            {versionSnapshots.map((entry, index) => {
+              const snapshotActiveSheet =
+                entry.snapshot.sheets.find((sheet) => sheet.id === entry.snapshot.activeSheetId) ?? entry.snapshot.sheets[0] ?? null;
+              const revisionNumber = versionSnapshots.length - index;
+              return (
+                <div key={entry.id} className="flex items-center justify-between gap-2 rounded-xl bg-white px-2.5 py-2 ring-1 ring-slate-200">
+                  <div className="min-w-0">
+                    <div className="truncate text-[11px] font-semibold text-slate-800">
+                      #{revisionNumber} · {formatVersionSnapshotTime(entry.createdAt)}
+                    </div>
+                    <div className="truncate text-[11px] text-slate-500">{snapshotActiveSheet?.title || ui.untitled}</div>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isReadMode}
+                    onClick={() => rollbackToVersionSnapshot(entry.id)}
+                    className="rounded-xl bg-slate-900 px-2.5 py-1.5 text-[11px] font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                  >
+                    {ui.historyRollback}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const fullscreenTextViewOverlay = activeSheet ? (
+    <div className="flex h-full w-full min-h-0 flex-col rounded-3xl bg-white/95 p-4 shadow-xl ring-1 ring-slate-200 backdrop-blur">
+      <div className="text-sm font-semibold text-slate-700">{ui.textViewTitle}</div>
+      <div className="mt-3 min-h-0 flex-1 rounded-2xl bg-slate-50 p-3 ring-1 ring-slate-200">
+        {textViewRows.length === 0 ? (
+          <div className="px-2 py-1 text-xs text-slate-500">{ui.textViewEmpty}</div>
+        ) : (
+          <div
+            className={[
+              "flex h-full min-h-0 overflow-hidden rounded-xl border transition",
+              isReadMode
+                ? "border-slate-200 bg-slate-100 text-slate-700"
+                : "border-slate-200 bg-white focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-400/30",
+            ].join(" ")}
+          >
+            <textarea
+              ref={textViewTextareaRef}
+              value={textViewDraft}
+              readOnly={isReadMode}
+              onFocus={() => {
+                setIsTextViewEditing(true);
+                textViewEditSessionRef.current = { hasPushedHistory: false };
+              }}
+              onChange={
+                isReadMode
+                  ? undefined
+                  : (event) => {
+                      const nextValue = event.target.value;
+                      setTextViewDraft(nextValue);
+                      applyTextViewDraft(nextValue);
+                    }
+              }
+              onBlur={() => {
+                setIsTextViewEditing(false);
+                textViewEditSessionRef.current = { hasPushedHistory: false };
+              }}
+              onKeyDown={isReadMode ? undefined : handleTextViewTextareaKeyDown}
+              className="h-full min-h-0 w-full resize-none overflow-auto bg-transparent px-3 py-2 font-mono text-xs leading-5 text-slate-900 outline-none"
+              placeholder={ui.textViewEmpty}
+              spellCheck={false}
+            />
+          </div>
+        )}
+      </div>
+      <div className="mt-2 text-[11px] text-slate-500">{ui.textViewShortcutHint}</div>
+    </div>
+  ) : null;
+
+  const fullscreenToolbar = activeSheet ? (
+    <div className="flex flex-wrap items-center gap-2">
+      <button
+        type="button"
+        onClick={toggleViewerMode}
+        className={
+          viewerMode === "read"
+            ? "rounded-2xl bg-emerald-600 px-3 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700"
+            : "rounded-2xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
+        }
+        title={viewerMode === "read" ? (isEnglish ? "Switch to edit mode" : "切换到编辑模式") : isEnglish ? "Switch to read mode" : "切换到阅读模式"}
+      >
+        {viewerMode === "read" ? (isEnglish ? "Read" : "阅读") : isEnglish ? "Edit" : "编辑"}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => setFullscreenPrimaryView((prev) => (prev === "mindmap" ? "text" : "mindmap"))}
+        className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200"
+        title={isFullscreenTextView ? (isEnglish ? "Switch to mind map view" : "切换到思维导图视图") : isEnglish ? "Switch to text view" : "切换到文本视图"}
+      >
+        {isFullscreenTextView ? (isEnglish ? "Mind Map" : "思维导图") : isEnglish ? "Text View" : "文本视图"}
+      </button>
+
+      {viewerMode === "edit" ? (
+        <>
+          <button
+            type="button"
+            disabled={!canUndo}
+            onClick={undo}
+            className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
+          >
+            {ui.undo}
+          </button>
+          <button
+            type="button"
+            disabled={!canRedo}
+            onClick={redo}
+            className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
+          >
+            {ui.redo}
+          </button>
+        </>
+      ) : null}
+
+      <button
+        type="button"
+        disabled={!collapseAction}
+        onClick={runCollapseAction}
+        className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
+      >
+        {collapseAction?.label ?? ui.collapseExpand}
+      </button>
+
+      <button
+        type="button"
+        onClick={() => void exportPng()}
+        className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+      >
+        PNG
+      </button>
+      <button
+        type="button"
+        onClick={exportSvg}
+        className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+      >
+        SVG
+      </button>
+      <button
+        type="button"
+        onClick={() => void exportPdf()}
+        className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+      >
+        PDF
+      </button>
+      <button
+        type="button"
+        onClick={exportXmind}
+        className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+      >
+        XMind
+      </button>
+    </div>
+  ) : null;
 
   return (
     <div className="space-y-8">
@@ -2295,6 +3250,7 @@ export default function XmindViewerClient() {
               <button
                 type="button"
                 onClick={createNewSheet}
+                disabled={isReadMode}
                 className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
               >
                 {ui.newCanvas}
@@ -2302,6 +3258,7 @@ export default function XmindViewerClient() {
               <button
                 type="button"
                 onClick={renameActiveSheet}
+                disabled={isReadMode}
                 className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
               >
                 {ui.rename}
@@ -2309,6 +3266,7 @@ export default function XmindViewerClient() {
               <button
                 type="button"
                 onClick={duplicateActiveSheet}
+                disabled={isReadMode}
                 className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200"
               >
                 {ui.duplicate}
@@ -2316,7 +3274,7 @@ export default function XmindViewerClient() {
               <button
                 type="button"
                 onClick={deleteActiveSheet}
-                disabled={editorSheets.length <= 1}
+                disabled={isReadMode || editorSheets.length <= 1}
                 className="rounded-2xl bg-white px-4 py-2 text-sm font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-60"
               >
                 {ui.delete}
@@ -2324,7 +3282,9 @@ export default function XmindViewerClient() {
               <button
                 type="button"
                 onClick={() => moveActiveSheet(-1)}
-                disabled={activeSheetIndex <= 0}
+                disabled={isReadMode || activeSheetIndex <= 0}
+                aria-label={ui.moveUp}
+                title={ui.moveUp}
                 className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
               >
                 ↑
@@ -2332,15 +3292,17 @@ export default function XmindViewerClient() {
               <button
                 type="button"
                 onClick={() => moveActiveSheet(1)}
-                disabled={activeSheetIndex < 0 || activeSheetIndex >= editorSheets.length - 1}
+                disabled={isReadMode || activeSheetIndex < 0 || activeSheetIndex >= editorSheets.length - 1}
+                aria-label={ui.moveDown}
+                title={ui.moveDown}
                 className="rounded-2xl bg-slate-100 px-3 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
               >
                 ↓
               </button>
 
               <select
-                value={activeSheet.layoutMode}
-                onChange={(e) => setSheetLayout(e.target.value as MindMapLayoutMode)}
+                value={effectiveLayoutMode}
+                onChange={(e) => setEffectiveLayoutMode(e.target.value as MindMapLayoutMode)}
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none"
                 title={ui.layoutTitle}
               >
@@ -2351,11 +3313,14 @@ export default function XmindViewerClient() {
                 <option value="down">{ui.layoutDown}</option>
                 <option value="downCompact">{ui.layoutDownCompact}</option>
                 <option value="downCompact2">{ui.layoutDownCompact2}</option>
+                <option value="superCompactDown">{ui.layoutSuperCompactDown}</option>
+                <option value="superCompactRight">{ui.layoutSuperCompactRight}</option>
+                <option value="superCompactDownVertical">{ui.layoutSuperCompactDownVertical}</option>
               </select>
 
               <select
-                value={activeSheet.themeId}
-                onChange={(e) => setSheetTheme(e.target.value as MindMapThemeId)}
+                value={effectiveThemeId}
+                onChange={(e) => setEffectiveThemeId(e.target.value as MindMapThemeId)}
                 className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none"
                 title={ui.themeTitle}
               >
@@ -2368,7 +3333,28 @@ export default function XmindViewerClient() {
 
               <button
                 type="button"
-                disabled={!canUndo}
+                onClick={toggleViewerMode}
+                className={
+                  viewerMode === "read"
+                    ? "rounded-2xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white transition hover:bg-emerald-700"
+                    : "rounded-2xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
+                }
+                title={
+                  viewerMode === "read"
+                    ? isEnglish
+                      ? "Switch to edit mode"
+                      : "切换到编辑模式"
+                    : isEnglish
+                      ? "Switch to read mode"
+                      : "切换到阅读模式"
+                }
+              >
+                {viewerMode === "read" ? (isEnglish ? "Read" : "阅读") : isEnglish ? "Edit" : "编辑"}
+              </button>
+
+              <button
+                type="button"
+                disabled={isReadMode || !canUndo}
                 onClick={undo}
                 className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
               >
@@ -2376,7 +3362,7 @@ export default function XmindViewerClient() {
               </button>
               <button
                 type="button"
-                disabled={!canRedo}
+                disabled={isReadMode || !canRedo}
                 onClick={redo}
                 className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
               >
@@ -2423,23 +3409,29 @@ export default function XmindViewerClient() {
           </div>
         )}
 
-        <div className="mt-6">
-          <XmindMindMapCanvas
-            ref={canvasHandleRef}
-            rootTopic={activeSheet?.rootTopic ?? null}
-            layoutMode={activeSheet?.layoutMode ?? "balanced"}
-            theme={activeTheme}
-            relationships={activeSheet?.relationships ?? []}
-            boundaries={activeSheet?.boundaries ?? []}
-            selectedNodeId={selectedNodeId}
-            onSelectNode={setSelectedNodeId}
-            onToggleCollapse={toggleCollapse}
-            onMoveNode={moveNode}
-            viewResetKey={canvasViewResetKey}
-            isEnglish={providedConfig?.lang?.toLowerCase().startsWith("en") ?? false}
-            fullscreenSidebar={
-              activeSheet ? (
-                <div className="space-y-3">
+        <div className="mt-6 grid gap-6">
+          <div className="min-w-0">
+            <XmindMindMapCanvas
+              ref={canvasHandleRef}
+              rootTopic={activeSheet?.rootTopic ?? null}
+              layoutMode={effectiveLayoutMode}
+              theme={activeTheme}
+              mode={viewerMode}
+              relationships={activeSheet?.relationships ?? []}
+              boundaries={activeSheet?.boundaries ?? []}
+              summaries={activeSheet?.summaries ?? []}
+              selectedNodeId={selectedNodeId}
+              onSelectNode={setSelectedNodeId}
+              onRenameNode={renameNodeFromCanvas}
+              onToggleCollapse={toggleCollapse}
+              onMoveNode={moveNode}
+              viewResetKey={canvasViewResetKey}
+              isEnglish={isEnglish}
+              fullscreenToolbar={fullscreenToolbar}
+              fullscreenOverlay={isFullscreenTextView ? fullscreenTextViewOverlay : null}
+              fullscreenSidebar={
+                activeSheet && !isFullscreenTextView ? (
+                  <div className="space-y-3">
                   <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
                     <div className="text-xs font-semibold text-slate-700">{ui.panelCanvas}</div>
                     <select
@@ -2481,6 +3473,7 @@ export default function XmindViewerClient() {
                       <button
                         type="button"
                         onClick={createNewSheet}
+                        disabled={isReadMode}
                         className="rounded-2xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800"
                       >
                         {ui.create}
@@ -2488,6 +3481,7 @@ export default function XmindViewerClient() {
                       <button
                         type="button"
                         onClick={renameActiveSheet}
+                        disabled={isReadMode}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200"
                       >
                         {ui.rename}
@@ -2495,6 +3489,7 @@ export default function XmindViewerClient() {
                       <button
                         type="button"
                         onClick={duplicateActiveSheet}
+                        disabled={isReadMode}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200"
                       >
                         {ui.duplicate}
@@ -2502,7 +3497,7 @@ export default function XmindViewerClient() {
                       <button
                         type="button"
                         onClick={deleteActiveSheet}
-                        disabled={editorSheets.length <= 1}
+                        disabled={isReadMode || editorSheets.length <= 1}
                         className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-rose-600 ring-1 ring-rose-200 transition hover:bg-rose-50 disabled:opacity-60"
                       >
                         {ui.delete}
@@ -2510,7 +3505,7 @@ export default function XmindViewerClient() {
                       <button
                         type="button"
                         onClick={() => moveActiveSheet(-1)}
-                        disabled={activeSheetIndex <= 0}
+                        disabled={isReadMode || activeSheetIndex <= 0}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
                         {ui.moveUp}
@@ -2518,7 +3513,7 @@ export default function XmindViewerClient() {
                       <button
                         type="button"
                         onClick={() => moveActiveSheet(1)}
-                        disabled={activeSheetIndex < 0 || activeSheetIndex >= editorSheets.length - 1}
+                        disabled={isReadMode || activeSheetIndex < 0 || activeSheetIndex >= editorSheets.length - 1}
                         className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
                         {ui.moveDown}
@@ -2529,8 +3524,8 @@ export default function XmindViewerClient() {
                   <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
                     <div className="text-xs font-semibold text-slate-700">{ui.panelLayout}</div>
                     <select
-                      value={activeSheet.layoutMode}
-                      onChange={(e) => setSheetLayout(e.target.value as MindMapLayoutMode)}
+                      value={effectiveLayoutMode}
+                      onChange={(e) => setEffectiveLayoutMode(e.target.value as MindMapLayoutMode)}
                       className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none"
                       title={ui.layoutTitle}
                     >
@@ -2541,14 +3536,17 @@ export default function XmindViewerClient() {
                       <option value="down">{ui.layoutDown}</option>
                       <option value="downCompact">{ui.layoutDownCompact}</option>
                       <option value="downCompact2">{ui.layoutDownCompact2}</option>
+                      <option value="superCompactDown">{ui.layoutSuperCompactDown}</option>
+                      <option value="superCompactRight">{ui.layoutSuperCompactRight}</option>
+                      <option value="superCompactDownVertical">{ui.layoutSuperCompactDownVertical}</option>
                     </select>
                   </div>
 
                   <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
                     <div className="text-xs font-semibold text-slate-700">{ui.panelTheme}</div>
                     <select
-                      value={activeSheet.themeId}
-                      onChange={(e) => setSheetTheme(e.target.value as MindMapThemeId)}
+                      value={effectiveThemeId}
+                      onChange={(e) => setEffectiveThemeId(e.target.value as MindMapThemeId)}
                       className="mt-2 w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2 text-sm text-slate-900 outline-none"
                       title={ui.themeTitle}
                     >
@@ -2560,70 +3558,77 @@ export default function XmindViewerClient() {
                     </select>
                   </div>
 
-                  <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
-                    <div className="text-xs font-semibold text-slate-700">{ui.panelExport}</div>
-                    <div className="mt-2 grid grid-cols-2 gap-2">
-                      <button
-                        type="button"
-                        onClick={() => void exportPng()}
-                        className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
-                      >
-                        PNG
-                      </button>
-                      <button
-                        type="button"
-                        onClick={exportSvg}
-                        className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
-                      >
-                        SVG
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => void exportPdf()}
-                        className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
-                      >
-                        PDF
-                      </button>
-                      <button
-                        type="button"
-                        onClick={exportXmind}
-                        className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
-                      >
-                        .xmind
-                      </button>
+                  {viewerMode === "edit" ? (
+                    <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
+                      <div className="text-xs font-semibold text-slate-700">{ui.panelExport}</div>
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => void exportPng()}
+                          className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+                        >
+                          PNG
+                        </button>
+                        <button
+                          type="button"
+                          onClick={exportSvg}
+                          className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+                        >
+                          SVG
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void exportPdf()}
+                          className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+                        >
+                          PDF
+                        </button>
+                        <button
+                          type="button"
+                          onClick={exportXmind}
+                          className="rounded-2xl bg-white px-3 py-2 text-xs font-semibold text-slate-700 ring-1 ring-slate-200 transition hover:bg-slate-50"
+                        >
+                          .xmind
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
 
-                  <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
-                    <div className="text-xs font-semibold text-slate-700">{ui.panelEdit}</div>
-                    <div className="mt-2 grid grid-cols-3 gap-2">
-                      <button
-                        type="button"
-                        disabled={!canUndo}
-                        onClick={undo}
-                        className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
-                      >
-                        {ui.undo}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!canRedo}
-                        onClick={redo}
-                        className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
-                      >
-                        {ui.redo}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!collapseAction}
-                        onClick={runCollapseAction}
-                        className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
-                      >
-                        {collapseAction?.label ?? ui.collapseExpand}
-                      </button>
+                  {viewerMode === "edit" ? (
+                    <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
+                      <div className="text-xs font-semibold text-slate-700">{ui.panelEdit}</div>
+                      <div className="mt-2 grid grid-cols-3 gap-2">
+                        <button
+                          type="button"
+                          disabled={!canUndo}
+                          onClick={undo}
+                          className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
+                        >
+                          {ui.undo}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!canRedo}
+                          onClick={redo}
+                          className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
+                        >
+                          {ui.redo}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!collapseAction}
+                          onClick={runCollapseAction}
+                          className="rounded-2xl bg-slate-100 px-3 py-2 text-xs font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
+                        >
+                          {collapseAction?.label ?? ui.collapseExpand}
+                        </button>
+                      </div>
                     </div>
-                  </div>
+                  ) : null}
 
+                  {renderVersionHistoryPanel("rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200")}
+
+                  {viewerMode === "edit" ? (
                   <div className="rounded-3xl bg-white/70 p-3 ring-1 ring-slate-200">
                     <div className="text-xs font-semibold text-slate-700">{ui.panelNode}</div>
                     <input
@@ -2700,6 +3705,34 @@ export default function XmindViewerClient() {
                       </div>
                     </div>
                     <div className="mt-3 rounded-2xl bg-slate-50 p-2 ring-1 ring-slate-200">
+                      <div className="text-[11px] font-semibold text-slate-700">{ui.summaryTitle}</div>
+                      <input
+                        value={summaryTitleInput}
+                        onChange={(event) => setSummaryTitleInput(event.target.value)}
+                        onBlur={updateSummaryTitle}
+                        className="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs text-slate-900 outline-none"
+                        placeholder={ui.summaryLabel}
+                      />
+                      <div className="mt-2 grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={addSummary}
+                          disabled={!selectedNodeId || !selectedNodeHasChildren || Boolean(selectedNodeSummary)}
+                          className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                        >
+                          {ui.summaryAdd}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={removeSummary}
+                          disabled={!selectedNodeSummary}
+                          className="rounded-xl bg-rose-50 px-3 py-2 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+                        >
+                          {ui.summaryRemove}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="mt-3 rounded-2xl bg-slate-50 p-2 ring-1 ring-slate-200">
                       <div className="text-[11px] font-semibold text-slate-700">{ui.relationTitle}</div>
                       <select
                         value={relationTargetId}
@@ -2728,16 +3761,40 @@ export default function XmindViewerClient() {
                         {ui.relationAdd}
                       </button>
                       {relationGuardText ? <div className="mt-1 text-[11px] text-amber-700">{relationGuardText}</div> : null}
+                      <div className="mt-2 space-y-2">
+                        {selectedNodeRelationships.length === 0 ? (
+                          <div className="text-[11px] text-slate-500">{ui.relationEmpty}</div>
+                        ) : (
+                          selectedNodeRelationships.map((relation) => (
+                            <div
+                              key={relation.id}
+                              className="flex items-center justify-between gap-2 rounded-xl bg-white px-2.5 py-2 text-[11px] text-slate-700 ring-1 ring-slate-200"
+                            >
+                              <div className="min-w-0">
+                                <div className="truncate font-semibold text-slate-900">{relation.targetTitle}</div>
+                                {relation.title ? <div className="truncate text-slate-500">{relation.title}</div> : null}
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => removeRelationship(relation.id)}
+                                className="rounded-lg bg-rose-50 px-2 py-1 text-[11px] font-semibold text-rose-700 transition hover:bg-rose-100"
+                              >
+                                {ui.relationRemove}
+                              </button>
+                            </div>
+                          ))
+                        )}
+                      </div>
                     </div>
                   </div>
+                  ) : null}
                 </div>
               ) : null
-            }
-          />
-        </div>
+              }
+            />
+            </div>
 
-        <div className="mt-6 grid gap-6 lg:grid-cols-2">
-          <div className="space-y-4">
+            <aside className="space-y-4">
             {activeSheet && (
               <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
                 <div className="text-sm font-semibold text-slate-900">{ui.nodeEditor}</div>
@@ -2749,12 +3806,18 @@ export default function XmindViewerClient() {
                       {ui.nodeTitleLabel}
                       <input
                         value={editingTitle}
-                        onChange={(event) => {
-                          const nextTitle = event.target.value;
-                          setEditingTitle(nextTitle);
-                          updateSelectedNodeTitle(nextTitle);
-                        }}
+                        readOnly={isReadMode}
+                        onChange={
+                          isReadMode
+                            ? undefined
+                            : (event) => {
+                                const nextTitle = event.target.value;
+                                setEditingTitle(nextTitle);
+                                updateSelectedNodeTitle(nextTitle);
+                              }
+                        }
                         onBlur={() => {
+                          if (isReadMode) return;
                           const normalized = editingTitle.trim() || ui.untitled;
                           if (normalized !== editingTitle) {
                             setEditingTitle(normalized);
@@ -2770,6 +3833,7 @@ export default function XmindViewerClient() {
                       <button
                         type="button"
                         onClick={addChildNode}
+                        disabled={isReadMode}
                         className="rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800"
                       >
                         {ui.addChildNode}
@@ -2777,7 +3841,7 @@ export default function XmindViewerClient() {
                       <button
                         type="button"
                         onClick={addSiblingNode}
-                        disabled={selectedNodeIsRoot}
+                        disabled={isReadMode || selectedNodeIsRoot}
                         className="rounded-2xl bg-slate-100 px-4 py-2 text-sm font-semibold text-slate-800 transition hover:bg-slate-200 disabled:opacity-60"
                       >
                         {ui.addSiblingNode}
@@ -2796,7 +3860,7 @@ export default function XmindViewerClient() {
                       <button
                         type="button"
                         onClick={deleteSelectedNode}
-                        disabled={selectedNodeIsRoot}
+                        disabled={isReadMode || selectedNodeIsRoot}
                         className="rounded-2xl bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
                       >
                         {ui.deleteNode}
@@ -2810,6 +3874,7 @@ export default function XmindViewerClient() {
                           value={boundaryTitleInput}
                           onChange={(event) => setBoundaryTitleInput(event.target.value)}
                           onBlur={updateBoundaryTitle}
+                          disabled={isReadMode}
                           className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
                           placeholder={ui.boundaryLabel}
                         />
@@ -2817,7 +3882,7 @@ export default function XmindViewerClient() {
                           <button
                             type="button"
                             onClick={addBoundary}
-                            disabled={!selectedNodeId || Boolean(selectedNodeBoundary)}
+                            disabled={isReadMode || !selectedNodeId || Boolean(selectedNodeBoundary)}
                             className="rounded-2xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
                           >
                             {ui.boundaryAdd}
@@ -2825,10 +3890,42 @@ export default function XmindViewerClient() {
                           <button
                             type="button"
                             onClick={removeBoundary}
-                            disabled={!selectedNodeBoundary}
+                            disabled={isReadMode || !selectedNodeBoundary}
                             className="rounded-2xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
                           >
                             {ui.boundaryRemove}
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-2xl border border-slate-200 bg-slate-50 p-3">
+                      <div className="text-xs font-semibold text-slate-700">{ui.summaryTitle}</div>
+                      <div className="mt-2 grid gap-2">
+                        <input
+                          value={summaryTitleInput}
+                          onChange={(event) => setSummaryTitleInput(event.target.value)}
+                          onBlur={updateSummaryTitle}
+                          disabled={isReadMode}
+                          className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
+                          placeholder={ui.summaryLabel}
+                        />
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={addSummary}
+                            disabled={isReadMode || !selectedNodeId || !selectedNodeHasChildren || Boolean(selectedNodeSummary)}
+                            className="rounded-2xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
+                          >
+                            {ui.summaryAdd}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={removeSummary}
+                            disabled={isReadMode || !selectedNodeSummary}
+                            className="rounded-2xl bg-rose-50 px-3 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:opacity-60"
+                          >
+                            {ui.summaryRemove}
                           </button>
                         </div>
                       </div>
@@ -2840,6 +3937,7 @@ export default function XmindViewerClient() {
                         <select
                           value={relationTargetId}
                           onChange={(event) => setRelationTargetId(event.target.value)}
+                          disabled={isReadMode}
                           className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
                         >
                           <option value="">{ui.relationTarget}</option>
@@ -2852,13 +3950,14 @@ export default function XmindViewerClient() {
                         <input
                           value={relationTitleInput}
                           onChange={(event) => setRelationTitleInput(event.target.value)}
+                          disabled={isReadMode}
                           className="w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-900 outline-none"
                           placeholder={ui.relationLabel}
                         />
                         <button
                           type="button"
                           onClick={addRelationship}
-                          disabled={!relationTargetId || relationExists}
+                          disabled={isReadMode || !relationTargetId || relationExists}
                           className="rounded-2xl bg-slate-900 px-3 py-2 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:opacity-60"
                         >
                           {ui.relationAdd}
@@ -2882,6 +3981,7 @@ export default function XmindViewerClient() {
                               <button
                                 type="button"
                                 onClick={() => removeRelationship(relation.id)}
+                                disabled={isReadMode}
                                 className="rounded-xl bg-rose-50 px-2 py-1 text-xs font-semibold text-rose-700 transition hover:bg-rose-100"
                               >
                                 {ui.relationRemove}
@@ -2899,6 +3999,8 @@ export default function XmindViewerClient() {
                 )}
               </div>
             )}
+
+            {activeSheet ? renderVersionHistoryPanel("rounded-3xl bg-white p-5 ring-1 ring-slate-200") : null}
 
             <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
               <div className="text-sm font-semibold text-slate-900">{ui.fileInfo}</div>
@@ -2925,9 +4027,7 @@ export default function XmindViewerClient() {
             <div className="rounded-3xl bg-slate-50 p-5 ring-1 ring-slate-200 text-xs text-slate-500">
               {ui.noteBlock}
             </div>
-          </div>
 
-          <div className="space-y-4">
             <div className="rounded-3xl bg-white p-5 ring-1 ring-slate-200">
               <div className="flex items-center justify-between gap-3">
                 <div className="text-sm font-semibold text-slate-900">{ui.outlinePreview}</div>
@@ -2942,7 +4042,7 @@ export default function XmindViewerClient() {
                 className="mt-4 h-96 w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 font-mono text-xs text-slate-900 outline-none"
               />
             </div>
-          </div>
+          </aside>
         </div>
       </div>
 
@@ -2960,11 +4060,11 @@ export default function XmindViewerClient() {
 
         <div className="rounded-3xl bg-white p-6 ring-1 ring-slate-200">
           <div className="text-base font-semibold text-slate-900">{ui.faq}</div>
-              <div className="mt-4 space-y-3 text-sm text-slate-700">
-                <div>
-                  <div className="font-semibold text-slate-900">{ui.faqFormat}</div>
-                  <div className="mt-1 text-slate-600">{ui.faqFormatDesc}</div>
-                </div>
+          <div className="mt-4 space-y-3 text-sm text-slate-700">
+            <div>
+              <div className="font-semibold text-slate-900">{ui.faqFormat}</div>
+              <div className="mt-1 text-slate-600">{ui.faqFormatDesc}</div>
+            </div>
             <div>
               <div className="font-semibold text-slate-900">{ui.faqNoContent}</div>
               <div className="mt-1 text-slate-600">{ui.faqNoContentDesc}</div>

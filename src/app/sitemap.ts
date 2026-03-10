@@ -1,5 +1,5 @@
 import type { MetadataRoute } from "next";
-import { SUPPORTED_LOCALES } from "../i18n/locales";
+import { DEFAULT_LOCALE, LOCALE_TAG, SUPPORTED_LOCALES } from "../i18n/locales";
 import { toolSlugs } from "./tools/tool-registry";
 
 export const dynamic = "force-static";
@@ -21,22 +21,15 @@ function getBaseUrl(): string {
 
 const baseUrl = getBaseUrl();
 
+function buildAlternates(pathname: string): Record<string, string> {
+  const entries = SUPPORTED_LOCALES.map((locale) => [LOCALE_TAG[locale], `${baseUrl}/${locale}${pathname}`] as const);
+  entries.push(["x-default", `${baseUrl}/${DEFAULT_LOCALE}${pathname}`]);
+  return Object.fromEntries(entries);
+}
+
 export default function sitemap(): MetadataRoute.Sitemap {
   const lastModified = new Date();
-  const entries: MetadataRoute.Sitemap = [
-    {
-      url: `${baseUrl}/`,
-      lastModified,
-      changeFrequency: "daily",
-      priority: 1,
-      alternates: {
-        languages: {
-          "zh-CN": `${baseUrl}/zh-cn`,
-          "en-US": `${baseUrl}/en-us`,
-        },
-      },
-    },
-  ];
+  const entries: MetadataRoute.Sitemap = [];
 
   for (const locale of SUPPORTED_LOCALES) {
     entries.push({
@@ -45,10 +38,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "daily",
       priority: 0.95,
       alternates: {
-        languages: {
-          "zh-CN": `${baseUrl}/zh-cn`,
-          "en-US": `${baseUrl}/en-us`,
-        },
+        languages: buildAlternates(""),
       },
     });
 
@@ -58,10 +48,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.4,
       alternates: {
-        languages: {
-          "zh-CN": `${baseUrl}/zh-cn/privacy-policy`,
-          "en-US": `${baseUrl}/en-us/privacy-policy`,
-        },
+        languages: buildAlternates("/privacy-policy"),
       },
     });
   }
@@ -74,10 +61,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
         changeFrequency: "weekly",
         priority: 0.85,
         alternates: {
-          languages: {
-            "zh-CN": `${baseUrl}/zh-cn/tools/${slug}`,
-            "en-US": `${baseUrl}/en-us/tools/${slug}`,
-          },
+          languages: buildAlternates(`/tools/${slug}`),
         },
       });
     }

@@ -11,11 +11,13 @@ import {
   useRef,
   useState,
 } from "react";
+import { createPortal } from "react-dom";
 import type {
   MindMapBoundary,
   MindMapLayoutMode,
   MindMapNode,
   MindMapRelationship,
+  MindMapSummary,
   MindMapTheme,
 } from "./types";
 
@@ -37,14 +39,19 @@ type Props = {
   layoutMode: MindMapLayoutMode;
   theme: MindMapTheme;
   isEnglish?: boolean;
+  mode?: "edit" | "read";
   relationships?: MindMapRelationship[];
   boundaries?: MindMapBoundary[];
+  summaries?: MindMapSummary[];
   selectedNodeId: string | null;
   onSelectNode: (nodeId: string | null) => void;
+  onRenameNode: (nodeId: string) => void;
   onToggleCollapse: (nodeId: string) => void;
   onMoveNode: (draggedNodeId: string, targetNodeId: string, placement: "before" | "after" | "child") => void;
   viewResetKey?: number;
   fullscreenSidebar?: ReactNode;
+  fullscreenToolbar?: ReactNode;
+  fullscreenOverlay?: ReactNode;
 };
 
 export type ViewState = { scale: number; offsetX: number; offsetY: number };
@@ -92,6 +99,13 @@ const COLLAPSE_MARKER_RADIUS = 8;
 const COMPACT_LEVEL_GAP_Y = 20;
 const COMPACT_INDENT_X = 180;
 const COMPACT2_BRANCH_GAP_X = 80;
+const SUPER_COMPACT_LEVEL_GAP_X = 70;
+const SUPER_COMPACT_LEVEL_GAP_Y = 56;
+const SUPER_COMPACT_SIBLING_GAP_X = 12;
+const SUPER_COMPACT_SIBLING_GAP_Y = 8;
+const SUPER_COMPACT_NODE_RADIUS = 4;
+const SUPER_COMPACT_VERTICAL_NODE_WIDTH = 36;
+const VERTICAL_TEXT_LINE_HEIGHT = 14;
 
 const defaultView: ViewState = { scale: 1, offsetX: 0, offsetY: 0 };
 
@@ -141,6 +155,19 @@ const truncateText = (ctx: CanvasRenderingContext2D, text: string, maxWidth: num
   return text.slice(0, Math.max(0, lo - 1)) + suffix;
 };
 
+const truncateVerticalText = (text: string, maxChars: number): string[] => {
+  const chars = Array.from(text);
+  if (chars.length <= maxChars) return chars;
+  if (maxChars <= 1) return ["…"];
+  return [...chars.slice(0, maxChars - 1), "…"];
+};
+
+const measureVerticalNodeHeight = (title: string): number => {
+  const chars = Array.from(title);
+  const raw = chars.length * VERTICAL_TEXT_LINE_HEIGHT + NODE_PADDING_X * 2;
+  return clamp(raw, NODE_HEIGHT, 460);
+};
+
 const drawRoundedRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, r: number) => {
   const radius = Math.min(r, w / 2, h / 2);
   ctx.beginPath();
@@ -150,6 +177,48 @@ const drawRoundedRect = (ctx: CanvasRenderingContext2D, x: number, y: number, w:
   ctx.arcTo(x, y + h, x, y, radius);
   ctx.arcTo(x, y, x + w, y, radius);
   ctx.closePath();
+};
+
+const drawNodeTitleCanvas = (
+  ctx: CanvasRenderingContext2D,
+  options: { title: string; x: number; y: number; width: number; height: number },
+  layoutMode: MindMapLayoutMode,
+) => {
+  ctx.font = "14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  if (layoutMode === "superCompactDownVertical") {
+    const maxChars = Math.max(1, Math.floor((options.height - NODE_PADDING_X * 2) / VERTICAL_TEXT_LINE_HEIGHT));
+    const chars = truncateVerticalText(options.title, maxChars);
+    const startY = options.y - ((chars.length - 1) * VERTICAL_TEXT_LINE_HEIGHT) / 2;
+    for (let index = 0; index < chars.length; index += 1) {
+      ctx.fillText(chars[index]!, options.x, startY + index * VERTICAL_TEXT_LINE_HEIGHT);
+    }
+    return;
+  }
+
+  const displayText = truncateText(ctx, options.title, Math.max(10, options.width - NODE_PADDING_X * 2));
+  ctx.fillText(displayText, options.x, options.y);
+};
+
+const nodeTitleToSvg = (
+  options: { title: string; x: number; y: number; width: number; height: number; textFill: string },
+  layoutMode: MindMapLayoutMode,
+) => {
+  if (layoutMode === "superCompactDownVertical") {
+    const maxChars = Math.max(1, Math.floor((options.height - NODE_PADDING_X * 2) / VERTICAL_TEXT_LINE_HEIGHT));
+    const chars = truncateVerticalText(options.title, maxChars);
+    const startY = options.y - ((chars.length - 1) * VERTICAL_TEXT_LINE_HEIGHT) / 2;
+    return chars.map(
+      (char, index) =>
+        `<text x="${options.x}" y="${startY + index * VERTICAL_TEXT_LINE_HEIGHT}" text-anchor="middle" dominant-baseline="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="14" fill="${options.textFill}">${escapeXml(char)}</text>`,
+    );
+  }
+
+  return [
+    `<text x="${options.x}" y="${options.y}" text-anchor="middle" dominant-baseline="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="14" fill="${options.textFill}">${escapeXml(options.title)}</text>`,
+  ];
 };
 
 const buildInternalTree = (topic: MindMapNode, ctx: CanvasRenderingContext2D): InternalNode => {
@@ -173,30 +242,61 @@ const buildInternalTree = (topic: MindMapNode, ctx: CanvasRenderingContext2D): I
   };
 };
 
-const computeSubtreeHeights = (node: InternalNode): number => {
+const applyVerticalTextNodeSizing = (node: InternalNode) => {
+  node.width = SUPER_COMPACT_VERTICAL_NODE_WIDTH;
+  node.height = measureVerticalNodeHeight(node.title);
+  for (const child of node.children) applyVerticalTextNodeSizing(child);
+};
+
+const computeSubtreeHeightsWithGap = (node: InternalNode, siblingGapY: number): number => {
   if (node.children.length === 0) {
     node.subtreeHeight = node.height;
     return node.subtreeHeight;
   }
-  const childrenHeights = node.children.map(computeSubtreeHeights);
-  const stacked = childrenHeights.reduce((sum, h) => sum + h, 0) + SIBLING_GAP_Y * (childrenHeights.length - 1);
+  const childrenHeights = node.children.map((child) => computeSubtreeHeightsWithGap(child, siblingGapY));
+  const stacked = childrenHeights.reduce((sum, h) => sum + h, 0) + siblingGapY * (childrenHeights.length - 1);
   node.subtreeHeight = Math.max(node.height, stacked);
   return node.subtreeHeight;
 };
 
-const computeSubtreeWidths = (node: InternalNode): number => {
+const computeSubtreeWidthsWithGap = (node: InternalNode, siblingGapX: number): number => {
   if (node.children.length === 0) {
     node.subtreeWidth = node.width;
     return node.subtreeWidth;
   }
-  const childrenWidths = node.children.map(computeSubtreeWidths);
-  const stacked = childrenWidths.reduce((sum, w) => sum + w, 0) + SIBLING_GAP_X * (childrenWidths.length - 1);
+  const childrenWidths = node.children.map((child) => computeSubtreeWidthsWithGap(child, siblingGapX));
+  const stacked = childrenWidths.reduce((sum, w) => sum + w, 0) + siblingGapX * (childrenWidths.length - 1);
   node.subtreeWidth = Math.max(node.width, stacked);
   return node.subtreeWidth;
 };
 
+const computeSubtreeHeights = (node: InternalNode): number => computeSubtreeHeightsWithGap(node, SIBLING_GAP_Y);
+
+const computeSubtreeWidths = (node: InternalNode): number => computeSubtreeWidthsWithGap(node, SIBLING_GAP_X);
+
 const isVerticalLayoutMode = (mode: MindMapLayoutMode) =>
-  mode === "up" || mode === "down" || mode === "downCompact" || mode === "downCompact2";
+  mode === "up" ||
+  mode === "down" ||
+  mode === "downCompact" ||
+  mode === "downCompact2" ||
+  mode === "superCompactDown" ||
+  mode === "superCompactDownVertical";
+
+const isVerticalConnectorLayoutMode = (mode: MindMapLayoutMode) =>
+  mode === "up" ||
+  mode === "down" ||
+  mode === "downCompact" ||
+  mode === "downCompact2" ||
+  mode === "superCompactDown" ||
+  mode === "superCompactDownVertical";
+
+const isSuperCompactLayoutMode = (mode: MindMapLayoutMode) =>
+  mode === "superCompactDown" || mode === "superCompactRight" || mode === "superCompactDownVertical";
+
+const isOrthogonalConnectorLayoutMode = (mode: MindMapLayoutMode) => isSuperCompactLayoutMode(mode);
+
+const isHorizontalReorderMode = (mode: MindMapLayoutMode) =>
+  mode === "up" || mode === "down" || mode === "superCompactDown" || mode === "superCompactDownVertical";
 
 const assignPositions = (
   node: InternalNode,
@@ -376,6 +476,137 @@ const layoutMindMapVertical = (rootTopic: MindMapNode, ctx: CanvasRenderingConte
   return { nodes, bounds: computeLayoutBounds(nodes, mode) };
 };
 
+const layoutMindMapSuperCompactDown = (
+  rootTopic: MindMapNode,
+  ctx: CanvasRenderingContext2D,
+  mode: MindMapLayoutMode,
+  options?: { verticalText?: boolean },
+): Layout => {
+  const root = buildInternalTree(rootTopic, ctx);
+  if (options?.verticalText) applyVerticalTextNodeSizing(root);
+  computeSubtreeWidthsWithGap(root, SUPER_COMPACT_SIBLING_GAP_X);
+
+  const nodes: LayoutNode[] = [];
+  const direction: -1 | 1 = 1;
+
+  const assign = (
+    node: InternalNode,
+    subtreeLeftX: number,
+    y: number,
+    parentId: string | null,
+  ): number => {
+    let nodeX = subtreeLeftX + node.subtreeWidth / 2;
+    const nodeY = y;
+
+    if (node.children.length > 0) {
+      const totalChildrenWidth =
+        node.children.reduce((sum, child) => sum + child.subtreeWidth, 0) +
+        SUPER_COMPACT_SIBLING_GAP_X * (node.children.length - 1);
+      let cursorX = subtreeLeftX + (node.subtreeWidth - totalChildrenWidth) / 2;
+      const childXs: number[] = [];
+      for (const child of node.children) {
+        const childY = nodeY + direction * (node.height / 2 + SUPER_COMPACT_LEVEL_GAP_Y + child.height / 2);
+        childXs.push(assign(child, cursorX, childY, node.id));
+        cursorX += child.subtreeWidth + SUPER_COMPACT_SIBLING_GAP_X;
+      }
+      if (childXs.length > 0) {
+        nodeX = (childXs[0]! + childXs[childXs.length - 1]!) / 2;
+      }
+    }
+
+    nodes.push({
+      id: node.id,
+      title: node.title,
+      x: nodeX,
+      y: nodeY,
+      width: node.width,
+      height: node.height,
+      parentId,
+      hasChildren: node.hasChildren,
+      collapsed: node.collapsed,
+      direction,
+    });
+
+    return nodeX;
+  };
+
+  assign(root, -root.subtreeWidth / 2, 0, null);
+  return { nodes, bounds: computeLayoutBounds(nodes, mode) };
+};
+
+const layoutMindMapSuperCompactRight = (
+  rootTopic: MindMapNode,
+  ctx: CanvasRenderingContext2D,
+  mode: MindMapLayoutMode,
+): Layout => {
+  const root = buildInternalTree(rootTopic, ctx);
+  computeSubtreeHeightsWithGap(root, SUPER_COMPACT_SIBLING_GAP_Y);
+
+  const nodes: LayoutNode[] = [
+    {
+      id: root.id,
+      title: root.title,
+      x: 0,
+      y: 0,
+      width: root.width,
+      height: root.height,
+      parentId: null,
+      hasChildren: root.hasChildren,
+      collapsed: root.collapsed,
+      direction: 1,
+    },
+  ];
+
+  const assign = (
+    node: InternalNode,
+    parentX: number,
+    parentWidth: number,
+    subtreeTopY: number,
+    parentId: string | null,
+  ) => {
+    const x = parentX + (parentWidth / 2 + SUPER_COMPACT_LEVEL_GAP_X + node.width / 2);
+    let y = subtreeTopY + node.height / 2;
+
+    if (node.children.length > 0) {
+      let cursorY = subtreeTopY;
+      const childYs: number[] = [];
+      for (const child of node.children) {
+        assign(child, x, node.width, cursorY, node.id);
+        childYs.push(nodes[nodes.length - 1]!.y);
+        cursorY += child.subtreeHeight + SUPER_COMPACT_SIBLING_GAP_Y;
+      }
+      if (childYs.length > 0) {
+        y = (childYs[0]! + childYs[childYs.length - 1]!) / 2;
+      }
+    }
+
+    nodes.push({
+      id: node.id,
+      title: node.title,
+      x,
+      y,
+      width: node.width,
+      height: node.height,
+      parentId,
+      hasChildren: node.hasChildren,
+      collapsed: node.collapsed,
+      direction: 1,
+    });
+  };
+
+  const totalHeight = (items: InternalNode[]) =>
+    items.reduce((sum, item) => sum + item.subtreeHeight, 0) +
+    Math.max(0, items.length - 1) * SUPER_COMPACT_SIBLING_GAP_Y;
+
+  let cursorY = -totalHeight(root.children) / 2;
+  for (const child of root.children) {
+    assign(child, 0, root.width, cursorY, root.id);
+    cursorY += child.subtreeHeight + SUPER_COMPACT_SIBLING_GAP_Y;
+  }
+
+  return { nodes, bounds: computeLayoutBounds(nodes, mode) };
+};
+
 const layoutMindMapDownCompact = (rootTopic: MindMapNode, ctx: CanvasRenderingContext2D, mode: MindMapLayoutMode): Layout => {
   const root = buildInternalTree(rootTopic, ctx);
   computeSubtreeHeights(root);
@@ -499,6 +730,11 @@ const layoutMindMapDownCompact2 = (rootTopic: MindMapNode, ctx: CanvasRenderingC
 };
 
 const layoutMindMap = (rootTopic: MindMapNode, ctx: CanvasRenderingContext2D, mode: MindMapLayoutMode): Layout => {
+  if (mode === "superCompactDownVertical") {
+    return layoutMindMapSuperCompactDown(rootTopic, ctx, mode, { verticalText: true });
+  }
+  if (mode === "superCompactDown") return layoutMindMapSuperCompactDown(rootTopic, ctx, mode);
+  if (mode === "superCompactRight") return layoutMindMapSuperCompactRight(rootTopic, ctx, mode);
   if (mode === "downCompact2") return layoutMindMapDownCompact2(rootTopic, ctx, mode);
   if (mode === "downCompact") return layoutMindMapDownCompact(rootTopic, ctx, mode);
   if (mode === "up" || mode === "down") return layoutMindMapVertical(rootTopic, ctx, mode);
@@ -517,6 +753,80 @@ const getToggleCenter = (node: LayoutNode, mode: MindMapLayoutMode) => {
     x: node.x + side * (node.width / 2 + COLLAPSE_MARKER_RADIUS + 8),
     y: node.y,
   };
+};
+
+type ConnectorEndpoints = {
+  fromX: number;
+  fromY: number;
+  toX: number;
+  toY: number;
+};
+
+const getConnectorEndpoints = (parent: LayoutNode, node: LayoutNode, verticalLinks: boolean): ConnectorEndpoints => {
+  const isDown = node.y > parent.y;
+  const isRight = node.x > parent.x;
+  return {
+    fromX: verticalLinks ? parent.x : parent.x + (isRight ? parent.width / 2 : -parent.width / 2),
+    fromY: verticalLinks ? parent.y + (isDown ? parent.height / 2 : -parent.height / 2) : parent.y,
+    toX: verticalLinks ? node.x : node.x + (isRight ? -node.width / 2 : node.width / 2),
+    toY: verticalLinks ? node.y + (isDown ? -node.height / 2 : node.height / 2) : node.y,
+  };
+};
+
+const drawConnectorPathCanvas = (
+  ctx: CanvasRenderingContext2D,
+  endpoints: ConnectorEndpoints,
+  verticalLinks: boolean,
+  orthogonal: boolean,
+) => {
+  const { fromX, fromY, toX, toY } = endpoints;
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+
+  ctx.beginPath();
+  ctx.moveTo(fromX, fromY);
+
+  if (orthogonal) {
+    if (verticalLinks) {
+      const midY = fromY + dy * 0.5;
+      ctx.lineTo(fromX, midY);
+      ctx.lineTo(toX, midY);
+      ctx.lineTo(toX, toY);
+    } else {
+      const midX = fromX + dx * 0.5;
+      ctx.lineTo(midX, fromY);
+      ctx.lineTo(midX, toY);
+      ctx.lineTo(toX, toY);
+    }
+    return;
+  }
+
+  if (verticalLinks) {
+    ctx.bezierCurveTo(fromX, fromY + dy * 0.5, toX, toY - dy * 0.5, toX, toY);
+  } else {
+    ctx.bezierCurveTo(fromX + dx * 0.5, fromY, toX - dx * 0.5, toY, toX, toY);
+  }
+};
+
+const connectorPathSvg = (
+  endpoints: ConnectorEndpoints,
+  verticalLinks: boolean,
+  orthogonal: boolean,
+): string => {
+  const { fromX, fromY, toX, toY } = endpoints;
+  const dx = toX - fromX;
+  const dy = toY - fromY;
+  if (orthogonal) {
+    if (verticalLinks) {
+      const midY = fromY + dy * 0.5;
+      return `M ${fromX} ${fromY} L ${fromX} ${midY} L ${toX} ${midY} L ${toX} ${toY}`;
+    }
+    const midX = fromX + dx * 0.5;
+    return `M ${fromX} ${fromY} L ${midX} ${fromY} L ${midX} ${toY} L ${toX} ${toY}`;
+  }
+  return verticalLinks
+    ? `M ${fromX} ${fromY} C ${fromX} ${fromY + dy * 0.5}, ${toX} ${toY - dy * 0.5}, ${toX} ${toY}`
+    : `M ${fromX} ${fromY} C ${fromX + dx * 0.5} ${fromY}, ${toX - dx * 0.5} ${toY}, ${toX} ${toY}`;
 };
 
 type BoundaryBox = {
@@ -617,6 +927,85 @@ const drawBoundaryBoxesCanvas = (
   }
 };
 
+type SummaryBox = {
+  id: string;
+  title?: string;
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+};
+
+const computeSummaryBoxes = (layout: Layout, summaries: MindMapSummary[]): SummaryBox[] => {
+  if (summaries.length === 0) return [];
+
+  const childrenByParent = new Map<string, LayoutNode[]>();
+  for (const node of layout.nodes) {
+    if (!node.parentId) continue;
+    const list = childrenByParent.get(node.parentId);
+    if (list) list.push(node);
+    else childrenByParent.set(node.parentId, [node]);
+  }
+
+  const boxes: SummaryBox[] = [];
+  for (const summary of summaries) {
+    const children = childrenByParent.get(summary.nodeId) ?? [];
+    if (children.length === 0) continue;
+    let minX = Infinity;
+    let maxX = -Infinity;
+    let minY = Infinity;
+    let maxY = -Infinity;
+    for (const node of children) {
+      minX = Math.min(minX, node.x - node.width / 2);
+      maxX = Math.max(maxX, node.x + node.width / 2);
+      minY = Math.min(minY, node.y - node.height / 2);
+      maxY = Math.max(maxY, node.y + node.height / 2);
+    }
+    if (!Number.isFinite(minX) || !Number.isFinite(maxX) || !Number.isFinite(minY) || !Number.isFinite(maxY)) continue;
+    const padding = 12;
+    boxes.push({
+      id: summary.id,
+      title: summary.title?.trim() || undefined,
+      left: minX - padding,
+      top: minY - padding,
+      width: maxX - minX + padding * 2,
+      height: maxY - minY + padding * 2,
+    });
+  }
+  return boxes;
+};
+
+const drawSummaryBoxesCanvas = (
+  ctx: CanvasRenderingContext2D,
+  boxes: SummaryBox[],
+  theme: MindMapTheme,
+) => {
+  if (boxes.length === 0) return;
+  for (const box of boxes) {
+    ctx.save();
+    drawRoundedRect(ctx, box.left, box.top, box.width, box.height, 10);
+    ctx.globalAlpha = 0.08;
+    ctx.fillStyle = theme.accent;
+    ctx.fill();
+    ctx.globalAlpha = 0.85;
+    ctx.setLineDash([3, 3]);
+    ctx.lineWidth = 1.3;
+    ctx.strokeStyle = theme.accent;
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.globalAlpha = 1;
+
+    if (box.title) {
+      ctx.font = "12px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
+      ctx.textAlign = "left";
+      ctx.textBaseline = "top";
+      ctx.fillStyle = theme.nodeText;
+      ctx.fillText(box.title, box.left + 8, box.top + 6);
+    }
+    ctx.restore();
+  }
+};
+
 const drawRelationshipCurves = (
   ctx: CanvasRenderingContext2D,
   byId: Map<string, LayoutNode>,
@@ -685,6 +1074,7 @@ const drawLayoutStatic = (
   theme: MindMapTheme,
   relationships: MindMapRelationship[],
   boundaries: MindMapBoundary[],
+  summaries: MindMapSummary[],
   view: ViewState,
 ) => {
   ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -698,10 +1088,13 @@ const drawLayoutStatic = (
 
   const byId = new Map(layout.nodes.map((node) => [node.id, node] as const));
   const boundaryBoxes = computeBoundaryBoxes(layout, boundaries);
-  const verticalLinks =
-    layoutMode === "up" || layoutMode === "down" || layoutMode === "downCompact" || layoutMode === "downCompact2";
+  const summaryBoxes = computeSummaryBoxes(layout, summaries);
+  const verticalLinks = isVerticalConnectorLayoutMode(layoutMode);
+  const orthogonalConnectors = isOrthogonalConnectorLayoutMode(layoutMode);
+  const nodeRadius = isSuperCompactLayoutMode(layoutMode) ? SUPER_COMPACT_NODE_RADIUS : NODE_RADIUS;
 
   drawBoundaryBoxesCanvas(ctx, boundaryBoxes, theme);
+  drawSummaryBoxesCanvas(ctx, summaryBoxes, theme);
 
   ctx.lineWidth = 2;
   ctx.strokeStyle = theme.linkStroke;
@@ -709,22 +1102,8 @@ const drawLayoutStatic = (
     if (!node.parentId) continue;
     const parent = byId.get(node.parentId);
     if (!parent) continue;
-    const isDown = node.y > parent.y;
-    const isRight = node.x > parent.x;
-    const fromX = verticalLinks ? parent.x : parent.x + (isRight ? parent.width / 2 : -parent.width / 2);
-    const fromY = verticalLinks ? parent.y + (isDown ? parent.height / 2 : -parent.height / 2) : parent.y;
-    const toX = verticalLinks ? node.x : node.x + (isRight ? -node.width / 2 : node.width / 2);
-    const toY = verticalLinks ? node.y + (isDown ? -node.height / 2 : node.height / 2) : node.y;
-    const dx = toX - fromX;
-    const dy = toY - fromY;
-
-    ctx.beginPath();
-    ctx.moveTo(fromX, fromY);
-    if (verticalLinks) {
-      ctx.bezierCurveTo(fromX, fromY + dy * 0.5, toX, toY - dy * 0.5, toX, toY);
-    } else {
-      ctx.bezierCurveTo(fromX + dx * 0.5, fromY, toX - dx * 0.5, toY, toX, toY);
-    }
+    const endpoints = getConnectorEndpoints(parent, node, verticalLinks);
+    drawConnectorPathCanvas(ctx, endpoints, verticalLinks, orthogonalConnectors);
     ctx.stroke();
   }
 
@@ -736,7 +1115,7 @@ const drawLayoutStatic = (
     const isRoot = node.parentId === null;
 
     ctx.save();
-    drawRoundedRect(ctx, left, top, node.width, node.height, NODE_RADIUS);
+    drawRoundedRect(ctx, left, top, node.width, node.height, nodeRadius);
     ctx.fillStyle = isRoot ? theme.rootFill : theme.nodeFill;
     ctx.fill();
     ctx.lineWidth = isRoot ? 2.5 : 2;
@@ -744,11 +1123,11 @@ const drawLayoutStatic = (
     ctx.stroke();
 
     ctx.fillStyle = isRoot ? theme.rootText : theme.nodeText;
-    ctx.font = "14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    const displayText = truncateText(ctx, node.title, Math.max(10, node.width - NODE_PADDING_X * 2));
-    ctx.fillText(displayText, node.x, node.y);
+    drawNodeTitleCanvas(
+      ctx,
+      { title: node.title, x: node.x, y: node.y, width: node.width, height: node.height },
+      layoutMode,
+    );
     ctx.restore();
 
     if (node.hasChildren) {
@@ -785,6 +1164,7 @@ const layoutToSvg = (
   theme: MindMapTheme,
   relationships: MindMapRelationship[],
   boundaries: MindMapBoundary[],
+  summaries: MindMapSummary[],
   padding: number,
 ) => {
   const width = Math.max(1, Math.ceil(layout.bounds.maxX - layout.bounds.minX + padding * 2));
@@ -793,8 +1173,10 @@ const layoutToSvg = (
   const dy = padding - layout.bounds.minY;
   const byId = new Map(layout.nodes.map((node) => [node.id, node] as const));
   const boundaryBoxes = computeBoundaryBoxes(layout, boundaries);
-  const verticalLinks =
-    layoutMode === "up" || layoutMode === "down" || layoutMode === "downCompact" || layoutMode === "downCompact2";
+  const summaryBoxes = computeSummaryBoxes(layout, summaries);
+  const verticalLinks = isVerticalConnectorLayoutMode(layoutMode);
+  const orthogonalConnectors = isOrthogonalConnectorLayoutMode(layoutMode);
+  const nodeRadius = isSuperCompactLayoutMode(layoutMode) ? SUPER_COMPACT_NODE_RADIUS : NODE_RADIUS;
 
   const parts: string[] = [];
   parts.push(
@@ -813,21 +1195,32 @@ const layoutToSvg = (
     }
   }
 
+  for (const box of summaryBoxes) {
+    parts.push(
+      `<rect x="${box.left + dx}" y="${box.top + dy}" width="${box.width}" height="${box.height}" rx="10" ry="10" fill="${theme.accent}" fill-opacity="0.08" stroke="${theme.accent}" stroke-width="1.3" stroke-dasharray="3 3" stroke-opacity="0.85"/>`,
+    );
+    if (box.title) {
+      parts.push(
+        `<text x="${box.left + dx + 8}" y="${box.top + dy + 7}" text-anchor="start" dominant-baseline="hanging" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="12" fill="${theme.nodeText}">${escapeXml(box.title)}</text>`,
+      );
+    }
+  }
+
   for (const node of layout.nodes) {
     if (!node.parentId) continue;
     const parent = byId.get(node.parentId);
     if (!parent) continue;
-    const isDown = node.y > parent.y;
-    const isRight = node.x > parent.x;
-    const fromX = (verticalLinks ? parent.x : parent.x + (isRight ? parent.width / 2 : -parent.width / 2)) + dx;
-    const fromY = (verticalLinks ? parent.y + (isDown ? parent.height / 2 : -parent.height / 2) : parent.y) + dy;
-    const toX = (verticalLinks ? node.x : node.x + (isRight ? -node.width / 2 : node.width / 2)) + dx;
-    const toY = (verticalLinks ? node.y + (isDown ? -node.height / 2 : node.height / 2) : node.y) + dy;
-    const ddx = toX - fromX;
-    const ddy = toY - fromY;
-    const d = verticalLinks
-      ? `M ${fromX} ${fromY} C ${fromX} ${fromY + ddy * 0.5}, ${toX} ${toY - ddy * 0.5}, ${toX} ${toY}`
-      : `M ${fromX} ${fromY} C ${fromX + ddx * 0.5} ${fromY}, ${toX - ddx * 0.5} ${toY}, ${toX} ${toY}`;
+    const endpoints = getConnectorEndpoints(parent, node, verticalLinks);
+    const d = connectorPathSvg(
+      {
+        fromX: endpoints.fromX + dx,
+        fromY: endpoints.fromY + dy,
+        toX: endpoints.toX + dx,
+        toY: endpoints.toY + dy,
+      },
+      verticalLinks,
+      orthogonalConnectors,
+    );
     parts.push(`<path d="${d}" fill="none" stroke="${theme.linkStroke}" stroke-width="2"/>`);
   }
 
@@ -867,11 +1260,20 @@ const layoutToSvg = (
     const stroke = isRoot ? theme.rootStroke : theme.nodeStroke;
     const textFill = isRoot ? theme.rootText : theme.nodeText;
     parts.push(
-      `<rect x="${left}" y="${top}" width="${node.width}" height="${node.height}" rx="${NODE_RADIUS}" ry="${NODE_RADIUS}" fill="${fill}" stroke="${stroke}" stroke-width="${isRoot ? 2.5 : 2}"/>`,
+      `<rect x="${left}" y="${top}" width="${node.width}" height="${node.height}" rx="${nodeRadius}" ry="${nodeRadius}" fill="${fill}" stroke="${stroke}" stroke-width="${isRoot ? 2.5 : 2}"/>`,
     );
-    const text = escapeXml(node.title);
     parts.push(
-      `<text x="${node.x + dx}" y="${node.y + dy}" text-anchor="middle" dominant-baseline="middle" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial" font-size="14" fill="${textFill}">${text}</text>`,
+      ...nodeTitleToSvg(
+        {
+          title: node.title,
+          x: node.x + dx,
+          y: node.y + dy,
+          width: node.width,
+          height: node.height,
+          textFill,
+        },
+        layoutMode,
+      ),
     );
 
     if (node.hasChildren) {
@@ -900,14 +1302,19 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     layoutMode,
     theme,
     isEnglish = false,
+    mode = "edit",
     relationships = [],
     boundaries = [],
+    summaries = [],
     selectedNodeId,
     onSelectNode,
+    onRenameNode,
     onToggleCollapse,
     onMoveNode,
     viewResetKey,
     fullscreenSidebar,
+    fullscreenToolbar,
+    fullscreenOverlay,
   },
   ref,
 ) {
@@ -930,6 +1337,40 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     null,
   );
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenSidebarWidth, setFullscreenSidebarWidth] = useState(() => {
+    if (typeof window === "undefined") return 360;
+    try {
+      const widthRaw = window.localStorage.getItem("atools:xmind-viewer:fullscreen:sidebarWidth:v1");
+      if (!widthRaw) return 360;
+      const widthParsed = Number.parseFloat(widthRaw);
+      if (!Number.isFinite(widthParsed)) return 360;
+      return clamp(widthParsed, 280, 560);
+    } catch {
+      return 360;
+    }
+  });
+  const [fullscreenSidebarCollapsed, setFullscreenSidebarCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return window.localStorage.getItem("atools:xmind-viewer:fullscreen:sidebarCollapsed:v1") === "1";
+    } catch {
+      return false;
+    }
+  });
+  const resizeStateRef = useRef<{ startX: number; startWidth: number } | null>(null);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      window.localStorage.setItem(
+        "atools:xmind-viewer:fullscreen:sidebarWidth:v1",
+        String(clamp(fullscreenSidebarWidth, 280, 560)),
+      );
+      window.localStorage.setItem("atools:xmind-viewer:fullscreen:sidebarCollapsed:v1", fullscreenSidebarCollapsed ? "1" : "0");
+    } catch {
+      // ignore storage errors
+    }
+  }, [fullscreenSidebarCollapsed, fullscreenSidebarWidth]);
 
   const measureCtx = useMemo(() => createMeasureContext(), []);
   const layout = useMemo(() => {
@@ -1027,6 +1468,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
         theme,
         relationships,
         boundaries,
+        summaries,
         {
           scale,
           offsetX: (padding - layout.bounds.minX) * scale,
@@ -1042,16 +1484,16 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
       });
       return blob;
     },
-    [boundaries, layout, layoutMode, relationships, theme],
+    [boundaries, layout, layoutMode, relationships, summaries, theme],
   );
 
   const exportAsSvg = useCallback(
     (options?: { padding?: number }) => {
       if (!layout) throw new Error("No mind map loaded");
       const padding = withDefault(options?.padding, 48);
-      return layoutToSvg(layout, layoutMode, theme, relationships, boundaries, padding);
+      return layoutToSvg(layout, layoutMode, theme, relationships, boundaries, summaries, padding);
     },
-    [boundaries, layout, layoutMode, relationships, theme],
+    [boundaries, layout, layoutMode, relationships, summaries, theme],
   );
 
   const setFullscreen = useCallback(
@@ -1072,7 +1514,8 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
       if (isFullscreen) fullscreenViewRef.current = { ...currentView };
       else normalViewRef.current = { ...currentView };
 
-      let nextBase = nextFullscreen ? fullscreenViewRef.current : normalViewRef.current;
+      const nextBase = nextFullscreen ? fullscreenViewRef.current : normalViewRef.current;
+      let shouldFitWhenEnterFullscreen = false;
       if (nextFullscreen) {
         const stored = fullscreenViewRef.current;
         const isDefaultStored =
@@ -1080,8 +1523,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
           stored.offsetX === defaultView.offsetX &&
           stored.offsetY === defaultView.offsetY;
         if (isDefaultStored) {
-          fullscreenViewRef.current = { ...currentView };
-          nextBase = fullscreenViewRef.current;
+          shouldFitWhenEnterFullscreen = true;
         }
       }
       setIsFullscreen(nextFullscreen);
@@ -1090,6 +1532,10 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
         window.requestAnimationFrame(() => {
           const nextContainer = containerRef.current;
           if (!nextContainer) return;
+          if (nextFullscreen && shouldFitWhenEnterFullscreen) {
+            fitToView();
+            return;
+          }
           const nextRect = nextContainer.getBoundingClientRect();
           const scale = nextBase.scale;
           viewRef.current = {
@@ -1101,7 +1547,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
         });
       });
     },
-    [isFullscreen, requestDraw],
+    [fitToView, isFullscreen, requestDraw],
   );
 
   useEffect(() => {
@@ -1235,6 +1681,8 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
       for (let index = layout.nodes.length - 1; index >= 0; index -= 1) {
         const node = layout.nodes[index]!;
         if (!node.hasChildren) continue;
+        const isToggleVisible = !isSuperCompactLayoutMode(layoutMode) || selectedNodeId === node.id;
+        if (!isToggleVisible) continue;
         const marker = getToggleCenter(node, layoutMode);
         const dx = worldX - marker.x;
         const dy = worldY - marker.y;
@@ -1242,12 +1690,12 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
       }
       return null;
     },
-    [layout, layoutMode],
+    [layout, layoutMode, selectedNodeId],
   );
 
   const getPlacementForNode = useCallback(
     (node: LayoutNode, worldX: number, worldY: number) => {
-      if (layoutMode === "down" || layoutMode === "up") {
+      if (isHorizontalReorderMode(layoutMode)) {
         const left = node.x - node.width / 2;
         const rel = (worldX - left) / Math.max(1, node.width);
         if (rel < 0.25) return "before" as const;
@@ -1301,33 +1749,22 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
 
     const byId = new Map(layout.nodes.map((node) => [node.id, node] as const));
     const boundaryBoxes = computeBoundaryBoxes(layout, boundaries);
+    const summaryBoxes = computeSummaryBoxes(layout, summaries);
 
     drawBoundaryBoxesCanvas(ctx, boundaryBoxes, theme);
+    drawSummaryBoxesCanvas(ctx, summaryBoxes, theme);
 
     ctx.lineWidth = 2;
     ctx.strokeStyle = theme.linkStroke;
-    const verticalLinks =
-      layoutMode === "up" || layoutMode === "down" || layoutMode === "downCompact" || layoutMode === "downCompact2";
+    const verticalLinks = isVerticalConnectorLayoutMode(layoutMode);
+    const orthogonalConnectors = isOrthogonalConnectorLayoutMode(layoutMode);
+    const nodeRadius = isSuperCompactLayoutMode(layoutMode) ? SUPER_COMPACT_NODE_RADIUS : NODE_RADIUS;
     for (const node of layout.nodes) {
       if (!node.parentId) continue;
       const parent = byId.get(node.parentId);
       if (!parent) continue;
-      const isDown = node.y > parent.y;
-      const isRight = node.x > parent.x;
-      const fromX = verticalLinks ? parent.x : parent.x + (isRight ? parent.width / 2 : -parent.width / 2);
-      const fromY = verticalLinks ? parent.y + (isDown ? parent.height / 2 : -parent.height / 2) : parent.y;
-      const toX = verticalLinks ? node.x : node.x + (isRight ? -node.width / 2 : node.width / 2);
-      const toY = verticalLinks ? node.y + (isDown ? -node.height / 2 : node.height / 2) : node.y;
-      const dx = toX - fromX;
-      const dy = toY - fromY;
-
-      ctx.beginPath();
-      ctx.moveTo(fromX, fromY);
-      if (verticalLinks) {
-        ctx.bezierCurveTo(fromX, fromY + dy * 0.5, toX, toY - dy * 0.5, toX, toY);
-      } else {
-        ctx.bezierCurveTo(fromX + dx * 0.5, fromY, toX - dx * 0.5, toY, toX, toY);
-      }
+      const endpoints = getConnectorEndpoints(parent, node, verticalLinks);
+      drawConnectorPathCanvas(ctx, endpoints, verticalLinks, orthogonalConnectors);
       ctx.stroke();
     }
 
@@ -1346,7 +1783,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
         ctx.shadowBlur = 14 / view.scale;
       }
 
-      drawRoundedRect(ctx, left, top, node.width, node.height, NODE_RADIUS);
+      drawRoundedRect(ctx, left, top, node.width, node.height, nodeRadius);
       if (isRoot) ctx.fillStyle = theme.rootFill;
       else if (isSelected) ctx.fillStyle = theme.selectedFill;
       else ctx.fillStyle = theme.nodeFill;
@@ -1361,14 +1798,17 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
 
       ctx.shadowBlur = 0;
       ctx.fillStyle = isRoot ? theme.rootText : theme.nodeText;
-      ctx.font = "14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      const displayText = truncateText(ctx, node.title, Math.max(10, node.width - NODE_PADDING_X * 2));
-      ctx.fillText(displayText, node.x, node.y);
+      drawNodeTitleCanvas(
+        ctx,
+        { title: node.title, x: node.x, y: node.y, width: node.width, height: node.height },
+        layoutMode,
+      );
       ctx.restore();
 
-      if (node.hasChildren) {
+      const showToggle =
+        node.hasChildren &&
+        (!isSuperCompactLayoutMode(layoutMode) || selectedNodeId === node.id);
+      if (showToggle) {
         const marker = getToggleCenter(node, layoutMode);
         const isToggleHovered = hoveredToggleNodeId === node.id;
         ctx.save();
@@ -1407,10 +1847,10 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
         ctx.strokeStyle = theme.accent;
         ctx.fillStyle = theme.accent;
         if (dropTarget.placement === "child") {
-          drawRoundedRect(ctx, left - 6, top - 6, target.width + 12, target.height + 12, NODE_RADIUS + 4);
+          drawRoundedRect(ctx, left - 6, top - 6, target.width + 12, target.height + 12, nodeRadius + 4);
           ctx.stroke();
         } else {
-          const verticalDrop = layoutMode === "up" || layoutMode === "down";
+          const verticalDrop = isHorizontalReorderMode(layoutMode);
           if (verticalDrop) {
             const x = dropTarget.placement === "before" ? left - 10 : right + 10;
             ctx.beginPath();
@@ -1448,7 +1888,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
           dragCursorWorld.y - dragged.height / 2,
           dragged.width,
           dragged.height,
-          NODE_RADIUS,
+          nodeRadius,
         );
         ctx.fillStyle = "#ffffff";
         ctx.fill();
@@ -1458,11 +1898,17 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
 
         ctx.globalAlpha = 1;
         ctx.fillStyle = theme.nodeText;
-        ctx.font = "14px ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        const displayText = truncateText(ctx, dragged.title, Math.max(10, dragged.width - NODE_PADDING_X * 2));
-        ctx.fillText(displayText, dragCursorWorld.x, dragCursorWorld.y);
+        drawNodeTitleCanvas(
+          ctx,
+          {
+            title: dragged.title,
+            x: dragCursorWorld.x,
+            y: dragCursorWorld.y,
+            width: dragged.width,
+            height: dragged.height,
+          },
+          layoutMode,
+        );
         ctx.restore();
       }
     }
@@ -1477,8 +1923,8 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     ctx.textBaseline = "bottom";
     ctx.fillText(
       isEnglish
-        ? "Drag nodes to reorder · drag blank area to pan · wheel to zoom · double-click to fit"
-        : "拖拽节点重排 · 空白拖拽平移 · 滚轮缩放 · 双击自适应",
+        ? "Drag nodes to reorder · drag blank area to pan · wheel to zoom · double-click node to rename · double-click blank to fit"
+        : "拖拽节点重排 · 空白拖拽平移 · 滚轮缩放 · 双击节点改名 · 双击空白自适应",
       14,
       rect.height - 12,
     );
@@ -1494,6 +1940,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     layout,
     layoutMode,
     relationships,
+    summaries,
     selectedNodeId,
     theme,
   ]);
@@ -1513,6 +1960,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     hoveredToggleNodeId,
     layout,
     relationships,
+    summaries,
     requestDraw,
     selectedNodeId,
   ]);
@@ -1584,7 +2032,7 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
       const distance = Math.hypot(dx, dy);
 
       if (!panning && !draggingNode && distance > 6) {
-        const canDragNode = Boolean(pressedNodeId && !pressedNodeIsRoot && pressedToggleNodeId === null);
+        const canDragNode = mode !== "read" && Boolean(pressedNodeId && !pressedNodeIsRoot && pressedToggleNodeId === null);
         if (canDragNode) {
           draggingNode = true;
           setDraggedNodeId(pressedNodeId);
@@ -1675,7 +2123,18 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
       requestDraw();
     };
 
-    const onDblClick = () => fitToView();
+    const onDblClick = (event: MouseEvent) => {
+      const rect = container.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      const nodeHit = hitTest(x, y);
+      if (nodeHit) {
+        onSelectNode(nodeHit.id);
+        if (mode !== "read") onRenameNode(nodeHit.id);
+      } else {
+        fitToView();
+      }
+    };
 
     canvas.style.touchAction = "none";
     canvas.style.cursor = "grab";
@@ -1702,10 +2161,12 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     layout,
     layoutMode,
     onMoveNode,
+    onRenameNode,
     onSelectNode,
     onToggleCollapse,
     requestDraw,
     zoomAround,
+    mode,
   ]);
 
   const hoveredNodeTitle = useMemo(
@@ -1758,23 +2219,112 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
     </>
   );
 
-  return (
-    <div className={isFullscreen ? "fixed inset-0 z-50 bg-slate-50" : "space-y-3"}>
-      {!isFullscreen && (
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div className="text-sm font-semibold text-slate-900">{isEnglish ? "Mind Map Editor (Canvas)" : "思维导图编辑（Canvas）"}</div>
-          <div className="flex flex-wrap items-center gap-2">{controls}</div>
-        </div>
-      )}
+  useEffect(() => {
+    if (!isFullscreen) {
+      resizeStateRef.current = null;
+      return;
+    }
 
-      <div
-        ref={containerRef}
-        className={
-          isFullscreen
-            ? "absolute inset-0 overflow-hidden bg-white"
-            : "relative h-[70vh] w-full overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200"
-        }
-      >
+    const onMove = (event: PointerEvent) => {
+      const state = resizeStateRef.current;
+      if (!state) return;
+      const delta = state.startX - event.clientX;
+      setFullscreenSidebarWidth(clamp(state.startWidth + delta, 280, 560));
+    };
+
+    const onUp = () => {
+      resizeStateRef.current = null;
+    };
+
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp);
+    window.addEventListener("pointercancel", onUp);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerup", onUp);
+      window.removeEventListener("pointercancel", onUp);
+    };
+  }, [isFullscreen]);
+
+  if (isFullscreen) {
+    const fullscreenView = (
+      <div className="fixed inset-0 z-50 bg-slate-50">
+        <div ref={containerRef} className="absolute inset-0 overflow-hidden bg-white">
+          <canvas ref={canvasRef} className="absolute inset-0" />
+          {hoveredNodeId && hoveredNodeTitle && (
+            <div className="pointer-events-none absolute left-4 top-16 max-w-[min(520px,calc(100%-2rem))] rounded-2xl bg-slate-900/90 px-3 py-2 text-xs text-white shadow-lg">
+              {hoveredNodeTitle}
+            </div>
+          )}
+
+          {fullscreenOverlay ? <div className="absolute inset-0 z-10 overflow-auto bg-white/95 p-4 pt-20">{fullscreenOverlay}</div> : null}
+
+          <div className="absolute left-4 top-4 z-20 flex flex-wrap items-center gap-2 rounded-2xl bg-white/90 p-2 shadow-xl ring-1 ring-slate-200 backdrop-blur">
+            {controls}
+            {fullscreenToolbar ? <div className="h-6 w-px bg-slate-200" /> : null}
+            {fullscreenToolbar}
+          </div>
+        </div>
+
+        {fullscreenSidebar ? (
+          <div
+            className="absolute bottom-4 right-4 top-4 z-20 flex max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-3xl border border-slate-200 bg-white/90 shadow-xl backdrop-blur"
+            style={{ width: fullscreenSidebarCollapsed ? 52 : fullscreenSidebarWidth }}
+          >
+            <div className="flex shrink-0 items-center justify-between gap-2 px-2 py-2">
+              {fullscreenSidebarCollapsed ? null : (
+                <div className="min-w-0 truncate text-xs font-semibold text-slate-700">{isEnglish ? "Panel" : "面板"}</div>
+              )}
+              <button
+                type="button"
+                onClick={() => setFullscreenSidebarCollapsed((prev) => !prev)}
+                className="rounded-xl bg-slate-100 px-2 py-1 text-xs font-semibold text-slate-700 transition hover:bg-slate-200"
+                aria-label={fullscreenSidebarCollapsed ? (isEnglish ? "Expand panel" : "展开面板") : isEnglish ? "Collapse panel" : "收起面板"}
+              >
+                {fullscreenSidebarCollapsed ? "»" : "«"}
+              </button>
+            </div>
+
+            {!fullscreenSidebarCollapsed ? (
+              <div className="min-h-0 flex-1 overflow-y-auto p-3">
+                {fullscreenSidebar}
+                <div className="pt-2 text-center text-[11px] text-slate-500">{isEnglish ? "Press Esc to exit" : "Esc 退出"}</div>
+              </div>
+            ) : (
+              <div className="flex-1" />
+            )}
+
+            {!fullscreenSidebarCollapsed ? (
+              <div
+                className="absolute left-0 top-0 h-full w-2 cursor-col-resize"
+                onPointerDown={(event) => {
+                  if (event.button !== 0) return;
+                  resizeStateRef.current = { startX: event.clientX, startWidth: fullscreenSidebarWidth };
+                  event.currentTarget.setPointerCapture(event.pointerId);
+                }}
+                aria-hidden="true"
+              />
+            ) : null}
+          </div>
+        ) : null}
+      </div>
+    );
+    if (typeof document !== "undefined") {
+      return createPortal(fullscreenView, document.body);
+    }
+    return fullscreenView;
+  }
+
+  return (
+    <div className="space-y-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="text-sm font-semibold text-slate-900">
+          {isEnglish ? "Mind Map Editor (Canvas)" : "思维导图编辑（Canvas）"}
+        </div>
+        <div className="flex flex-wrap items-center gap-2">{controls}</div>
+      </div>
+
+      <div ref={containerRef} className="relative h-[70vh] w-full overflow-hidden rounded-3xl bg-white ring-1 ring-slate-200">
         <canvas ref={canvasRef} className="absolute inset-0" />
         {hoveredNodeId && hoveredNodeTitle && (
           <div className="pointer-events-none absolute left-4 top-4 max-w-[min(520px,calc(100%-2rem))] rounded-2xl bg-slate-900/90 px-3 py-2 text-xs text-white shadow-lg">
@@ -1782,15 +2332,6 @@ const XmindMindMapCanvas = forwardRef<XmindMindMapCanvasHandle, Props>(function 
           </div>
         )}
       </div>
-
-      {isFullscreen && (
-        <div className="absolute right-4 top-4 flex max-h-[calc(100vh-2rem)] w-[min(360px,calc(100vw-2rem))] flex-col gap-3 overflow-auto rounded-3xl bg-white/90 p-3 shadow-xl ring-1 ring-slate-200 backdrop-blur">
-          <div className="flex flex-col gap-2">{controls}</div>
-          {fullscreenSidebar ? <div className="h-px bg-slate-200/80" /> : null}
-          {fullscreenSidebar}
-          <div className="pt-1 text-center text-[11px] text-slate-500">{isEnglish ? "Press Esc to exit" : "Esc 退出"}</div>
-        </div>
-      )}
     </div>
   );
 });

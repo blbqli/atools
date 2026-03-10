@@ -29,6 +29,7 @@ extension/node_modules/
 /public/en-us/tools/tools-meta.json
 /public/vendor/ffmpeg/**
 /public/vendor/realcugan/**
+/public/sw.js
 
 # generated tool nav data
 /src/app/tools/tools-meta*.json
@@ -58,3 +59,10 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+public/sw.js
+extension/dist.zip
+docs/features/
+legionmind/
+.claude/
+.serena/
+.archived/

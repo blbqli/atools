@@ -1,0 +1,26 @@
+{
+  "name": "Free Online Markdown Editor - ATools",
+  "shortName": "Markdown Editor",
+  "description": "Lightweight Markdown editor with live preview, built for quick notes and documentation.",
+  "seoDescription": "Free online Markdown editor with side-by-side input and preview, perfect for quick notes, documentation drafts and blog snippets. Runs entirely in your browser with zero uploads so your content stays local. Simple, distraction-free and ready to bookmark as your everyday Markdown scratchpad.",
+  "category": "Text Tools",
+  "lang": "en-US",
+  "themeColor": "#0f172a",
+  "backgroundColor": "#0f172a",
+  "icon": "/icon.svg",
+  "keywords": [
+    "Markdown editor",
+    "online Markdown",
+    "Markdown preview",
+    "write Markdown",
+    "MD editor"
+  ],
+  "ui": {
+    "title": "Markdown Editor",
+    "input": "Markdown Input",
+    "preview": "Preview (plain text)",
+    "placeholder": "Type Markdown here...",
+    "copy": "Copy",
+    "clear": "Clear"
+  }
+}

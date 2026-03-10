@@ -155,6 +155,8 @@ yarn dev
 - `yarn lint`：ESLint
 - `yarn generate:manifests`：生成 `public/tools/<slug>/manifest.webmanifest` 与导航数据
 - `yarn generate:sw`：生成 `public/sw.js`
+- `yarn scaffold:tool <slug>`：交互式创建新工具骨架（`tool.json` / `tool.en-us.json` / `page.tsx` / `*Client.tsx`）
+- `yarn check:tools`：检查所有工具目录配置完整性（缺失文件、必填字段、SEO 元数据调用等）
 
 ### 开发调试
 
@@ -183,6 +185,56 @@ yarn dev
 ---
 
 ## 新增工具
+
+### 推荐流程（脚手架 + 校验）
+
+1. 运行脚手架创建基础文件（推荐）：
+
+```bash
+yarn scaffold:tool my-tool
+```
+
+也可以不带参数启动后再输入 slug：
+
+```bash
+yarn scaffold:tool
+```
+
+脚本会交互询问以下信息（回车可使用默认值）：
+
+- `slug`：工具目录名，必须是 kebab-case（如 `text-to-speech`）
+- 中文/英文 `shortName`
+- 中文分类 `category`
+- 中文/英文 `name`（用于 SEO 标题）
+- 中文/英文 `description`（用于描述与默认 SEO 文案）
+
+脚本会自动生成：
+
+- `src/app/tools/<slug>/tool.json`
+- `src/app/tools/<slug>/tool.en-us.json`
+- `src/app/tools/<slug>/page.tsx`
+- `src/app/tools/<slug>/<PascalCase>Client.tsx`
+
+2. 完善业务逻辑与 SEO 文案（尤其 `seoDescription`、`keywords`）。
+
+3. 运行配置检查：
+
+```bash
+yarn check:tools
+```
+
+检查结果说明：
+
+- 出现 `ERROR`：命令会以非 0 退出码结束（CI 会失败），必须修复。
+- 仅有 `WARN`：命令可通过，但建议尽快处理（如缺少 `tool.en-us.json`、`page.tsx` 未声明 `dynamic = "force-static"` 等）。
+- 全部通过会输出类似：
+
+```text
+[check-tools] 检查完成。
+工具数量: <N>
+错误总数: 0
+警告总数: 0
+```
 
 ### 1. 创建工具目录和基础文件
 

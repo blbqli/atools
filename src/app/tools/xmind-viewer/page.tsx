@@ -13,7 +13,7 @@ const defaultConfig = getToolConfig("xmind-viewer", DEFAULT_LOCALE);
 export default function XmindViewerPage() {
   return (
     <ToolConfigProvider toolSlug="xmind-viewer" locale={DEFAULT_LOCALE} config={defaultConfig}>
-      <ToolPageLayout toolSlug="xmind-viewer" maxWidthClassName="max-w-6xl">
+      <ToolPageLayout toolSlug="xmind-viewer" maxWidthClassName="max-w-7xl">
         <XmindViewerClient />
       </ToolPageLayout>
     </ToolConfigProvider>

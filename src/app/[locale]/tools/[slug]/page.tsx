@@ -67,9 +67,10 @@ export async function generateMetadata({
 }
 
 export default async function ToolPage({ params }: { params: Promise<{ locale: string; slug: string }> }) {
-  const { locale, slug } = await params;
-  if (!isLocale(locale)) notFound();
-  if (!(slug in toolLoaders)) notFound();
+	const { locale, slug } = await params;
+
+	if (!isLocale(locale)) notFound();
+	if (!(slug in toolLoaders)) notFound();
 
   const toolSlug = slug as ToolSlug;
   const config = getToolConfig(toolSlug, locale);

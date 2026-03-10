@@ -1,0 +1,34 @@
+{
+  "name": "Free Online Speech to Text - ATools",
+  "shortName": "Speech to Text",
+  "description": "Convert speech to text in your browser using the Web Speech API.",
+  "seoDescription": "Free online speech to text tool powered by the Web Speech API. Record directly in your browser and get live transcripts with interim and final results, no account or upload required. Great for quick notes, meeting summaries and rough dictation, while keeping audio and text on your device.",
+  "category": "Text Tools",
+  "lang": "en-US",
+  "themeColor": "#0f172a",
+  "backgroundColor": "#0f172a",
+  "icon": "/icon.svg",
+  "keywords": [
+    "speech to text",
+    "STT",
+    "voice transcription",
+    "online speech recognition",
+    "browser speech to text"
+  ],
+  "ui": {
+    "title": "Speech to Text",
+    "outputLabel": "Recognition Results",
+    "languageSelect": "Select Language",
+    "startButton": "Start Recording",
+    "stopButton": "Stop Recording",
+    "clearButton": "Clear",
+    "copyButton": "Copy",
+    "statusReady": "Ready",
+    "statusListening": "Listening...",
+    "statusStopped": "Stopped",
+    "noSupport": "Your browser does not support speech recognition. Please use Chrome or Edge.",
+    "interimResults": "Interim Results",
+    "finalResults": "Final Results",
+    "note": "Note: Speech recognition requires a browser that supports the Web Speech API (Chrome or Edge recommended). Recognition accuracy depends on your network connection and speech engine."
+  }
+}

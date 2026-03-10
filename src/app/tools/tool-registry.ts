@@ -42,6 +42,7 @@ export const toolLoaders = {
   "docx-preview-to-pdf": () => import("./docx-preview-to-pdf/DocxPreviewToPdfClient"),
   "emoji-picker": () => import("./emoji-picker/EmojiPickerClient"),
   "escape-tool": () => import("./escape-tool/EscapeToolClient"),
+  "excel-formula-helper": () => import("./excel-formula-helper/ExcelFormulaHelperClient"),
   "excel-merger": () => import("./excel-merger/ExcelMergerClient"),
   "excel-to-json": () => import("./excel-to-json/ExcelToJsonClient"),
   "file-encryptor": () => import("./file-encryptor/FileEncryptorClient"),

@@ -1,0 +1,40 @@
+{
+  "name": "Free Online Text to Speech - ATools",
+  "shortName": "Text to Speech",
+  "description": "Convert text to natural speech with multiple voices and speed controls.",
+  "seoDescription": "Free online text to speech tool supporting multiple languages and voices. Paste text and play it back with adjustable rate, pitch and volume, all processed locally in your browser with zero uploads. Ideal for quick listening, accessibility checks and creating simple voice drafts without installing desktop software.",
+  "category": "Text Tools",
+  "lang": "en-US",
+  "themeColor": "#0f172a",
+  "backgroundColor": "#0f172a",
+  "icon": "/icon.svg",
+  "keywords": [
+    "text to speech",
+    "TTS",
+    "speech synthesis",
+    "online reader",
+    "browser text to speech"
+  ],
+  "ui": {
+    "title": "Text to Speech",
+    "inputLabel": "Input Text",
+    "inputPlaceholder": "Enter text to convert...",
+    "voiceSelect": "Select Voice",
+    "rateLabel": "Rate",
+    "pitchLabel": "Pitch",
+    "volumeLabel": "Volume",
+    "speakButton": "Start Speaking",
+    "pauseButton": "Pause",
+    "resumeButton": "Resume",
+    "stopButton": "Stop",
+    "clearButton": "Clear",
+    "statusReady": "Ready",
+    "statusSpeaking": "Speaking...",
+    "statusPaused": "Paused",
+    "statusStopped": "Stopped",
+    "noVoices": "No voices detected. Please use a browser that supports the Web Speech API.",
+    "sampleText": "This is a sample text for testing the text-to-speech functionality.",
+    "loadingVoices": "Loading voice list...",
+    "note": "Note: Long text will be automatically split into segments. Available voices depend on your browser and operating system."
+  }
+}

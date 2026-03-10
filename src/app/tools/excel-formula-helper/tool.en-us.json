@@ -1,0 +1,34 @@
+{
+  "name": "Free Online Excel Formula Helper - ATools",
+  "shortName": "Excel Formula Helper",
+  "description": "Library of common Excel formulas with syntax, examples, and a simple interactive picker.",
+  "seoDescription": "Free online Excel formula helper with a curated library of common functions such as SUM, IF, VLOOKUP and INDEX/MATCH. Each entry includes syntax, a short explanation and a practical example so you can build formulas faster without digging through documentation. Runs entirely in your browser with zero uploads, ideal for privacy‑sensitive spreadsheets and everyday productivity.",
+  "category": "Spreadsheet Tools",
+  "lang": "en-US",
+  "themeColor": "#0f172a",
+  "backgroundColor": "#0f172a",
+  "icon": "/icon.svg",
+  "keywords": [
+    "Excel formula helper",
+    "Excel functions",
+    "VLOOKUP example",
+    "IF formula",
+    "SUM function",
+    "spreadsheet tools",
+    "productivity"
+  ],
+  "ui": {
+    "title": "Excel Formula Helper",
+    "searchPlaceholder": "Search functions, descriptions or examples...",
+    "categoryAll": "All",
+    "formulaListTitle": "Common formulas",
+    "detailsTitle": "Formula details",
+    "syntaxLabel": "Syntax",
+    "categoryLabel": "Category",
+    "descriptionLabel": "Description",
+    "exampleLabel": "Example",
+    "copyFormula": "Copy formula",
+    "noSelection": "Select a formula on the left to view details.",
+    "noResults": "No formulas matched your query. Try another keyword."
+  }
+}

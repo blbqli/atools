@@ -1,4 +1,14 @@
-export type MindMapLayoutMode = "balanced" | "right" | "left" | "up" | "down" | "downCompact" | "downCompact2";
+export type MindMapLayoutMode =
+  | "balanced"
+  | "right"
+  | "left"
+  | "up"
+  | "down"
+  | "downCompact"
+  | "downCompact2"
+  | "superCompactDown"
+  | "superCompactRight"
+  | "superCompactDownVertical";
 
 export type MindMapThemeId = "classicLight" | "classicDark" | "ocean" | "forest" | "sunset" | "mono";
 
@@ -44,6 +54,12 @@ export type MindMapBoundary = {
   title?: string;
 };
 
+export type MindMapSummary = {
+  id: string;
+  nodeId: string;
+  title?: string;
+};
+
 export type MindMapSheet = {
   id: string;
   title: string;
@@ -52,4 +68,5 @@ export type MindMapSheet = {
   themeId: MindMapThemeId;
   relationships?: MindMapRelationship[];
   boundaries?: MindMapBoundary[];
+  summaries?: MindMapSummary[];
 };

@@ -1,0 +1,20 @@
+{
+  "name": "免费在线 Excel 公式助手 - 纯粹工具站",
+  "shortName": "Excel公式助手",
+  "description": "常用 Excel 公式模板库，提供语法说明和示例，帮助快速构建常见公式。",
+  "seoDescription": "免费在线 Excel 公式助手，内置常用函数模板库，提供语法说明与实战示例，帮助你快速构建 SUM、IF、VLOOKUP、INDEX/MATCH 等常见公式，减少查文档时间。所有计算与示例均在浏览器本地完成，不上传任何工作簿数据，适用于表格报表、数据分析和办公自动化场景。",
+  "category": "表格工具",
+  "lang": "zh-CN",
+  "themeColor": "#0f172a",
+  "backgroundColor": "#0f172a",
+  "icon": "/icon.svg",
+  "keywords": [
+    "Excel公式助手",
+    "Excel函数",
+    "VLOOKUP示例",
+    "IF公式",
+    "SUM函数",
+    "表格工具",
+    "办公效率"
+  ]
+}
