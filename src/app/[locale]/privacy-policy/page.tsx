@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { getMessages } from "../../../i18n/messages";
-import { isLocale } from "../../../i18n/locales";
+import { DEFAULT_LOCALE, isLocale } from "../../../i18n/locales";
 
 const LAST_UPDATED_ISO = "2026-02-25";
 
@@ -46,6 +46,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       title,
       description,
       type: "article",
+      siteName: messages.siteName,
       locale: isEn ? "en_US" : "zh_CN",
       url: `/${locale}/privacy-policy`,
     },
@@ -63,6 +64,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       languages: {
         "zh-CN": "/zh-cn/privacy-policy",
         "en-US": "/en-us/privacy-policy",
+        "x-default": `/${DEFAULT_LOCALE}/privacy-policy`,
       },
     },
   };

@@ -6,7 +6,7 @@ export function generateToolMetadata(toolSlug: string): Metadata {
   const config = getToolConfig(toolSlug);
   const title = `${config.name} | ATools 纯粹工具站`;
   const descriptionBase = config.seoDescription || config.description;
-  const description = `${descriptionBase} 纯前端本地处理、零上传更安心，并使用清晰语义元信息，提升搜索与 AI 引擎的理解和引用质量。`;
+  const description = `${descriptionBase} 尽可能在浏览器本地运行，文件和文本默认不上传服务器。`;
   const keywords = Array.from(
     new Set([
       ...(config.keywords ?? []),
@@ -30,6 +30,7 @@ export function generateToolMetadata(toolSlug: string): Metadata {
       title,
       description,
       type: "website",
+      siteName: "ATools 纯粹工具站",
     },
     twitter: {
       card: "summary_large_image",
@@ -38,6 +39,11 @@ export function generateToolMetadata(toolSlug: string): Metadata {
     },
     alternates: {
       canonical: `/${DEFAULT_LOCALE}/tools/${toolSlug}`,
+      languages: {
+        "zh-CN": `/zh-cn/tools/${toolSlug}`,
+        "en-US": `/en-us/tools/${toolSlug}`,
+        "x-default": `/${DEFAULT_LOCALE}/tools/${toolSlug}`,
+      },
     },
   };
 }

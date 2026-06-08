@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { isLocale, SUPPORTED_LOCALES } from "../../../../i18n/locales";
+import { DEFAULT_LOCALE, isLocale, SUPPORTED_LOCALES } from "../../../../i18n/locales";
 import { getToolConfig } from "../../../../lib/tool-config";
 import { toolLoaders, toolSlugs, type ToolSlug } from "../../../tools/tool-registry";
 import { ToolConfigProvider } from "../../../../components/ToolConfigProvider";
@@ -26,8 +26,8 @@ export async function generateMetadata({
   const title = isEn ? `${config.name} | Pure Tools` : `${config.name} | ATools 纯粹工具站`;
   const descriptionBase = config.seoDescription || config.description;
   const description = isEn
-    ? `${descriptionBase} Built for fast in-browser processing with zero uploads, privacy-first defaults, and machine-readable metadata that improves search and AI retrieval quality.`
-    : `${descriptionBase} 支持纯前端本地处理、零上传更安心，并配有清晰语义与结构化元数据，提升搜索与 AI 大模型检索引用效率。`;
+    ? `${descriptionBase} Runs in the browser where possible, with no file upload by default.`
+    : `${descriptionBase} 尽可能在浏览器本地运行，文件和文本默认不上传服务器。`;
   const keywords = Array.from(
     new Set([
       ...(config.keywords ?? []),
@@ -49,6 +49,7 @@ export async function generateMetadata({
       description,
       type: "website",
       url: canonical,
+      siteName: isEn ? "Pure Tools" : "ATools 纯粹工具站",
       locale: isEn ? "en_US" : "zh_CN",
     },
     twitter: {
@@ -61,6 +62,7 @@ export async function generateMetadata({
       languages: {
         "zh-CN": `/zh-cn/tools/${slug}`,
         "en-US": `/en-us/tools/${slug}`,
+        "x-default": `/${DEFAULT_LOCALE}/tools/${slug}`,
       },
     },
   };

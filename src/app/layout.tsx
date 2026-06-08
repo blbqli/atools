@@ -4,27 +4,18 @@ import "./globals.css";
 import { ServiceWorkerRegister } from "./sw-register";
 import RouteProgressBar from "../components/RouteProgressBar";
 import DesignUploadEnhancer from "../components/DesignUploadEnhancer";
+import { getSiteBaseUrl } from "../lib/site-url";
 
 function getMetadataBase(): URL {
-  const fallback = "http://www.atools.live";
-  const raw = String(process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").trim();
-  const candidate = raw || fallback;
-  try {
-    return new URL(candidate);
-  } catch {
-    try {
-      return new URL(`http://${candidate}`);
-    } catch {
-      return new URL(fallback);
-    }
-  }
+  return new URL(getSiteBaseUrl());
 }
 
 const metadataBase = getMetadataBase();
+const applicationName = "ATools";
 const siteNameZh = "ATools 纯粹工具站";
 const defaultTitle = "ATools 纯粹工具站 - 免费在线工具箱，零上传更安全";
 const defaultDescription =
-  "ATools 纯粹工具站提供上百款免费在线工具，覆盖开发调试、文档处理、音视频与图片编辑、效率办公等高频场景。站点坚持浏览器本地处理，绝大多数工具零上传、秒开即用；同时提供清晰语义页面与结构化元数据，帮助搜索引擎与 AI 大模型更高质量地理解、索引与引用。";
+  "ATools 纯粹工具站提供免费在线工具，覆盖开发调试、文档处理、图片与音视频处理、办公效率等场景。多数工具在浏览器本地运行，文件和文本默认不上传服务器。";
 const defaultKeywords = [
   "免费在线工具",
   "ATools",
@@ -60,7 +51,7 @@ export const metadata: Metadata = {
   },
   description: defaultDescription,
   keywords: defaultKeywords,
-  applicationName: siteNameZh,
+  applicationName,
   category: "technology",
   openGraph: {
     title: defaultTitle,

@@ -2,7 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import ToolNavClient from "../ToolNavClient";
 import { getMessages } from "../../i18n/messages";
-import { isLocale } from "../../i18n/locales";
+import { DEFAULT_LOCALE, isLocale, LOCALE_TAG } from "../../i18n/locales";
+import { getSiteBaseUrl } from "../../lib/site-url";
+import { getToolConfig } from "../../lib/tool-config";
+import { toolSlugs } from "../tools/tool-registry";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -14,8 +17,8 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
     ? `Free Online Tools Directory | ${messages.siteName}`
     : `免费在线工具导航大全 - 开发/办公/音视频/图片工具一站直达 | ${messages.siteName}`;
   const description = isEn
-    ? `${messages.siteName} provides a high-coverage collection of free online tools for developer workflows, document handling, media processing, and productivity tasks. Most tools run fully in-browser with zero uploads, fast response, and privacy-first defaults. Pages are built with clear semantic metadata and stable URLs, making search engines and AI assistants more likely to index, understand, and cite them accurately.`
-    : `${messages.siteName} 提供高覆盖度的免费在线工具导航，覆盖开发调试、文档处理、音视频与图片编辑、办公效率等核心场景。多数工具纯浏览器本地运行、零上传、即开即用，兼顾速度与隐私。页面采用清晰语义标题、关键词与结构化描述，便于搜索引擎和 AI 大模型更快理解并优先索引引用。`;
+    ? `${messages.siteName} is a free online tools directory for developer workflows, document handling, image and media processing, and productivity tasks. Most tools run locally in the browser with no file upload by default.`
+    : `${messages.siteName} 是免费在线工具导航，覆盖开发调试、文档处理、图片与音视频处理、办公效率等场景。多数工具在浏览器本地运行，文件和文本默认不上传服务器。`;
   const keywords = isEn
     ? [
         "free online tools",
@@ -55,6 +58,7 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       title,
       description,
       type: "website",
+      siteName: messages.siteName,
       locale: isEn ? "en_US" : "zh_CN",
       url: canonical,
     },
@@ -68,8 +72,75 @@ export async function generateMetadata({ params }: { params: Promise<{ locale: s
       languages: {
         "zh-CN": "/zh-cn",
         "en-US": "/en-us",
+        "x-default": `/${DEFAULT_LOCALE}`,
       },
     },
+  };
+}
+
+function buildHomeJsonLd(locale: string, siteName: string, isEn: boolean) {
+  const baseUrl = getSiteBaseUrl();
+  const localePath = `/${locale}`;
+  const language = LOCALE_TAG[locale as keyof typeof LOCALE_TAG] ?? (isEn ? "en-US" : "zh-CN");
+  const homeUrl = `${baseUrl}${localePath}`;
+  const listedToolSlugs = toolSlugs.slice(0, 80);
+
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Organization",
+        "@id": `${baseUrl}/#organization`,
+        name: "ATools",
+        alternateName: ["Pure Tools", "纯粹工具站"],
+        url: baseUrl,
+        logo: `${baseUrl}/icon.svg`,
+      },
+      {
+        "@type": "WebSite",
+        "@id": `${baseUrl}/#website`,
+        name: siteName,
+        url: homeUrl,
+        inLanguage: language,
+        publisher: {
+          "@id": `${baseUrl}/#organization`,
+        },
+        potentialAction: {
+          "@type": "SearchAction",
+          target: `${homeUrl}?q={search_term_string}`,
+          "query-input": "required name=search_term_string",
+        },
+      },
+      {
+        "@type": "CollectionPage",
+        "@id": `${homeUrl}#collection`,
+        url: homeUrl,
+        name: isEn ? "Free Online Tools Directory" : "免费在线工具导航大全",
+        description: isEn
+          ? "Directory of browser-based tools for development, documents, media processing, images, and productivity."
+          : "面向开发调试、文档处理、图片与音视频处理、办公效率的浏览器工具导航。",
+        inLanguage: language,
+        isPartOf: {
+          "@id": `${baseUrl}/#website`,
+        },
+      },
+      {
+        "@type": "ItemList",
+        "@id": `${homeUrl}#tools`,
+        name: isEn ? "Available online tools" : "可用在线工具列表",
+        numberOfItems: listedToolSlugs.length,
+        itemListElement: listedToolSlugs.map((slug, index) => {
+          const config = getToolConfig(slug, locale);
+          return {
+            "@type": "ListItem",
+            position: index + 1,
+            url: `${baseUrl}${localePath}/tools/${slug}`,
+            name: config.name,
+            description: config.description,
+          };
+        }),
+      },
+    ],
   };
 }
 
@@ -77,9 +148,15 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
   const { locale } = await params;
   if (!isLocale(locale)) notFound();
   const messages = getMessages(locale);
+  const isEn = locale === "en-us";
+  const jsonLd = buildHomeJsonLd(locale, messages.siteName, isEn);
 
   return (
     <div className="space-y-16">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c") }}
+      />
       <section className="relative mx-auto max-w-2xl text-center animate-fade-in-up">
         <div className="mb-6 inline-flex items-center rounded-full border border-blue-100 bg-blue-50/50 px-3 py-1 text-xs font-medium text-blue-600 backdrop-blur-sm">
           <span className="mr-2 flex h-2 w-2 rounded-full bg-blue-600" />

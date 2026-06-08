@@ -22,7 +22,7 @@
     "push:search": "ENABLE_SEARCH_PUSH=true node scripts/push-search.mjs",
     "prebuild": "node scripts/copy-ffmpeg-core.mjs && node scripts/check-realcugan-assets.mjs && node scripts/generate-tool-manifests.mjs && node scripts/generate-sw.mjs",
     "prebuild:turbo": "node scripts/copy-ffmpeg-core.mjs && node scripts/check-realcugan-assets.mjs && node scripts/generate-tool-manifests.mjs && node scripts/generate-sw.mjs",
-    "postbuild": "node scripts/remove-non-locale-tools-out.mjs && node scripts/fix-export-rsc-flat-files.mjs && node scripts/push-search.mjs"
+    "postbuild": "node scripts/remove-non-locale-tools-out.mjs && node scripts/fix-export-rsc-flat-files.mjs && node scripts/fix-export-html-lang.mjs && node scripts/push-search.mjs"
   },
   "dependencies": {
     "@ffmpeg/core": "0.12.6",

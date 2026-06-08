@@ -1,25 +1,11 @@
 import type { MetadataRoute } from "next";
 import { DEFAULT_LOCALE, LOCALE_TAG, SUPPORTED_LOCALES } from "../i18n/locales";
+import { getSiteBaseUrl } from "../lib/site-url";
 import { toolSlugs } from "./tools/tool-registry";
 
 export const dynamic = "force-static";
 
-function getBaseUrl(): string {
-  const fallback = "https://www.atools.live";
-  const raw = String(process.env.SITE_URL || process.env.NEXT_PUBLIC_SITE_URL || "").trim();
-  const candidate = raw || fallback;
-  try {
-    return new URL(candidate).origin;
-  } catch {
-    try {
-      return new URL(`https://${candidate}`).origin;
-    } catch {
-      return fallback;
-    }
-  }
-}
-
-const baseUrl = getBaseUrl();
+const baseUrl = getSiteBaseUrl();
 
 function buildAlternates(pathname: string): Record<string, string> {
   const entries = SUPPORTED_LOCALES.map((locale) => [LOCALE_TAG[locale], `${baseUrl}/${locale}${pathname}`] as const);
