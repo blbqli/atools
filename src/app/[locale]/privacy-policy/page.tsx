@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { getMessages } from "../../../i18n/messages";
 import { DEFAULT_LOCALE, isLocale } from "../../../i18n/locales";
 
-const LAST_UPDATED_ISO = "2026-02-25";
+const LAST_UPDATED_ISO = "2026-05-18";
 
 export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
   const { locale } = await params;
@@ -85,7 +85,7 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
         </h1>
         <p className="text-sm text-slate-500">
           {isEn ? "Last updated: " : "最后更新："}
-          <time dateTime={LAST_UPDATED_ISO}>{isEn ? "February 25, 2026" : "2026年2月25日"}</time>
+          <time dateTime={LAST_UPDATED_ISO}>{isEn ? "May 18, 2026" : "2026年5月18日"}</time>
         </p>
         <p className="text-sm leading-7">
           {isEn
@@ -146,7 +146,43 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-slate-900">
-          {isEn ? "4. Chrome extension permissions" : "4. Chrome 扩展权限说明"}
+          {isEn ? "4. Usage analytics (Microsoft Clarity)" : "4. 使用分析（Microsoft Clarity）"}
+        </h2>
+        <p className="text-sm leading-7">
+          {isEn
+            ? "To understand usability issues such as confusing navigation, ineffective calls to action, or interaction dead ends, we may use Microsoft Clarity for heatmaps, scroll behavior analysis, and session replay."
+            : "为理解导航是否清晰、按钮是否有效以及交互链路中是否存在卡点，我们可能使用 Microsoft Clarity 查看热力图、滚动行为和会话回放。"}
+        </p>
+        <p className="text-sm leading-7">
+          {isEn
+            ? "When enabled for this deployment, Clarity runs in no-consent mode by default with analytics storage denied and ad storage denied. In this state, Clarity still loads and collects cookieless, page-level anonymous usage data. Each page view receives a separate identifier, so cross-page sessions and some reports are more limited until you explicitly allow analytics cookies in the footer settings."
+            : "当此部署启用 Clarity 时，默认会以 no-consent mode 运行：`analytics_Storage` 为 denied，`ad_Storage` 也为 denied。此时 Clarity 仍会加载，但只采集无 Cookie 的页面级匿名使用数据；每个页面访问都会使用独立标识，因此在您通过页脚“统计设置”明确允许分析类 Cookie 之前，跨页会话关联和部分报表能力会受限。"}
+        </p>
+        <p className="text-sm leading-7">
+          {isEn
+            ? "If you allow analytics cookies, Clarity can connect visits across pages into fuller sessions and richer heatmaps. We keep ad storage denied in this implementation. Tool interaction areas are additionally masked by default, and Clarity masks form inputs and dropdowns by default."
+            : "如果您允许分析类 Cookie，Clarity 可以将跨页访问关联成更完整的会话，并提供更丰富的热力图与回放能力。在当前实现中，我们始终保持 `ad_Storage` 为 denied。站点还会对工具主交互区默认施加额外遮罩；输入框和下拉选择框则由 Clarity 默认遮罩。"}
+        </p>
+        <p className="text-sm leading-7">
+          {isEn
+            ? "For more information about Microsoft's privacy practices, refer to the Microsoft Privacy Statement."
+            : "关于 Microsoft 对相关数据的处理方式，请同时参阅 Microsoft Privacy Statement。"}
+        </p>
+        <p className="text-sm">
+          <Link
+            href="https://privacy.microsoft.com/en-us/privacystatement"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-600 underline underline-offset-4 hover:text-blue-700"
+          >
+            https://privacy.microsoft.com/en-us/privacystatement
+          </Link>
+        </p>
+      </section>
+
+      <section className="space-y-3">
+        <h2 className="text-xl font-semibold text-slate-900">
+          {isEn ? "5. Chrome extension permissions" : "5. Chrome 扩展权限说明"}
         </h2>
         <ul className="list-disc space-y-2 pl-5 text-sm leading-7">
           <li>
@@ -180,7 +216,7 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-slate-900">
-          {isEn ? "5. Data retention and deletion" : "5. 数据保留与删除"}
+          {isEn ? "6. Data retention and deletion" : "6. 数据保留与删除"}
         </h2>
         <p className="text-sm leading-7">
           {isEn
@@ -191,7 +227,7 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-slate-900">
-          {isEn ? "6. Policy updates" : "6. 政策更新"}
+          {isEn ? "7. Policy updates" : "7. 政策更新"}
         </h2>
         <p className="text-sm leading-7">
           {isEn
@@ -202,7 +238,7 @@ export default async function PrivacyPolicyPage({ params }: { params: Promise<{ 
 
       <section className="space-y-3">
         <h2 className="text-xl font-semibold text-slate-900">
-          {isEn ? "7. Contact" : "7. 联系我们"}
+          {isEn ? "8. Contact" : "8. 联系我们"}
         </h2>
         <p className="text-sm leading-7">
           {isEn ? "For privacy questions, please contact us via GitHub Issues:" : "如有隐私相关问题，请通过 GitHub Issues 联系我们："}

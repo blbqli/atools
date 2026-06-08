@@ -4,6 +4,7 @@ import type { Locale } from "../i18n/locales";
 import type { Messages } from "../i18n/messages";
 import LocaleSwitcher from "./LocaleSwitcher";
 import { PwaActionsBar } from "../app/pwa-actions";
+import ClarityConsentManager from "./ClarityConsentManager";
 
 export default function SiteShell({
   locale,
@@ -14,6 +15,8 @@ export default function SiteShell({
   messages: Messages;
   children: React.ReactNode;
 }>) {
+  const clarityEnabled = Boolean(String(process.env.NEXT_PUBLIC_CLARITY_ID || "").trim());
+
   return (
     <div className="flex min-h-screen flex-col">
       <header className="sticky top-0 z-50 w-full glass border-b border-white/20 transition-all duration-300">
@@ -72,11 +75,17 @@ export default function SiteShell({
           <p>
             © {new Date().getFullYear()} {messages.siteName}. {messages.footerTagline}
           </p>
-          <p className="mt-2">
+          <div className="mt-2 flex items-center justify-center gap-3">
             <Link href={`/${locale}/privacy-policy`} className="transition-colors hover:text-slate-700">
               {messages.navPrivacy}
             </Link>
-          </p>
+            {clarityEnabled ? (
+              <>
+                <span aria-hidden="true">·</span>
+                <ClarityConsentManager locale={locale} messages={messages} />
+              </>
+            ) : null}
+          </div>
         </div>
       </footer>
     </div>

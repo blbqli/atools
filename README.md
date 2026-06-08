@@ -158,6 +158,16 @@ yarn dev
 - `yarn scaffold:tool <slug>`：交互式创建新工具骨架（`tool.json` / `tool.en-us.json` / `page.tsx` / `*Client.tsx`）
 - `yarn check:tools`：检查所有工具目录配置完整性（缺失文件、必填字段、SEO 元数据调用等）
 
+### 可选：启用 Microsoft Clarity
+
+如果需要启用站点行为分析，在构建前设置环境变量：
+
+```bash
+NEXT_PUBLIC_CLARITY_ID=your-clarity-project-id
+```
+
+当前接入策略为默认 no-consent mode：站点会预加载 Clarity，但在用户未授权前始终以 `analytics_Storage=denied`、`ad_Storage=denied` 运行，仅采集无 Cookie 的匿名页面级使用数据。用户在页脚“统计设置”中同意后，才升级为可跨页关联的完整分析模式；工具页主交互区默认额外遮罩，避免会话回放直接暴露用户在工具中的原始内容。
+
 ### 开发调试
 
 1. **渐进式开发**：先实现基础功能，再添加高级特性

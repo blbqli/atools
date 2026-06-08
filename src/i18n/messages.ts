@@ -5,6 +5,7 @@ export type Messages = {
   navTools: string;
   navSitemap: string;
   navPrivacy: string;
+  navAnalyticsSettings: string;
   navGithub: string;
   navReportIssue: string;
   footerTagline: string;
@@ -28,6 +29,11 @@ export type Messages = {
   sharing: string;
   installAsApp: string;
   iosInstallHint: string;
+  clarityConsentTitle: string;
+  clarityConsentDescription: string;
+  clarityConsentAllow: string;
+  clarityConsentDeny: string;
+  clarityConsentClose: string;
 };
 
 const zhCN: Messages = {
@@ -35,6 +41,7 @@ const zhCN: Messages = {
   navTools: "工具导航",
   navSitemap: "站点地图",
   navPrivacy: "隐私政策",
+  navAnalyticsSettings: "统计设置",
   navReportIssue: "提交缺陷",
   navGithub: "GitHub",
   footerTagline: "Crafted with precision.",
@@ -59,6 +66,12 @@ const zhCN: Messages = {
   sharing: "分享中...",
   installAsApp: "安装此页面为应用",
   iosInstallHint: "在 Safari 浏览器底部菜单中选择“分享”，然后点击“添加到主屏幕”即可安装此工具。",
+  clarityConsentTitle: "分析偏好设置",
+  clarityConsentDescription:
+    "站点默认以 Microsoft Clarity 的无 Cookie 模式收集匿名页面使用数据，用于基础可用性分析。若你同意，我们会额外启用分析类 Cookie，把跨页访问串成更完整的热力图与会话回放；广告存储始终关闭，工具主交互区默认额外遮罩。",
+  clarityConsentAllow: "允许完整分析",
+  clarityConsentDeny: "仅保留匿名统计",
+  clarityConsentClose: "关闭",
 };
 
 const enUS: Messages = {
@@ -66,6 +79,7 @@ const enUS: Messages = {
   navTools: "Tools",
   navSitemap: "Sitemap",
   navPrivacy: "Privacy",
+  navAnalyticsSettings: "Analytics settings",
   navReportIssue: "Report Issue",
   navGithub: "GitHub",
   footerTagline: "Crafted with precision.",
@@ -90,6 +104,12 @@ const enUS: Messages = {
   sharing: "Sharing...",
   installAsApp: "Install as app",
   iosInstallHint: "In Safari, tap Share, then choose “Add to Home Screen” to install this tool.",
+  clarityConsentTitle: "Analytics preferences",
+  clarityConsentDescription:
+    "This site uses Microsoft Clarity in cookieless mode by default to collect anonymous page-usage data for baseline usability analysis. If you allow it, we additionally enable analytics cookies so cross-page visits can be stitched into fuller heatmaps and session replays; ad storage stays denied and tool interaction areas remain additionally masked.",
+  clarityConsentAllow: "Allow full analytics",
+  clarityConsentDeny: "Keep anonymous only",
+  clarityConsentClose: "Close",
 };
 
 export const getMessages = (locale: Locale): Messages => {

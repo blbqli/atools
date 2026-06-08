@@ -114,7 +114,7 @@ export default function ToolPageLayout({
             }}
           />
         </div>
-        {isRenderProp ? children({ config, locale }) : children}
+        <div data-clarity-mask="true">{isRenderProp ? children({ config, locale }) : children}</div>
       </div>
     </ToolConfigProvider>
   );

@@ -1,9 +1,11 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import Script from "next/script";
 import "./globals.css";
 import { ServiceWorkerRegister } from "./sw-register";
 import RouteProgressBar from "../components/RouteProgressBar";
 import DesignUploadEnhancer from "../components/DesignUploadEnhancer";
+import { buildClarityBootstrapScript, getClarityProjectId } from "../lib/clarity";
 import { getSiteBaseUrl } from "../lib/site-url";
 
 function getMetadataBase(): URL {
@@ -42,6 +44,8 @@ const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
 });
+
+const clarityProjectId = getClarityProjectId();
 
 export const metadata: Metadata = {
   metadataBase,
@@ -88,6 +92,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="zh-CN" className="scroll-smooth">
+      {clarityProjectId ? (
+        <Script
+          id="clarity-bootstrap"
+          strategy="beforeInteractive"
+          dangerouslySetInnerHTML={{
+            __html: buildClarityBootstrapScript(clarityProjectId),
+          }}
+        />
+      ) : null}
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[var(--background)] text-[var(--foreground)] selection:bg-blue-500/20 selection:text-blue-600`}
       >
