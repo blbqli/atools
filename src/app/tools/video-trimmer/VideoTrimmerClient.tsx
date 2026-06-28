@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useFileDropzone } from "../../../hooks/useFileDropzone";
 
@@ -189,9 +190,10 @@ export default function VideoTrimmerClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="video-trimmer" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">视频剪辑器</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">视频剪辑器</h2>
         <p className="mt-2 text-sm text-slate-500">设置起止时间，导出 WebM（实时转码，不上传）</p>
       </div>
 
@@ -347,5 +349,6 @@ export default function VideoTrimmerClient() {
         )}
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }

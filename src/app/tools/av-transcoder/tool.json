@@ -8,6 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "媒体工具",
-  "keywords": ["免费音视频转码", "在线媒体转换", "WebM转码", "音视频格式转换", "实时转码工具"]
+  "keywords": [
+    "免费音视频转码",
+    "在线媒体转换",
+    "WebM转码",
+    "音视频格式转换",
+    "实时转码工具"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

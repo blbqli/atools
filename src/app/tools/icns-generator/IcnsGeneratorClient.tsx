@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { ChangeEvent, FC } from "react";
 import { useEffect, useRef, useState } from "react";
 
@@ -321,11 +322,12 @@ const IcnsGeneratorClient: FC = () => {
   const hasImage = Boolean(file);
 
   return (
-    <div className="mx-auto max-w-5xl animate-fade-in-up space-y-8">
+    <ToolPageLayout toolSlug="icns-generator" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           ICNS 图标生成工具
-        </h1>
+        </h2>
         <p className="mt-3 text-sm text-slate-600">
           上传一张图片，浏览器会在本地生成包含多尺寸图标资源的苹果
           ICNS 文件，可直接用于 macOS 应用、Dock 图标等场景，全程本地处理，不上传服务器。
@@ -505,7 +507,8 @@ const IcnsGeneratorClient: FC = () => {
         </div>
       )}
     </div>
-  );
+    </ToolPageLayout>
+    );
 };
 
 export default IcnsGeneratorClient;

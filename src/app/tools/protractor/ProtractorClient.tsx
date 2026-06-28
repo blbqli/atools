@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { PointerEvent as ReactPointerEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -115,9 +116,10 @@ export default function ProtractorClient() {
   }, [normalized.a, normalized.small, radius]);
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="protractor" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">量角器</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">量角器</h2>
         <p className="mt-2 text-sm text-slate-500">拖动两条射线的端点，测量夹角（0–180°）</p>
       </div>
 
@@ -287,5 +289,6 @@ export default function ProtractorClient() {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }

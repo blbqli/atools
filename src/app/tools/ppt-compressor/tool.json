@@ -15,6 +15,9 @@
     "重打包",
     "ZIP压缩",
     "本地处理"
-  ]
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

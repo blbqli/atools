@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -172,9 +173,10 @@ export default function MusicPlayerClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="music-player" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">音乐播放器</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">音乐播放器</h2>
         <p className="mt-2 text-sm text-slate-500">导入本地音频文件，播放列表播放（不上传服务器）</p>
       </div>
 
@@ -373,5 +375,6 @@ export default function MusicPlayerClient() {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }

@@ -166,7 +166,7 @@ export default async function Home({ params }: { params: Promise<{ locale: strin
           {messages.homeTitlePrefix}
           <span className="text-gradient">{messages.homeTitleHighlight}</span>
         </h1>
-        <p className="text-lg leading-8 text-slate-600">{messages.homeDescription}</p>
+        <p className="hidden text-lg leading-8 text-slate-600 sm:block">{messages.homeDescription}</p>
       </section>
 
       <ToolNavClient />

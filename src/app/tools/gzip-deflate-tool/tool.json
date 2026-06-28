@@ -15,6 +15,9 @@
     "base64",
     "fflate",
     "本地处理"
-  ]
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

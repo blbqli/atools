@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useState } from "react";
 
 type Algorithm = "SHA-1" | "SHA-256" | "SHA-512";
@@ -76,9 +77,10 @@ export default function HmacGeneratorClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="hmac-generator" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">HMAC 生成器</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">HMAC 生成器</h2>
         <p className="mt-2 text-sm text-slate-500">SHA1/SHA256/SHA512（纯本地）</p>
       </div>
 
@@ -208,6 +210,7 @@ export default function HmacGeneratorClient() {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }
 

@@ -446,7 +446,7 @@ export default function MarkdownToWordClient() {
       <div className="space-y-6">
         {/* 工具标题和说明 */}
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-slate-900 mb-2">{ui.title}</h1>
+          <h2 className="text-2xl font-bold text-slate-900 mb-2">{ui.title}</h2>
           <p className="text-slate-600">{ui.description}</p>
         </div>
 

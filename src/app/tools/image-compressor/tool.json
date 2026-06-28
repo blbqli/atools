@@ -8,5 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "图片工具",
-  "keywords": ["免费图片压缩", "在线图片优化", "图片减小", "JPG压缩", "PNG压缩工具"]
+  "keywords": [
+    "免费图片压缩",
+    "在线图片优化",
+    "图片减小",
+    "JPG压缩",
+    "PNG压缩工具"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

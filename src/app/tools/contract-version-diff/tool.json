@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["合同对比", "合同对版", "版本比对", "文本diff", "条款变更"]
+  "keywords": [
+    "合同对比",
+    "合同对版",
+    "版本比对",
+    "文本diff",
+    "条款变更"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

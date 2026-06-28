@@ -8,5 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["PDF目录", "TOC生成", "PDF目录页", "报告目录", "本地处理"]
+  "keywords": [
+    "PDF目录",
+    "TOC生成",
+    "PDF目录页",
+    "报告目录",
+    "本地处理"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

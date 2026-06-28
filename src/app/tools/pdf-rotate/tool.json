@@ -8,7 +8,13 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["PDF旋转", "旋转PDF页面", "PDF方向调整", "扫描件旋转", "PDF工具"],
+  "keywords": [
+    "PDF旋转",
+    "旋转PDF页面",
+    "PDF方向调整",
+    "扫描件旋转",
+    "PDF工具"
+  ],
   "ui": {
     "hint": "旋转 PDF 页面，全程本地处理，不上传文件。",
     "pick": "选择 PDF",
@@ -31,5 +37,9 @@
     "errParseFailed": "PDF 解析失败。",
     "errNoValidPages": "未选择有效页码。",
     "errRotateFailed": "旋转失败。"
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }

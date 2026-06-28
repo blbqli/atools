@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 import { PDFDocument } from "pdf-lib";
@@ -206,11 +207,12 @@ const PdfTrimClient: FC = () => {
   );
 
   return (
-    <div className="mx-auto max-w-5xl animate-fade-in-up space-y-8">
+    <ToolPageLayout toolSlug="pdf-trim" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           PDF 剪切工具
-        </h1>
+        </h2>
         <p className="mt-2 text-slate-500">
           上传一个 PDF，勾选需要删除的页面，浏览器会在本地生成删除这些页面后的新
           PDF，适合合同隐私页删除、说明书裁剪等场景。
@@ -383,7 +385,8 @@ const PdfTrimClient: FC = () => {
         </div>
       )}
     </div>
-  );
+    </ToolPageLayout>
+    );
 };
 
 export default PdfTrimClient;

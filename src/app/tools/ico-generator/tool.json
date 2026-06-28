@@ -8,5 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["免费ICO生成", "在线图标制作", "Windows图标", "favicon生成", "ICO转换器"]
+  "keywords": [
+    "免费ICO生成",
+    "在线图标制作",
+    "Windows图标",
+    "favicon生成",
+    "ICO转换器"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

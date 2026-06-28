@@ -8,5 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "PDF 工具",
-  "keywords": ["免费PDF删除页面", "在线PDF剪切", "PDF页面管理", "PDF编辑工具", "PDF页面删除"]
+  "keywords": [
+    "免费PDF删除页面",
+    "在线PDF剪切",
+    "PDF页面管理",
+    "PDF编辑工具",
+    "PDF页面删除"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

@@ -8,5 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "图片工具",
-  "keywords": ["免费图片调整", "在线图片缩放", "图片尺寸修改", "图片大小调整", "图片缩放工具"]
+  "keywords": [
+    "免费图片调整",
+    "在线图片缩放",
+    "图片尺寸修改",
+    "图片大小调整",
+    "图片缩放工具"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

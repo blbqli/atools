@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { ChangeEvent, FC } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -646,18 +647,20 @@ const P2PFileTransferClient: FC = () => {
 
   if (!supported) {
     return (
-      <div className="mx-auto max-w-3xl animate-fade-in-up space-y-6">
+      <ToolPageLayout toolSlug="p2p-file-transfer" maxWidthClassName="max-w-3xl">
+        <div className="space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
             局域网 P2P 文件传输工具
-          </h1>
+          </h2>
           <p className="mt-2 text-slate-500">
             当前浏览器不支持 WebRTC（RTCPeerConnection），请更换为 Chrome /
             Edge / Firefox / Safari 新版本再试。
           </p>
         </div>
       </div>
-    );
+      </ToolPageLayout>
+      );
   }
 
   const statusBadge = connectionReady
@@ -669,11 +672,12 @@ const P2PFileTransferClient: FC = () => {
         : { text: "未连接", cls: "bg-slate-200 text-slate-700" };
 
   return (
-    <div className="mx-auto max-w-5xl animate-fade-in-up space-y-8">
+    <ToolPageLayout toolSlug="p2p-file-transfer" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           局域网 P2P 文件传输工具
-        </h1>
+        </h2>
         <p className="mt-2 text-slate-500">
           基于 WebRTC DataChannel 的纯前端点对点传输，不经服务器中转。先完成连接，再选择文件发送。
         </p>
@@ -1010,7 +1014,8 @@ const P2PFileTransferClient: FC = () => {
         </div>
       )}
     </div>
-  );
+    </ToolPageLayout>
+    );
 };
 
 export default P2PFileTransferClient;

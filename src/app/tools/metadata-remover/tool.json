@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["元数据清理", "EXIF移除", "图片去EXIF", "PDF元数据", "隐私保护"]
+  "keywords": [
+    "元数据清理",
+    "EXIF移除",
+    "图片去EXIF",
+    "PDF元数据",
+    "隐私保护"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

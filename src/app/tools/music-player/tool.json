@@ -8,6 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "媒体工具",
-  "keywords": ["免费音乐播放器", "在线音频播放", "网页播放器", "本地音乐播放", "MP3播放器"]
+  "keywords": [
+    "免费音乐播放器",
+    "在线音频播放",
+    "网页播放器",
+    "本地音乐播放",
+    "MP3播放器"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

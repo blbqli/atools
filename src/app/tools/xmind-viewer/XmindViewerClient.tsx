@@ -4,6 +4,7 @@ import type { ChangeEvent, KeyboardEvent as ReactKeyboardEvent } from "react";
 import { strFromU8, strToU8, unzipSync, zipSync } from "fflate";
 import { PDFDocument } from "pdf-lib";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
 import XmindMindMapCanvas from "./XmindMindMapCanvas";
 import type { ViewStateBundle, XmindMindMapCanvasHandle } from "./XmindMindMapCanvas";
@@ -3099,7 +3100,8 @@ export default function XmindViewerClient() {
   ) : null;
 
   return (
-    <div className="space-y-8">
+    <ToolPageLayout toolSlug="xmind-viewer" maxWidthClassName="max-w-7xl">
+      <div className="space-y-8">
       <div className="glass-card rounded-3xl p-6 shadow-2xl ring-1 ring-black/5">
         {draftStatus === "available" && editorSheets.length === 0 && (
           <div className="mb-6 rounded-3xl bg-amber-50 p-5 ring-1 ring-amber-200">
@@ -4076,6 +4078,7 @@ export default function XmindViewerClient() {
           </div>
         </div>
       </div>
-    </div>
+      </div>
+    </ToolPageLayout>
   );
 }

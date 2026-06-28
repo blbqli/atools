@@ -8,7 +8,13 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["视频压缩", "MP4压缩", "H.264压缩", "CRF", "ffmpeg.wasm"],
+  "keywords": [
+    "视频压缩",
+    "MP4压缩",
+    "H.264压缩",
+    "CRF",
+    "ffmpeg.wasm"
+  ],
   "ui": {
     "hint": "视频压缩器：输出 MP4(H.264) 并用 CRF 控制体积/质量，可选 720p/1080p 缩放（纯前端本地处理不上传）。首次需加载 ffmpeg.wasm。",
     "pick": "选择视频文件",
@@ -32,6 +38,9 @@
     "errFfmpegLoadFailed": "FFmpeg 加载失败。",
     "errCompressFailed": "压缩失败（可能输出编码器未内置或浏览器资源不足）。",
     "note": "说明：CRF 越大体积越小、画质越差（常用 20-28）。"
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }
-

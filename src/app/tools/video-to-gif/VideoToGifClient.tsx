@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { FFmpeg } from "@ffmpeg/ffmpeg";
 import { fetchFile, toBlobURL } from "@ffmpeg/util";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -183,9 +184,10 @@ export default function VideoToGifClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="video-to-gif" maxWidthClassName="max-w-6xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">视频转 GIF</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">视频转 GIF</h2>
         <p className="mt-2 text-sm text-slate-500">基于 ffmpeg.wasm：截取片段并转为 GIF（纯本地处理）</p>
       </div>
 
@@ -352,5 +354,6 @@ export default function VideoToGifClient() {
         )}
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }

@@ -19,6 +19,9 @@
     "xlsx属性修改",
     "PDF metadata editor",
     "自定义属性"
-  ]
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

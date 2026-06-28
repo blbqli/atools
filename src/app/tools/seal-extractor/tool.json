@@ -8,5 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "图片工具",
-  "keywords": ["免费印章提取", "在线公章提取", "电子印章制作", "印章识别", "透明背景印章"]
+  "keywords": [
+    "免费印章提取",
+    "在线公章提取",
+    "电子印章制作",
+    "印章识别",
+    "透明背景印章"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

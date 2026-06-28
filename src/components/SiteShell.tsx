@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { Github } from "lucide-react";
 import type { Locale } from "../i18n/locales";
 import type { Messages } from "../i18n/messages";
 import LocaleSwitcher from "./LocaleSwitcher";
@@ -32,29 +33,32 @@ export default function SiteShell({
               height={24}
               className="rounded-lg shadow-sm"
             />
-            <span>{messages.siteName}</span>
+            <span className="hidden sm:inline">{messages.siteName}</span>
           </Link>
 
-          <nav className="flex items-center gap-3 text-sm font-medium text-slate-600">
+          <nav className="flex items-center gap-2 text-sm font-medium text-slate-600 sm:gap-3">
             <Link href={`/${locale}`} className="transition-colors hover:text-slate-900">
               {messages.navTools}
             </Link>
-            <a href="/sitemap.xml" className="transition-colors hover:text-slate-900">
+            <a href="/sitemap.xml" className="hidden transition-colors hover:text-slate-900 xl:inline">
               {messages.navSitemap}
             </a>
             <a
               href="https://github.com/aak1247/atools"
               target="_blank"
               rel="noopener noreferrer"
-              className="transition-colors hover:text-slate-900"
+              aria-label={messages.navGithub}
+              title={messages.navGithub}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full text-slate-600 transition-colors hover:bg-slate-100 hover:text-slate-900 sm:h-auto sm:w-auto sm:rounded-none sm:hover:bg-transparent"
             >
-              {messages.navGithub}
+              <Github className="h-4 w-4" />
+              <span className="sr-only">{messages.navGithub}</span>
             </a>
             <a
               href="https://github.com/aak1247/atools/issues/new?template=bug_report.yml"
               target="_blank"
               rel="noopener noreferrer"
-              className="transition-colors hover:text-slate-900"
+              className="hidden transition-colors hover:text-slate-900 lg:inline"
             >
               {messages.navReportIssue}
             </a>

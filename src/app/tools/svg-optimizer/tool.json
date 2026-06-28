@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["SVG优化", "SVG压缩", "SVG minify", "前端优化", "图标优化"]
+  "keywords": [
+    "SVG优化",
+    "SVG压缩",
+    "SVG minify",
+    "前端优化",
+    "图标优化"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

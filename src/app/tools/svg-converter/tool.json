@@ -17,5 +17,9 @@
     "免费在线工具",
     "本地处理",
     "隐私保护"
-  ]
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

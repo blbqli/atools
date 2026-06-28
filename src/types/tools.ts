@@ -11,5 +11,9 @@ export interface ToolConfig {
   scope?: string;
   category?: string;
   keywords?: string[];
+  pageFeatures?: {
+    floatingUploadAction?: boolean;
+    globalDropZone?: boolean;
+  };
   ui?: Record<string, unknown>;
 }

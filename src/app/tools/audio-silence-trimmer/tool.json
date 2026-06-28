@@ -8,7 +8,13 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["剪静音", "音频剪辑", "silenceremove", "ffmpeg wasm", "播客剪辑"],
+  "keywords": [
+    "剪静音",
+    "音频剪辑",
+    "silenceremove",
+    "ffmpeg wasm",
+    "播客剪辑"
+  ],
   "ui": {
     "pickTitle": "选择音频文件",
     "pickFile": "选择文件",
@@ -48,6 +54,9 @@
     "settingsLabel": "设置",
     "ffmpegLoadError": "FFmpeg 加载失败。",
     "processingError": "处理失败（可能浏览器资源不足或编码器不支持）。"
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }
-

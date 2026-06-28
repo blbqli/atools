@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["文件加密", "AES-256-GCM", "PBKDF2", "本地加密", "在线解密"]
+  "keywords": [
+    "文件加密",
+    "AES-256-GCM",
+    "PBKDF2",
+    "本地加密",
+    "在线解密"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

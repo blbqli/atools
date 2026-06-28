@@ -8,6 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "媒体工具",
-  "keywords": ["免费音频拼接", "在线音频合并", "音频文件合并", "音频拼接工具", "WAV合并"]
+  "keywords": [
+    "免费音频拼接",
+    "在线音频合并",
+    "音频文件合并",
+    "音频拼接工具",
+    "WAV合并"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

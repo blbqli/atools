@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { ChangeEvent, DragEvent, FC } from "react";
 import { useEffect, useRef, useState } from "react";
 import { PDFDocument, degrees } from "pdf-lib";
@@ -582,12 +583,13 @@ const PdfStampClient: FC = () => {
   );
 
   return (
-    <div className="mx-auto max-w-[1400px] animate-fade-in-up space-y-6 p-4 md:p-8">
+    <ToolPageLayout toolSlug="pdf-stamp" maxWidthClassName="max-w-[1400px]">
+      <div className="space-y-8">
       {/* Header Section */}
       <div className="text-center mb-8">
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900 mb-3 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
+        <h2 className="text-4xl font-bold tracking-tight text-slate-900 mb-3 bg-gradient-to-r from-slate-900 to-slate-700 bg-clip-text text-transparent">
           PDF 盖章工具
-        </h1>
+        </h2>
         <p className="text-slate-500 max-w-2xl mx-auto text-sm leading-relaxed">
           纯前端安全处理，拖拽式盖章体验。
           <span className="hidden sm:inline">支持透明印章、自由缩放旋转，所见即所得。</span>
@@ -818,7 +820,8 @@ const PdfStampClient: FC = () => {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 };
 
 export default PdfStampClient;

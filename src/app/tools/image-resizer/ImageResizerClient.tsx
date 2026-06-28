@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { ChangeEvent, FC } from "react";
 import { useEffect, useState } from "react";
 import {
@@ -283,11 +284,12 @@ const ImageResizerClient: FC = () => {
   );
 
   return (
-    <div className="mx-auto max-w-4xl animate-fade-in-up space-y-8">
+    <ToolPageLayout toolSlug="image-resizer" maxWidthClassName="max-w-4xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           图片尺寸调整工具
-        </h1>
+        </h2>
         <p className="mt-2 text-slate-500">
           查看原图分辨率，一键设置目标宽高，支持自动拉伸与透明背景等比填充两种模式。
         </p>
@@ -555,7 +557,8 @@ const ImageResizerClient: FC = () => {
         </div>
       )}
     </div>
-  );
+    </ToolPageLayout>
+    );
 };
 
 export default ImageResizerClient;

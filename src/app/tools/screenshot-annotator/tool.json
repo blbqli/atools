@@ -8,7 +8,13 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["截图标注", "图片标注", "箭头标注", "画笔涂鸦", "导出PNG"],
+  "keywords": [
+    "截图标注",
+    "图片标注",
+    "箭头标注",
+    "画笔涂鸦",
+    "导出PNG"
+  ],
   "ui": {
     "hint": "截图标注工具：上传截图后可画笔、矩形、箭头、文字标注，导出 PNG（全程本地处理不上传）。",
     "pick": "选择图片",
@@ -29,6 +35,9 @@
     "copyPng": "复制 PNG",
     "errPickImage": "请选择图片文件（PNG/JPG/WebP）。",
     "copied": "已复制"
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }
-

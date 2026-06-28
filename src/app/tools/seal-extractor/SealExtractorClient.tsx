@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { FC, ChangeEvent } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
@@ -1113,11 +1114,12 @@ const SealExtractorClient: FC = () => {
   );
 
   return (
-    <div className="mx-auto max-w-5xl animate-fade-in-up space-y-8">
+    <ToolPageLayout toolSlug="seal-extractor" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
 	      <div className="text-center">
-	        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+	        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
 	          印章提取工具
-	        </h1>
+	        </h2>
 	        <p className="mt-2 text-slate-500">
 	          从扫描件/图片中自动提取印章区域，支持自定义颜色与容差，生成透明背景电子章，全程浏览器本地处理。
 	        </p>
@@ -1650,7 +1652,8 @@ const SealExtractorClient: FC = () => {
 	        </p>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 };
 
 export default SealExtractorClient;

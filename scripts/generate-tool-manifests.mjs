@@ -271,6 +271,22 @@ function writeToolRegistry(toolEntries) {
   lines.push("} as const;");
   lines.push("");
   lines.push("export type ToolSlug = keyof typeof toolLoaders;");
+  lines.push("");
+  lines.push("export type ToolPageFeatures = {");
+  lines.push("  readonly floatingUploadAction?: boolean;");
+  lines.push("  readonly globalDropZone?: boolean;");
+  lines.push("};");
+  lines.push("");
+  lines.push("export const toolPageFeatures: Record<ToolSlug, ToolPageFeatures> = {");
+  for (const entry of toolEntries) {
+    const pageFeatures =
+      entry.pageFeatures && typeof entry.pageFeatures === "object" && !Array.isArray(entry.pageFeatures)
+        ? entry.pageFeatures
+        : {};
+    lines.push(`  ${JSON.stringify(entry.slug)}: ${JSON.stringify(pageFeatures)},`);
+  }
+  lines.push("};");
+  lines.push("");
   lines.push("export const toolSlugs = Object.keys(toolLoaders) as ToolSlug[];");
   lines.push("");
 
@@ -355,7 +371,13 @@ function main() {
           (m) => m[1],
         );
         const clientImport = importMatches[0] ?? null;
-        if (clientImport) toolRegistryEntries.push({ slug, importPath: `./${slug}/${clientImport}` });
+        if (clientImport) {
+          toolRegistryEntries.push({
+            slug,
+            importPath: `./${slug}/${clientImport}`,
+            pageFeatures: baseConfig.pageFeatures ?? {},
+          });
+        }
       }
     } catch (error) {
       console.error(

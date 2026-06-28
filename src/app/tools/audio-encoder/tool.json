@@ -8,6 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "媒体工具",
-  "keywords": ["免费音频转换", "在线音频编码", "MP3转换器", "音频格式转换", "FFmpeg音频工具"]
+  "keywords": [
+    "免费音频转换",
+    "在线音频编码",
+    "MP3转换器",
+    "音频格式转换",
+    "FFmpeg音频工具"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

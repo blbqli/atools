@@ -8,6 +8,17 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["PDF转文字", "PDF提取文本", "PDF转TXT", "PDF文本提取", "pdf.js", "本地处理", "隐私保护"]
+  "keywords": [
+    "PDF转文字",
+    "PDF提取文本",
+    "PDF转TXT",
+    "PDF文本提取",
+    "pdf.js",
+    "本地处理",
+    "隐私保护"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

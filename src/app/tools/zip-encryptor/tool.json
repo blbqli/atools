@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["ZIP加密", "ZIP解密", "文件打包", "AES-256-GCM", "本地处理"]
+  "keywords": [
+    "ZIP加密",
+    "ZIP解密",
+    "文件打包",
+    "AES-256-GCM",
+    "本地处理"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

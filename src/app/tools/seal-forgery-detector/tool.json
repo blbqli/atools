@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["印章检测", "电子章鉴伪", "印章伪造", "疑点分析", "像素分析"]
+  "keywords": [
+    "印章检测",
+    "电子章鉴伪",
+    "印章伪造",
+    "疑点分析",
+    "像素分析"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

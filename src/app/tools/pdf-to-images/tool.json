@@ -8,6 +8,18 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["PDF转图片", "PDF转PNG", "PDF转JPG", "PDF按页导出", "pdf.js", "ZIP下载", "本地处理", "隐私保护"]
+  "keywords": [
+    "PDF转图片",
+    "PDF转PNG",
+    "PDF转JPG",
+    "PDF按页导出",
+    "pdf.js",
+    "ZIP下载",
+    "本地处理",
+    "隐私保护"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

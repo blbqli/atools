@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Mic,
@@ -274,9 +275,10 @@ const NoiseMeterClient = () => {
   })();
 
   return (
-    <div className="mx-auto max-w-3xl animate-fade-in-up space-y-8">
+    <ToolPageLayout toolSlug="noise-meter" maxWidthClassName="max-w-3xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">噪音计</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">噪音计</h2>
         <p className="mt-2 text-sm text-slate-500">
           纯前端实时测量 • 支持校准偏移 • 数据不上传
         </p>
@@ -485,7 +487,8 @@ const NoiseMeterClient = () => {
           </div>
         </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 };
 
 export default NoiseMeterClient;

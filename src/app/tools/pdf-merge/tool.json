@@ -8,5 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "PDF 工具",
-  "keywords": ["免费PDF合并", "在线PDF拼接", "PDF文件合并", "PDF合并工具", "多PDF合并"]
+  "keywords": [
+    "免费PDF合并",
+    "在线PDF拼接",
+    "PDF文件合并",
+    "PDF合并工具",
+    "多PDF合并"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

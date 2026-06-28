@@ -8,6 +8,17 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["PDF拆分", "PDF分割", "PDF提取页面", "PDF按页导出", "PDF转ZIP", "本地处理", "隐私保护"]
+  "keywords": [
+    "PDF拆分",
+    "PDF分割",
+    "PDF提取页面",
+    "PDF按页导出",
+    "PDF转ZIP",
+    "本地处理",
+    "隐私保护"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

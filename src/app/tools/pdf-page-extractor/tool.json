@@ -8,7 +8,13 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["PDF页面提取", "PDF提取器", "提取PDF页面", "PDF页码范围", "PDF拆分"],
+  "keywords": [
+    "PDF页面提取",
+    "PDF提取器",
+    "提取PDF页面",
+    "PDF页码范围",
+    "PDF拆分"
+  ],
   "ui": {
     "hint": "提取 PDF 指定页面，全程本地处理，不上传文件。",
     "pick": "选择 PDF",
@@ -28,5 +34,9 @@
     "errParseFailed": "PDF 解析失败。",
     "errNoValidPages": "未选择有效页码。",
     "errExtractFailed": "提取失败。"
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }

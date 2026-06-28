@@ -8,7 +8,14 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["图片超分", "图片放大", "RealCUGAN", "WebAssembly", "无损放大", "动漫图片超分"],
+  "keywords": [
+    "图片超分",
+    "图片放大",
+    "RealCUGAN",
+    "WebAssembly",
+    "无损放大",
+    "动漫图片超分"
+  ],
   "ui": {
     "hint": "图片超分辨率提升：优先使用 RealCUGAN（WebAssembly，本地 CPU 运行），不上传图片；若环境不支持则使用高质量缩放作为兼容方案。",
     "pick": "选择图片",
@@ -42,6 +49,9 @@
     "noteTitle": "提示",
     "noteBody": "AI 超分计算耗时与内存占用较高；建议使用 PC 端最新版浏览器。输出为本地生成，不上传。",
     "libCredit": "AI 引擎：RealCUGAN-ncnn-webassembly（MIT）"
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }
-

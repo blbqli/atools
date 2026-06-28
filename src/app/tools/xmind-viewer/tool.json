@@ -173,5 +173,9 @@
       "content_xml_parse_failed": "已找到 content.xml，但解析失败（可能是格式差异或文件损坏）。",
       "content_entry_not_found": "未找到 content.json 或 content.xml（可能不是 XMind 文件或格式暂不支持）。"
     }
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }

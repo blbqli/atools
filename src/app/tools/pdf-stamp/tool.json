@@ -8,5 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "PDF 工具",
-  "keywords": ["免费PDF盖章", "在线电子印章", "PDF签章工具", "电子公章", "PDF印章工具"]
+  "keywords": [
+    "免费PDF盖章",
+    "在线电子印章",
+    "PDF签章工具",
+    "电子公章",
+    "PDF印章工具"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

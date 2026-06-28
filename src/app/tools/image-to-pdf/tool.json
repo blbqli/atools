@@ -8,5 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["图片转PDF", "多图合并PDF", "扫描件PDF", "PDF生成", "本地处理"]
+  "keywords": [
+    "图片转PDF",
+    "多图合并PDF",
+    "扫描件PDF",
+    "PDF生成",
+    "本地处理"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

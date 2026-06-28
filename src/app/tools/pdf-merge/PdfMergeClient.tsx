@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { ChangeEvent, DragEvent, FC } from "react";
 import { useEffect, useRef, useState } from "react";
 import { PDFDocument } from "pdf-lib";
@@ -198,11 +199,12 @@ const PdfMergeClient: FC = () => {
     (pdfA?.pageCount ?? 0) + (pdfB?.pageCount ?? 0);
 
   return (
-    <div className="mx-auto max-w-5xl animate-fade-in-up space-y-8">
+    <ToolPageLayout toolSlug="pdf-merge" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           PDF 拼接工具
-        </h1>
+        </h2>
         <p className="mt-2 text-slate-500">
           将两个 PDF 文件按顺序合并为一个新的 PDF，完全在浏览器本地处理，不上传服务器，适合合同、多页资料整理等场景。
         </p>
@@ -415,7 +417,8 @@ const PdfMergeClient: FC = () => {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 };
 
 export default PdfMergeClient;

@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useMemo, useState } from "react";
 import { useOptionalToolConfig } from "../../../components/ToolConfigProvider";
 
@@ -92,9 +93,10 @@ export default function EscapeToolClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="escape-tool" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">{ui.title}</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">{ui.title}</h2>
         <p className="mt-2 text-sm text-slate-500">{ui.subtitle}</p>
       </div>
 
@@ -153,5 +155,6 @@ export default function EscapeToolClient() {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }

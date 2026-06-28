@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["音频降噪", "录音降噪", "ffmpeg wasm", "WAV降噪", "MP3降噪"]
+  "keywords": [
+    "音频降噪",
+    "录音降噪",
+    "ffmpeg wasm",
+    "WAV降噪",
+    "MP3降噪"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

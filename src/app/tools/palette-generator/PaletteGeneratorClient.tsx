@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useMemo, useState } from "react";
 
 type Rgb = { r: number; g: number; b: number };
@@ -135,9 +136,10 @@ export default function PaletteGeneratorClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="palette-generator" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">配色生成器</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">配色生成器</h2>
         <p className="mt-2 text-sm text-slate-500">输入主色，生成多套配色方案（纯本地处理）</p>
       </div>
 
@@ -220,6 +222,7 @@ export default function PaletteGeneratorClient() {
         )}
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }
 

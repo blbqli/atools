@@ -5,7 +5,13 @@
   "seoDescription": "免费在线 DOCX 预览与转 PDF 工具，支持将 Word 的 .docx 文档在浏览器中本地解析渲染并快速预览，同时可通过打印功能保存为 PDF。纯前端运行不上传文件，适合临时查看文档内容、快速导出 PDF 备份与分享。对复杂排版的还原以实际渲染为准。",
   "category": "文档工具",
   "lang": "zh-CN",
-  "keywords": ["docx预览", "docx转pdf", "word预览", "word转pdf", "本地渲染 不上传"],
+  "keywords": [
+    "docx预览",
+    "docx转pdf",
+    "word预览",
+    "word转pdf",
+    "本地渲染 不上传"
+  ],
   "ui": {
     "hint": "DOCX 预览与转 PDF：纯前端本地渲染（不上传），支持 .docx 文件的快速预览与打印/保存为 PDF。",
     "privacyNote": "提示：文件仅在浏览器本地处理，不会上传到服务器。",
@@ -30,5 +36,9 @@
     "errorNothingToPrint": "请先渲染预览后再打印/保存为 PDF。",
     "errorPopupBlocked": "无法打开打印窗口：可能被浏览器拦截了弹窗。请允许弹窗后重试，或使用浏览器菜单“打印”。",
     "errorRenderFailed": "渲染失败：该文件可能包含不受支持的复杂排版或已损坏。"
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }

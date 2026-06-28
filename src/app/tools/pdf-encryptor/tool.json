@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["PDF加密", "PDF解密", "AES-256-GCM", "本地加密", "文件加密"]
+  "keywords": [
+    "PDF加密",
+    "PDF解密",
+    "AES-256-GCM",
+    "本地加密",
+    "文件加密"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

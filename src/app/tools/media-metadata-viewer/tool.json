@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["媒体信息", "视频元数据", "音频元数据", "码率", "分辨率"]
+  "keywords": [
+    "媒体信息",
+    "视频元数据",
+    "音频元数据",
+    "码率",
+    "分辨率"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

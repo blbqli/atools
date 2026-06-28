@@ -8,6 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "媒体工具",
-  "keywords": ["免费音频剪辑", "在线音频裁剪", "音频编辑器", "音频剪切工具", "WAV剪辑"]
+  "keywords": [
+    "免费音频剪辑",
+    "在线音频裁剪",
+    "音频编辑器",
+    "音频剪切工具",
+    "WAV剪辑"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

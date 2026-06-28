@@ -8,5 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "网络工具",
-  "keywords": ["免费P2P传输", "在线文件传输", "WebRTC传输", "点对点文件共享", "局域网传输"]
+  "keywords": [
+    "免费P2P传输",
+    "在线文件传输",
+    "WebRTC传输",
+    "点对点文件共享",
+    "局域网传输"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

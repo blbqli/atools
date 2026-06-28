@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useEffect, useMemo, useState } from "react";
 
 type OutputFormat = "newline" | "comma";
@@ -130,11 +131,12 @@ export default function RandomNumberGeneratorClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="random-number-generator" maxWidthClassName="max-w-4xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           随机数生成器
-        </h1>
+        </h2>
         <p className="mt-2 text-sm text-slate-500">
           支持区间、数量、去重与复制（设置会保存到本地）
         </p>
@@ -247,6 +249,7 @@ export default function RandomNumberGeneratorClient() {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }
 

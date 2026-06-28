@@ -8,6 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "密码学工具",
-  "keywords": ["免费哈希计算", "在线MD5生成", "SHA256校验", "文件哈希", "哈希校验工具"]
+  "keywords": [
+    "免费哈希计算",
+    "在线MD5生成",
+    "SHA256校验",
+    "文件哈希",
+    "哈希校验工具"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

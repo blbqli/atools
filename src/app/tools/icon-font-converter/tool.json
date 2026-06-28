@@ -23,5 +23,15 @@
     "readFailed": "读取失败",
     "fileSizeKb": "{size} KB"
   },
-  "keywords": ["iconfont", "woff2转base64", "字体转css", "font-face生成", "data url"]
+  "keywords": [
+    "iconfont",
+    "woff2转base64",
+    "字体转css",
+    "font-face生成",
+    "data url"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

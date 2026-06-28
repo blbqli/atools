@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { FC } from "react";
 import { useEffect, useState } from "react";
 import {
@@ -236,11 +237,12 @@ const ImageConverterClient: FC = () => {
   );
 
   return (
-    <div className="mx-auto max-w-4xl animate-fade-in-up space-y-8">
+    <ToolPageLayout toolSlug="image-converter" maxWidthClassName="max-w-4xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           图片格式转换工具
-        </h1>
+        </h2>
         <p className="mt-2 text-slate-500">
           支持在 JPG、PNG、WebP、BMP、ICO、GIF 等常见格式之间转换，完全在浏览器本地完成。
         </p>
@@ -467,6 +469,7 @@ const ImageConverterClient: FC = () => {
         </div>
       )}
     </div>
+    </ToolPageLayout>
   );
 };
 

@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["CSV可视化", "CSV预览", "CSV图表", "数据分析", "本地处理"]
+  "keywords": [
+    "CSV可视化",
+    "CSV预览",
+    "CSV图表",
+    "数据分析",
+    "本地处理"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

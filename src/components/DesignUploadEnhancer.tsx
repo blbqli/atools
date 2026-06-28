@@ -2,87 +2,21 @@
 
 import { usePathname } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
+import { isLocale } from "../i18n/locales";
+import { toolPageFeatures, type ToolSlug } from "../app/tools/tool-registry";
 
-const DESIGN_UPLOAD_TOOL_SLUGS = new Set([
-  "audio-encoder",
-  "audio-format-converter",
-  "audio-merger",
-  "audio-noise-reducer",
-  "audio-silence-trimmer",
-  "audio-trimmer",
-  "av-transcoder",
-  "color-palette-from-image",
-  "color-picker",
-  "contract-version-diff",
-  "csv-excel-converter",
-  "csv-to-json",
-  "csv-to-yaml",
-  "csv-visualizer",
-  "document-metadata-editor",
-  "docx-preview-to-pdf",
-  "excel-merger",
-  "excel-to-json",
-  "file-encryptor",
-  "gif-optimizer",
-  "gif-to-video",
-  "gzip-deflate-tool",
-  "hash-tools",
-  "icns-generator",
-  "ico-generator",
-  "icon-font-converter",
-  "id-photo-processor",
-  "image-compressor",
-  "image-converter",
-  "image-cropper",
-  "image-resizer",
-  "image-to-pdf",
-  "image-upscaler",
-  "markdown-pdf-converter",
-  "markdown-to-confluence",
-  "markdown-to-word",
-  "media-metadata-viewer",
-  "metadata-remover",
-  "music-player",
-  "p2p-file-transfer",
-  "pdf-compressor",
-  "pdf-encryptor",
-  "pdf-merge",
-  "pdf-page-extractor",
-  "pdf-page-merger",
-  "pdf-rotate",
-  "pdf-split",
-  "pdf-stamp",
-  "pdf-to-images",
-  "pdf-to-text",
-  "pdf-toc-generator",
-  "pdf-trim",
-  "ppt-compressor",
-  "qr-decoder",
-  "screenshot-annotator",
-  "seal-extractor",
-  "seal-forgery-detector",
-  "sprite-sheet-generator",
-  "subtitle-extractor",
-  "svg-converter",
-  "svg-optimizer",
-  "video-compressor",
-  "video-format-converter",
-  "video-player",
-  "video-to-gif",
-  "video-trimmer",
-  "word-compressor",
-  "x509-certificate-viewer",
-  "xmind-viewer",
-  "xml-json-converter",
-  "zip-encryptor",
-]);
+type ToolRoute = {
+  slug: string;
+};
 
-const getToolSlugFromPathname = (pathname: string): string | null => {
+const getToolRouteFromPathname = (pathname: string): ToolRoute | null => {
   const parts = pathname.split("/").filter(Boolean);
-  const toolsIndex = parts.indexOf("tools");
-  if (toolsIndex < 0) return null;
+  const hasLocalePrefix = parts[0] ? isLocale(parts[0]) : false;
+  const toolsIndex = hasLocalePrefix ? 1 : 0;
+  if (parts[toolsIndex] !== "tools") return null;
   const slug = parts[toolsIndex + 1];
-  return slug ?? null;
+  if (!slug) return null;
+  return { slug };
 };
 
 const isFileDragEvent = (event: DragEvent): boolean => {
@@ -119,11 +53,14 @@ export default function DesignUploadEnhancer() {
   const [isDragging, setIsDragging] = useState(false);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const targetSlug = useMemo(() => getToolSlugFromPathname(pathname), [pathname]);
-  const isEnabled = Boolean(targetSlug && DESIGN_UPLOAD_TOOL_SLUGS.has(targetSlug));
+  const toolRoute = useMemo(() => getToolRouteFromPathname(pathname), [pathname]);
+  const pageFeatures =
+    toolRoute && toolRoute.slug in toolPageFeatures ? toolPageFeatures[toolRoute.slug as ToolSlug] : null;
+  const floatingUploadAction = pageFeatures?.floatingUploadAction === true;
+  const globalDropZone = pageFeatures?.globalDropZone === true;
 
   useEffect(() => {
-    if (!isEnabled) return;
+    if (!globalDropZone) return;
 
     let dragDepth = 0;
     const showNotice = (text: string) => {
@@ -180,13 +117,13 @@ export default function DesignUploadEnhancer() {
       window.removeEventListener("dragleave", onDragLeave);
       window.removeEventListener("drop", onDrop);
     };
-  }, [isEnabled]);
+  }, [globalDropZone]);
 
-  if (!isEnabled) return null;
+  if (!floatingUploadAction && !globalDropZone) return null;
 
   return (
     <>
-      {isDragging && (
+      {globalDropZone && isDragging && (
         <div className="pointer-events-none fixed inset-0 z-[70] flex items-center justify-center bg-slate-900/35 backdrop-blur-sm">
           <div className="rounded-2xl border border-white/30 bg-white/95 px-6 py-4 text-center shadow-2xl">
             <div className="text-sm font-semibold text-slate-900">松开即可上传或替换文件</div>
@@ -194,28 +131,32 @@ export default function DesignUploadEnhancer() {
           </div>
         </div>
       )}
-      <div className="fixed bottom-5 right-5 z-[71] flex flex-col items-end gap-2">
-        {notice && (
-          <div className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-medium text-white shadow-lg">
-            {notice}
-          </div>
-        )}
-        <button
-          type="button"
-          onClick={() => {
-            const input = pickPrimaryFileInput();
-            if (!input) {
-              setNotice("当前页面未找到可用上传入口");
-              return;
-            }
-            input.value = "";
-            input.click();
-          }}
-          className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-slate-800 active:scale-95"
-        >
-          点击上传/替换
-        </button>
-      </div>
+      {(floatingUploadAction || notice) && (
+        <div className="fixed bottom-5 right-5 z-[71] flex flex-col items-end gap-2">
+          {notice && (
+            <div className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-medium text-white shadow-lg">
+              {notice}
+            </div>
+          )}
+          {floatingUploadAction && (
+            <button
+              type="button"
+              onClick={() => {
+                const input = pickPrimaryFileInput();
+                if (!input) {
+                  setNotice("当前页面未找到可用上传入口");
+                  return;
+                }
+                input.value = "";
+                input.click();
+              }}
+              className="rounded-full bg-slate-900 px-4 py-2 text-xs font-semibold text-white shadow-lg transition hover:bg-slate-800 active:scale-95"
+            >
+              点击上传/替换
+            </button>
+          )}
+        </div>
+      )}
     </>
   );
 }

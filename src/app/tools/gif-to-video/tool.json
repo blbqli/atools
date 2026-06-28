@@ -8,6 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "媒体工具",
-  "keywords": ["免费GIF转视频", "在线GIF转MP4", "动图转视频", "GIF格式转换", "FFmpeg转换工具"]
+  "keywords": [
+    "免费GIF转视频",
+    "在线GIF转MP4",
+    "动图转视频",
+    "GIF格式转换",
+    "FFmpeg转换工具"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

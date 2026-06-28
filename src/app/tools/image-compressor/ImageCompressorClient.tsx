@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { FC, ChangeEvent } from "react";
 import { useState, useRef, useEffect } from "react";
 
@@ -121,9 +122,10 @@ const ImageCompressorClient: FC = () => {
   }, [originalUrl, compressedUrl]);
 
   return (
-    <div className="mx-auto max-w-4xl animate-fade-in-up space-y-8">
+    <ToolPageLayout toolSlug="image-compressor" maxWidthClassName="max-w-4xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">图片压缩工具</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">图片压缩工具</h2>
         <p className="mt-2 text-slate-500">智能压缩算法 • 隐私安全 • 即刻预览</p>
       </div>
 
@@ -264,7 +266,8 @@ const ImageCompressorClient: FC = () => {
         </div>
       )}
     </div>
-  );
+    </ToolPageLayout>
+    );
 };
 
 export default ImageCompressorClient;

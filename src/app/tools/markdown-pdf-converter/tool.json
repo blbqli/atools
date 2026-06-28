@@ -14,5 +14,9 @@
     "文档导出",
     "打印保存为PDF",
     "本地处理"
-  ]
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

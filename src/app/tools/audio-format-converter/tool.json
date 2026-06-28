@@ -8,7 +8,13 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["音频格式转换", "MP3转WAV", "FLAC转MP3", "M4A转MP3", "OPUS转换"],
+  "keywords": [
+    "音频格式转换",
+    "MP3转WAV",
+    "FLAC转MP3",
+    "M4A转MP3",
+    "OPUS转换"
+  ],
   "ui": {
     "hint": "音频格式转换：支持 MP3/WAV/FLAC/OGG/M4A/OPUS 转换与基础参数设置（纯前端本地处理不上传）。首次需加载 ffmpeg.wasm。",
     "pick": "选择音频文件",
@@ -37,6 +43,9 @@
     "errPickAudio": "请先选择一个音频文件。",
     "errFfmpegLoadFailed": "FFmpeg 加载失败。",
     "errTranscodeFailed": "转换失败（可能输出编码器未内置或浏览器资源不足）。"
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }
-

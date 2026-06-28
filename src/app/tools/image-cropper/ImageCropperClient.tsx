@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { zip } from "fflate";
 import {
@@ -606,9 +607,10 @@ export default function ImageCropperClient() {
   }, [activeRegionId, selection, regions]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="image-cropper" maxWidthClassName="max-w-6xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">图片裁剪工具</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">图片裁剪工具</h2>
         <p className="mt-2 text-sm text-slate-500">放大缩小 + 移动视角 + 批量裁剪，纯本地运行</p>
       </div>
 
@@ -1033,5 +1035,6 @@ export default function ImageCropperClient() {
         )}
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }

@@ -8,5 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "图标工具",
-  "keywords": ["免费ICNS生成", "在线苹果图标", "Mac图标制作", "ICNS转换器", "macOS应用图标"]
+  "keywords": [
+    "免费ICNS生成",
+    "在线苹果图标",
+    "Mac图标制作",
+    "ICNS转换器",
+    "macOS应用图标"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }

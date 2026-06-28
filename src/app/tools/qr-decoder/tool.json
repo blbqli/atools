@@ -8,6 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "图片工具",
-  "keywords": ["免费二维码解析", "在线QR码识别", "二维码内容提取", "图片二维码解析", "QR解码器"]
+  "keywords": [
+    "免费二维码解析",
+    "在线QR码识别",
+    "二维码内容提取",
+    "图片二维码解析",
+    "QR解码器"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

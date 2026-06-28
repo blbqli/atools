@@ -406,9 +406,9 @@ export default function SvgConverterClient() {
     <ToolPageLayout toolSlug="svg-converter">
       <div className="mx-auto max-w-6xl space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
             SVG转PNG/JPG转换器
-          </h1>
+          </h2>
           <p className="mt-3 text-sm text-slate-600">
             🖼️ 免费在线SVG转换工具 - 将矢量图转换为位图格式。
             100%本地转换，保护隐私，无需注册。

@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import type { ChangeEvent, DragEvent } from "react";
 import { useEffect, useMemo, useRef, useState } from "react";
 
@@ -214,11 +215,12 @@ export default function HashToolsClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="hash-tools" maxWidthClassName="max-w-4xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">
           哈希生成与校验
-        </h1>
+        </h2>
         <p className="mt-2 text-sm text-slate-500">
           支持 MD5 / SHA1 / SHA256 / SHA512（文本与文件），纯本地计算
         </p>
@@ -394,5 +396,6 @@ export default function HashToolsClient() {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }

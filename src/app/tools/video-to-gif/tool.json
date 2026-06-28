@@ -8,6 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "媒体工具",
-  "keywords": ["免费视频转GIF", "在线GIF制作", "视频转动图", "表情包制作", "FFmpeg转换工具"]
+  "keywords": [
+    "免费视频转GIF",
+    "在线GIF制作",
+    "视频转动图",
+    "表情包制作",
+    "FFmpeg转换工具"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

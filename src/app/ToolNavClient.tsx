@@ -37,6 +37,8 @@ export default function ToolNavClient() {
   const [activeCategory, setActiveCategory] = useState<string>(ALL_CATEGORY);
   const [query, setQuery] = useState<string>("");
   const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const [hasActivatedControls, setHasActivatedControls] = useState(false);
+  const navSectionRef = useRef<HTMLElement>(null);
   const categoryContainerRef = useRef<HTMLDivElement>(null);
   const categoryDragStateRef = useRef<{
     isPointerDown: boolean;
@@ -100,6 +102,20 @@ export default function ToolNavClient() {
       return tokens.every((token) => normalizedSource.includes(token));
     });
   }, [activeCategory, allTools, query]);
+
+  const isCompact = hasActivatedControls || query.trim().length > 0 || activeCategory !== ALL_CATEGORY;
+
+  const activateControls = useCallback(() => {
+    if (!hasActivatedControls) {
+      setHasActivatedControls(true);
+    }
+    window.requestAnimationFrame(() => {
+      navSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
+    });
+  }, [hasActivatedControls]);
 
   // Smooth scroll to active category on change
   useEffect(() => {
@@ -180,13 +196,18 @@ export default function ToolNavClient() {
   }, []);
 
   return (
-    <section className="min-h-[80vh] space-y-10 py-8">
+    <section
+      ref={navSectionRef}
+      className={`min-h-[80vh] scroll-mt-20 transition-all duration-300 ${
+        isCompact ? "space-y-5 py-0" : "space-y-10 py-8"
+      }`}
+    >
       {/* Header Section */}
-      <div className="relative z-20 flex flex-col items-center gap-8">
+      <div className={`relative z-20 flex flex-col items-center transition-all duration-300 ${isCompact ? "gap-3" : "gap-8"}`}>
         {/* Search Bar */}
         <div
-          className={`relative w-full max-w-2xl transition-all duration-300 ease-out ${
-            isSearchFocused ? "scale-105 transform" : ""
+          className={`relative w-full transition-all duration-300 ease-out ${
+            isCompact ? "max-w-xl" : "max-w-2xl"
           }`}
         >
           <div className="group relative">
@@ -196,17 +217,25 @@ export default function ToolNavClient() {
               }`}
             />
             <div className="relative flex items-center rounded-full bg-white shadow-xl shadow-slate-200/50 ring-1 ring-slate-900/5">
-              <div className="flex h-14 w-14 items-center justify-center text-slate-400">
-                <Search className="h-5 w-5" />
+              <div className={`flex items-center justify-center text-slate-400 transition-all duration-300 ${isCompact ? "h-11 w-11" : "h-14 w-14"}`}>
+                <Search className={isCompact ? "h-4 w-4" : "h-5 w-5"} />
               </div>
               <input
                 type="text"
                 placeholder={messages.searchPlaceholder}
                 value={query}
-                onChange={(e) => setQuery(e.target.value)}
-                onFocus={() => setIsSearchFocused(true)}
+                onChange={(e) => {
+                  activateControls();
+                  setQuery(e.target.value);
+                }}
+                onFocus={() => {
+                  setIsSearchFocused(true);
+                  activateControls();
+                }}
                 onBlur={() => setIsSearchFocused(false)}
-                className="h-14 w-full bg-transparent pr-14 text-base text-slate-900 placeholder:text-slate-400 focus:outline-none"
+                className={`w-full bg-transparent pr-14 text-slate-900 placeholder:text-slate-400 focus:outline-none transition-all duration-300 ${
+                  isCompact ? "h-11 text-sm" : "h-14 text-base"
+                }`}
               />
               <div className="absolute right-4 flex items-center gap-2">
                 <kbd className="hidden rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-500 md:inline-flex items-center gap-1">
@@ -221,7 +250,9 @@ export default function ToolNavClient() {
         <div className="w-full">
           <div
             ref={categoryContainerRef}
-            className="pretty-scrollbar w-full select-none overflow-x-auto px-4 pb-4 pt-2 cursor-grab active:cursor-grabbing"
+            className={`pretty-scrollbar w-full select-none overflow-x-auto px-4 cursor-grab active:cursor-grabbing transition-all duration-300 ${
+              isCompact ? "pb-2 pt-1" : "pb-4 pt-2"
+            }`}
             style={{
               WebkitOverflowScrolling: "touch",
             }}
@@ -272,7 +303,10 @@ export default function ToolNavClient() {
                 <button
                   key={category}
                   data-active={isActive}
-                  onClick={() => setActiveCategory(category)}
+                  onClick={() => {
+                    activateControls();
+                    setActiveCategory(category);
+                  }}
                   className={`group relative flex-shrink-0 rounded-full px-5 py-2.5 text-sm font-medium transition-all duration-300 ${
                     isActive
                       ? "bg-slate-900 text-white shadow-lg shadow-slate-900/20 ring-2 ring-slate-900 ring-offset-2"
@@ -298,7 +332,7 @@ export default function ToolNavClient() {
       </div>
 
       {/* Tools Grid */}
-      <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-4 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3 xl:grid-cols-4">
 	        {filteredTools.map((tool) => {
             const href = `/${locale}${tool.path}`;
             return (
@@ -308,31 +342,25 @@ export default function ToolNavClient() {
               onMouseEnter={() => router.prefetch(href)}
               onFocus={() => router.prefetch(href)}
               onTouchStart={() => router.prefetch(href)}
-              className="group relative flex h-full flex-col overflow-hidden rounded-3xl bg-white p-6 shadow-sm ring-1 ring-slate-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50 hover:ring-slate-300"
+              className="group relative flex h-full flex-col overflow-hidden rounded-2xl bg-white p-4 shadow-sm ring-1 ring-slate-200 transition-all duration-300 hover:-translate-y-1 hover:shadow-xl hover:shadow-slate-200/50 hover:ring-slate-300 sm:rounded-3xl sm:p-6"
             >
             <div className="absolute inset-0 bg-gradient-to-br from-slate-50 via-white to-slate-50 opacity-0 transition-opacity duration-500 group-hover:opacity-100" />
             
             <div className="relative z-10 flex h-full flex-col">
-              <div className="mb-6 flex items-start justify-between">
-                <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-50 ring-1 ring-slate-100 transition-transform duration-300 group-hover:scale-110 group-hover:bg-white group-hover:shadow-sm">
-                  <span className="text-lg font-bold text-slate-900">
-                    {tool.shortName.slice(0, 2)}
-                  </span>
-                </div>
-                <div className="rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium text-slate-600 transition-colors group-hover:bg-slate-900 group-hover:text-white">
+              <div className="mb-2 flex items-start justify-between gap-3 sm:mb-4">
+                <h3 className="min-w-0 flex-1 text-base font-bold leading-6 text-slate-900 sm:text-lg">
+                  {tool.name.replace(/ - .*$/, "")}
+                </h3>
+                <div className="shrink-0 rounded-full bg-slate-100 px-2.5 py-1 text-[10px] font-medium text-slate-600 transition-colors group-hover:bg-slate-900 group-hover:text-white">
                   {tool.category}
                 </div>
               </div>
 
-              <h3 className="mb-2 text-lg font-bold text-slate-900">
-                {tool.name.replace(/ - .*$/, "")}
-              </h3>
-              
-              <p className="flex-1 text-sm leading-relaxed text-slate-500 line-clamp-2">
+              <p className="flex-1 text-sm leading-6 text-slate-500 line-clamp-1 sm:leading-relaxed sm:line-clamp-2">
                 {tool.description}
               </p>
 
-              <div className="mt-6 flex items-center justify-between border-t border-slate-100 pt-4">
+              <div className="mt-3 flex items-center justify-between border-t border-slate-100 pt-3 sm:mt-6 sm:pt-4">
                 <span className="flex items-center gap-1.5 text-[11px] font-medium text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">
                   <span className="relative flex h-1.5 w-1.5">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
@@ -356,9 +384,9 @@ export default function ToolNavClient() {
           href={GITHUB_ADD_TOOL_URL}
           target="_blank"
           rel="noopener noreferrer"
-          className="group relative flex h-full min-h-[240px] flex-col items-center justify-center rounded-3xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-6 text-center transition-all duration-300 hover:border-slate-300 hover:bg-slate-50"
+          className="group relative flex h-full min-h-40 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-slate-200 bg-slate-50/50 p-4 text-center transition-all duration-300 hover:border-slate-300 hover:bg-slate-50 sm:min-h-[240px] sm:rounded-3xl sm:p-6"
         >
-          <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-100 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-md">
+          <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-white shadow-sm ring-1 ring-slate-100 transition-transform duration-300 group-hover:scale-110 group-hover:shadow-md sm:mb-4 sm:h-16 sm:w-16">
             <Sparkles className="h-6 w-6 text-slate-400 transition-colors group-hover:text-indigo-500" />
           </div>
           <h3 className="text-base font-semibold text-slate-900">{messages.moreToolsTitle}</h3>
@@ -378,6 +406,7 @@ export default function ToolNavClient() {
             onClick={() => {
               setQuery("");
               setActiveCategory(ALL_CATEGORY);
+              setHasActivatedControls(false);
             }}
             className="mt-6 rounded-full bg-slate-900 px-6 py-2 text-sm font-medium text-white transition-transform hover:scale-105 active:scale-95"
           >

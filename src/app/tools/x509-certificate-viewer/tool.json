@@ -8,7 +8,13 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["X509证书解析", "PEM解析", "DER解析", "证书查看", "SAN解析"],
+  "keywords": [
+    "X509证书解析",
+    "PEM解析",
+    "DER解析",
+    "证书查看",
+    "SAN解析"
+  ],
   "ui": {
     "pasteCertificate": "粘贴证书内容",
     "clear": "清空",
@@ -60,6 +66,9 @@
     "ipLabel": "IP：",
     "uriLabel": "URI：",
     "emailLabel": "Email："
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }
-

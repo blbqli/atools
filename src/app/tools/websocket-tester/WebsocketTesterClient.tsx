@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 type LogItem = {
@@ -126,9 +127,10 @@ export default function WebsocketTesterClient() {
   const clear = () => setLogs([]);
 
   return (
-    <div className="mx-auto w-full max-w-6xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="websocket-tester" maxWidthClassName="max-w-6xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">WebSocket 测试工具</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">WebSocket 测试工具</h2>
         <p className="mt-2 text-sm text-slate-500">连接/断开、发送消息、查看日志（纯前端）</p>
       </div>
 
@@ -270,6 +272,7 @@ export default function WebsocketTesterClient() {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }
 

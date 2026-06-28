@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["字幕转换", "SRT转VTT", "ASS转SRT", "字幕时间轴调整", "GBK字幕"]
+  "keywords": [
+    "字幕转换",
+    "SRT转VTT",
+    "ASS转SRT",
+    "字幕时间轴调整",
+    "GBK字幕"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

@@ -14,6 +14,9 @@
     "重写PDF",
     "pdf-lib",
     "本地处理"
-  ]
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

@@ -8,6 +8,15 @@
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
   "category": "媒体工具",
-  "keywords": ["免费视频剪辑", "在线视频裁剪", "视频剪切工具", "WebM转换", "视频编辑器"]
+  "keywords": [
+    "免费视频剪辑",
+    "在线视频裁剪",
+    "视频剪切工具",
+    "WebM转换",
+    "视频编辑器"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

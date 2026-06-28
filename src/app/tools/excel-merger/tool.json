@@ -8,7 +8,13 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["Excel合并", "合并工作表", "xlsx合并", "xls合并", "表格汇总"],
+  "keywords": [
+    "Excel合并",
+    "合并工作表",
+    "xlsx合并",
+    "xls合并",
+    "表格汇总"
+  ],
   "ui": {
     "hint": "Excel 合并工具：导入多个 Excel，将所有工作表合并导出（本地处理不上传）。",
     "pick": "选择 Excel 文件",
@@ -24,6 +30,9 @@
     "start": "开始合并",
     "errPickExcel": "请选择 .xlsx/.xls 文件。",
     "note": "提示：复杂格式与跨表公式可能无法完整保持；建议合并后自检。"
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }
-

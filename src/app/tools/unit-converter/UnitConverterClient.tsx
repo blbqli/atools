@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useMemo, useState } from "react";
 
 type Unit = { id: string; name: string };
@@ -260,9 +261,10 @@ export default function UnitConverterClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="unit-converter" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">单位换算</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">单位换算</h2>
         <p className="mt-2 text-sm text-slate-500">常用单位互转，支持精度设置与复制结果</p>
       </div>
 
@@ -392,6 +394,7 @@ export default function UnitConverterClient() {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }
 

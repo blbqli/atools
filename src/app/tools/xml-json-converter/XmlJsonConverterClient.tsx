@@ -381,9 +381,9 @@ export default function XmlJsonConverterClient() {
     <ToolPageLayout toolSlug="xml-json-converter">
       <div className="mx-auto max-w-6xl space-y-8">
         <div className="text-center">
-          <h1 className="text-3xl font-bold tracking-tight text-slate-900">
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">
             XML转JSON转换器
-          </h1>
+          </h2>
           <p className="mt-3 text-sm text-slate-600">
             🔄 免费在线XML转JSON工具 - 智能解析XML结构，转换为JSON格式。
             100%本地处理，无需注册，保护您的数据隐私。

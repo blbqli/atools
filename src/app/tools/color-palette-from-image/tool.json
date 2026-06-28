@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["图片取色", "配色提取", "主色提取", "调色板", "HEX颜色"]
+  "keywords": [
+    "图片取色",
+    "配色提取",
+    "主色提取",
+    "调色板",
+    "HEX颜色"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-

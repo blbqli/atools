@@ -8,7 +8,13 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["视频格式转换", "MP4转换", "WebM转换", "MKV转换", "ffmpeg.wasm"],
+  "keywords": [
+    "视频格式转换",
+    "MP4转换",
+    "WebM转换",
+    "MKV转换",
+    "ffmpeg.wasm"
+  ],
   "ui": {
     "hint": "视频格式转换：MP4/WebM/MKV/MOV/AVI 转换，支持分辨率/帧率/CRF 等基础参数（纯前端本地处理不上传）。首次需加载 ffmpeg.wasm。",
     "pick": "选择视频文件",
@@ -34,6 +40,9 @@
     "errFfmpegLoadFailed": "FFmpeg 加载失败。",
     "errTranscodeFailed": "转换失败（可能输出编码器未内置或浏览器资源不足）。",
     "note": "提示：不同浏览器/ffmpeg.wasm 构建的编码器支持不同，若失败可换输出格式或降低参数。"
+  },
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
   }
 }
-

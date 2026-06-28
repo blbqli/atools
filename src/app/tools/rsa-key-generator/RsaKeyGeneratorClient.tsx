@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useState } from "react";
 
 type Modulus = 2048 | 3072 | 4096;
@@ -72,9 +73,10 @@ export default function RsaKeyGeneratorClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-5xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="rsa-key-generator" maxWidthClassName="max-w-5xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">RSA 密钥生成器</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">RSA 密钥生成器</h2>
         <p className="mt-2 text-sm text-slate-500">生成 RSA-OAEP 密钥对并导出 PEM（纯本地）</p>
       </div>
 
@@ -185,6 +187,7 @@ export default function RsaKeyGeneratorClient() {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }
 

@@ -1,5 +1,6 @@
 "use client";
 
+import ToolPageLayout from "../../../components/ToolPageLayout";
 import { useMemo, useState } from "react";
 
 type Format = "hex" | "base64" | "base64url";
@@ -43,9 +44,10 @@ export default function SaltGeneratorClient() {
   };
 
   return (
-    <div className="mx-auto w-full max-w-4xl px-4 py-10 animate-fade-in-up">
+    <ToolPageLayout toolSlug="salt-generator" maxWidthClassName="max-w-4xl">
+      <div className="space-y-8">
       <div className="text-center">
-        <h1 className="text-3xl font-bold tracking-tight text-slate-900">盐值生成器</h1>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">盐值生成器</h2>
         <p className="mt-2 text-sm text-slate-500">生成随机盐值（纯本地）</p>
       </div>
 
@@ -108,6 +110,7 @@ export default function SaltGeneratorClient() {
         </div>
       </div>
     </div>
-  );
+    </ToolPageLayout>
+    );
 }
 

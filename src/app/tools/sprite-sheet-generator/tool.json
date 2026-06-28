@@ -8,6 +8,15 @@
   "themeColor": "#0f172a",
   "backgroundColor": "#0f172a",
   "icon": "/icon.svg",
-  "keywords": ["雪碧图", "sprite sheet", "图片合并", "坐标导出", "CSS背景定位"]
+  "keywords": [
+    "雪碧图",
+    "sprite sheet",
+    "图片合并",
+    "坐标导出",
+    "CSS背景定位"
+  ],
+  "pageFeatures": {
+    "floatingUploadAction": true,
+    "globalDropZone": true
+  }
 }
-
