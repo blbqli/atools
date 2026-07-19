@@ -184,6 +184,10 @@ export default defineNuxtConfig({
           content: "ca-pub-6584635184413581",
         },
         {
+          name: "monetag",
+          content: "a55ea1333c9c20d42f2021405a6dd39f",
+        },
+        {
           name: "msvalidate.01",
           content: "5701598D6681B1E9BB4388B40E18D9D1",
         },
