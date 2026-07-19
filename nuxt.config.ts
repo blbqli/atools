@@ -206,6 +206,22 @@ export default defineNuxtConfig({
         process.env.NODE_ENV === "development"
           ? {}
           : {
+              src: "https://5gvci.com/act/files/tag.min.js?z=11346657",
+              "data-cfasync": "false",
+              async: true,
+              type: "text/javascript",
+              tagPosition: "bodyClose",
+            },
+        process.env.NODE_ENV === "development"
+          ? {}
+          : {
+              innerHTML: `(function(s){s.dataset.zone='11346659',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`,
+              type: "text/javascript",
+              tagPosition: "bodyClose",
+            },
+        process.env.NODE_ENV === "development"
+          ? {}
+          : {
               src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6584635184413581`,
               crossorigin: "anonymous",
               defer: true,

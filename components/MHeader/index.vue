@@ -1,23 +1,22 @@
 <template>
-  <header class="navbar bg-base-100 shadow-none">
-    <div class="flex items-center basis-0 shrink-0">
-      <MMenuIcon />
-      <MSearchIcon />
-    </div>
+  <header class="navbar bg-base-100 shadow-none flex items-center gap-2 px-2 py-1">
     <MA
       href="/"
-      class="flex flex-col flex-1 justify-center items-center gap-0 btn btn-ghost"
+      class="flex flex-col flex-1 min-w-0 items-start gap-0 px-2 btn btn-ghost"
       :title="menuName"
     >
-      <h1 class="text-center font-bold">{{ h1Title }}</h1>
+      <h1 class="w-full text-left font-bold truncate">{{ h1Title }}</h1>
       <p
-        class="text-[12px] line-clamp-1 break-all"
+        class="w-full text-left text-[12px] line-clamp-1 break-all"
         style="zoom: 0.8"
       >
         {{ sencondText }}
       </p>
     </MA>
-    <div class="flex items-center justify-end basis-0 shrink-0">
+    <div class="flex items-center justify-end gap-0 shrink-0">
+      <MRewardIcon />
+      <MMenuIcon />
+      <MSearchIcon />
       <MFullScreenIcon />
       <MThemeIcon />
     </div>
