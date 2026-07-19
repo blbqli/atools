@@ -1,0 +1,24 @@
+/*
+  Cross-Origin-Opener-Policy: same-origin
+  Cross-Origin-Embedder-Policy: require-corp
+
+/__next*.txt
+  Content-Type: text/x-component; charset=utf-8
+
+/_not-found.txt
+  Content-Type: text/x-component; charset=utf-8
+
+/index.txt
+  Content-Type: text/x-component; charset=utf-8
+
+/zh-cn.txt
+  Content-Type: text/x-component; charset=utf-8
+
+/en-us.txt
+  Content-Type: text/x-component; charset=utf-8
+
+/zh-cn/tools/*.txt
+  Content-Type: text/x-component; charset=utf-8
+
+/en-us/tools/*.txt
+  Content-Type: text/x-component; charset=utf-8

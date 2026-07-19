@@ -23,23 +23,8 @@ jobs:
         with:
           node-version: 22
 
-      - name: Enable Yarn (Corepack)
-        run: |
-          corepack enable
-          corepack prepare yarn@1.22.22 --activate
-          yarn --version
-
-      - name: Cache Yarn
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/yarn
-          key: ${{ runner.os }}-yarn-${{ hashFiles('yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
       - name: Install dependencies
-        run: yarn install --frozen-lockfile
+        run: npm ci
 
       - name: Build static site (Next.js export, webpack on CI)
         env:
@@ -47,7 +32,7 @@ jobs:
           SITE_URL: ${{ secrets.SITE_URL }}
           ENABLE_SEARCH_PUSH: ${{ secrets.ENABLE_SEARCH_PUSH }}
           BAIDU_PUSH_ENDPOINT: ${{ secrets.BAIDU_PUSH_ENDPOINT }}
-        run: yarn build
+        run: npm run build
 
       - name: Build Docker image (nginx static site)
         run: docker build -t $IMAGE_NAME:latest -t $IMAGE_NAME:${GITHUB_SHA} .
