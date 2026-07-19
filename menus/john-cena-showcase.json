@@ -1,0 +1,120 @@
+{
+  "name": "john-cena-showcase",
+  "nameShort": "john-cena",
+  "icon": "🚀",
+  "seoTitle": "John Cena Profiles, Matches, And Filmography | Guides, Tips.",
+  "seoDescription": "Official And Fan-Favorite Resources For John Cena Including WWE Profile, Film Credits, And Social Updates. Explore Features, Use Cases, Pricing, Alternatives.",
+  "seoKeywords": [
+    "john cena",
+    "wwe",
+    "filmography",
+    "profile"
+  ],
+  "children": [
+    {
+      "name": "wwe-john-cena",
+      "nameShort": "wwe",
+      "seoTitle": "John Cena Official WWE Superstar Page | Guides, Tips &.",
+      "seoDescription": "WWE Profile For John Cena With Match History, Videos, And Latest WWE Appearances. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "john cena",
+        "wwe",
+        "matches",
+        "videos"
+      ],
+      "iframeUrl": "https://www.wwe.com/superstars/john-cena",
+      "bgImg": "",
+      "tags": [
+        "john-cena",
+        "wwe",
+        "profile"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧾"
+    },
+    {
+      "name": "imdb-john-cena",
+      "nameShort": "imdb",
+      "seoTitle": "John Cena Filmography On Imdb | Guides, Tips & Updates.",
+      "seoDescription": "Imdb Page Listing John Cena's Films, TV Credits, Trailers, And Upcoming Projects. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "john cena",
+        "imdb",
+        "filmography",
+        "movies"
+      ],
+      "iframeUrl": "https://www.imdb.com/name/nm1078479/",
+      "bgImg": "",
+      "tags": [
+        "john-cena",
+        "imdb",
+        "movies"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🔧"
+    },
+    {
+      "name": "instagram-john-cena",
+      "nameShort": "instagram",
+      "seoTitle": "John Cena Instagram Updates | Guides, Tips & Updates.",
+      "seoDescription": "John Cena's Instagram Feed Featuring Photos, Motivational Posts, And WWE Highlights. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "john cena",
+        "instagram",
+        "social",
+        "updates"
+      ],
+      "iframeUrl": "https://www.instagram.com/johncena/",
+      "bgImg": "",
+      "tags": [
+        "john-cena",
+        "instagram",
+        "social"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📚"
+    },
+    {
+      "name": "twitter-john-cena",
+      "nameShort": "twitter",
+      "seoTitle": "John Cena Official X (Twitter) Feed | Guides, Tips &.",
+      "seoDescription": "John Cena's Official X (Twitter) Feed With Announcements, Charity Work, And WWE Notes. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "john cena",
+        "twitter",
+        "social",
+        "updates"
+      ],
+      "iframeUrl": "https://twitter.com/JohnCena",
+      "bgImg": "",
+      "tags": [
+        "john-cena",
+        "twitter",
+        "social"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🏆"
+    },
+    {
+      "name": "biography-john-cena",
+      "nameShort": "biography",
+      "seoTitle": "John Cena Biography And Career Highlights | Guides, Tips &.",
+      "seoDescription": "Biography.com Profile Covering John Cena's Early Life, Wrestling Success, And Acting Career. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "john cena",
+        "biography",
+        "career",
+        "highlights"
+      ],
+      "iframeUrl": "https://www.biography.com/athletes/john-cena",
+      "bgImg": "",
+      "tags": [
+        "john-cena",
+        "biography",
+        "career"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🛠"
+    }
+  ]
+}

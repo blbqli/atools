@@ -1,0 +1,178 @@
+{
+  "name": "fortune-global-500-leaders",
+  "nameShort": "fortune",
+  "icon": "🌟",
+  "seoTitle": "Fortune Featuring Walmart, Saudi, Amazon Ecommerce.",
+  "seoDescription": "Fortune Directory Featuring Walmart, Saudi, Amazon Ecommerce, Apple And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+  "seoKeywords": [
+    "fortune",
+    "global",
+    "500",
+    "leaders",
+    "walmart",
+    "retail",
+    "leader",
+    "saudi",
+    "aramco",
+    "energy",
+    "giant",
+    "amazon"
+  ],
+  "children": [
+    {
+      "name": "walmart-global-retail-leader",
+      "nameShort": "walmart",
+      "seoTitle": "Walmart Is The Fortune #1 Retailer With Global Supply.",
+      "seoDescription": "Walmart Is The Fortune 1 Retailer With Global Supply Chains, Automation Pilots, And 600B In Annual Revenue Explore Features, Use Cases, Pricing, Alternatives.",
+      "seoKeywords": [
+        "walmart",
+        "global",
+        "retail",
+        "leader",
+        "tool",
+        "fortune",
+        "retailer",
+        "supply",
+        "chains",
+        "automation",
+        "pilots",
+        "600b+"
+      ],
+      "iframeUrl": "https://companiesmarketcap.com/walmart/marketcap/",
+      "bgImg": "",
+      "tags": [
+        "walmart",
+        "global",
+        "retail",
+        "leader",
+        "tool"
+      ],
+      "updateTime": "2025-11-19",
+      "icon": "🔥"
+    },
+    {
+      "name": "saudi-aramco-energy-giant",
+      "nameShort": "saudi",
+      "seoTitle": "Saudi Aramco Is An Energy Giant Overseeing Upstream And.",
+      "seoDescription": "Saudi Aramco Is An Energy Giant Overseeing Upstream And Downstream Oil, Gas, And Chemicals With Giga-Scale Capital Programs Explore Features, Use Cases.",
+      "seoKeywords": [
+        "saudi",
+        "aramco",
+        "energy",
+        "giant",
+        "tool",
+        "overseeing",
+        "upstream",
+        "downstream",
+        "oil",
+        "gas",
+        "chemicals",
+        "giga"
+      ],
+      "iframeUrl": "https://companiesmarketcap.com/saudi-aramco/marketcap/",
+      "bgImg": "",
+      "tags": [
+        "saudi",
+        "aramco",
+        "energy",
+        "giant",
+        "tool"
+      ],
+      "updateTime": "2025-11-18",
+      "icon": "🪄"
+    },
+    {
+      "name": "amazon-ecommerce-cloud-powerhouse",
+      "nameShort": "amazon-ecommerce",
+      "seoTitle": "Amazon Is An E-Commerce And Cloud Conglomerate Spanning AWS.",
+      "seoDescription": "Amazon Ecommerce - Amazon Is An E-Commerce And Cloud Conglomerate Spanning AWS, Prime, Logistics Robotics, And Global Digital Advertising Explore Features, Use.",
+      "seoKeywords": [
+        "amazon ecommerce",
+        "amazon",
+        "ecommerce",
+        "cloud",
+        "powerhouse",
+        "tool",
+        "commerce",
+        "conglomerate",
+        "spanning",
+        "aws",
+        "prime",
+        "logistics"
+      ],
+      "iframeUrl": "https://companiesmarketcap.com/amazon/marketcap/",
+      "bgImg": "",
+      "tags": [
+        "amazon",
+        "ecommerce",
+        "cloud",
+        "powerhouse",
+        "tool"
+      ],
+      "updateTime": "2025-11-16",
+      "icon": "🛫"
+    },
+    {
+      "name": "apple-consumer-electronics-leader",
+      "nameShort": "apple",
+      "seoTitle": "Apple Is A Consumer Electronics Leader Whose Services.",
+      "seoDescription": "Apple Is A Consumer Electronics Leader Whose Services, Silicon, And Devices Keep It Atop The Profitability Charts Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "apple",
+        "consumer",
+        "electronics",
+        "leader",
+        "tool",
+        "whose",
+        "services",
+        "silicon",
+        "devices",
+        "keep",
+        "atop",
+        "profitability"
+      ],
+      "iframeUrl": "https://companiesmarketcap.com/apple/marketcap/",
+      "bgImg": "",
+      "tags": [
+        "apple",
+        "consumer",
+        "electronics",
+        "leader",
+        "tool"
+      ],
+      "updateTime": "2025-11-15",
+      "icon": "⚡"
+    },
+    {
+      "name": "exxonmobil-integrated-energy-major",
+      "nameShort": "exxonmobil",
+      "seoTitle": "Exxonmobil Exxon Mobil Is An Integrated Oil Major.",
+      "seoDescription": "Exxonmobil - Exxon Mobil Is An Integrated Oil Major Accelerating Low-Carbon Ventures While Running One Of The World's Largest Downstream Networks Explore.",
+      "seoKeywords": [
+        "exxonmobil",
+        "integrated",
+        "energy",
+        "major",
+        "tool",
+        "exxon",
+        "mobil",
+        "oil",
+        "accelerating",
+        "low",
+        "carbon",
+        "ventures"
+      ],
+      "iframeUrl": "https://companiesmarketcap.com/exxon-mobil/marketcap/",
+      "bgImg": "",
+      "tags": [
+        "exxonmobil",
+        "integrated",
+        "energy",
+        "major",
+        "tool"
+      ],
+      "updateTime": "2025-11-14",
+      "icon": "🛰"
+    }
+  ]
+}

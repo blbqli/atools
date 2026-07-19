@@ -1,0 +1,161 @@
+{
+  "name": "welcome-to-derry",
+  "nameShort": "derry",
+  "icon": "📡",
+  "seoTitle": "Derry Featuring Derry Wiki, Derry Thr, Derry Fandom.",
+  "seoDescription": "Derry Directory Featuring Derry Wiki, Derry Thr, Derry Fandom And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips.",
+  "seoKeywords": [
+    "derry",
+    "welcome",
+    "wikipedia",
+    "hollywood",
+    "reporter",
+    "stephenking",
+    "fandom"
+  ],
+  "children": [
+    {
+      "name": "welcome-to-derry-wikipedia",
+      "nameShort": "derry-wiki",
+      "seoTitle": "Derry Wiki Wikipedia Covers The IT Prequel's Showrunners.",
+      "seoDescription": "Derry Wiki - Wikipedia Covers The IT Prequel's Showrunners, Returning Cast Members, Production Timeline, And How The Max Series Ties Into Andy Explore.",
+      "seoKeywords": [
+        "derry wiki",
+        "welcome",
+        "derry",
+        "wikipedia",
+        "wiki",
+        "it",
+        "series",
+        "covers",
+        "prequel",
+        "showrunners",
+        "returning",
+        "cast"
+      ],
+      "iframeUrl": "https://en.wikipedia.org/wiki/Welcome_to_Derry",
+      "bgImg": "",
+      "tags": [
+        "welcome",
+        "derry",
+        "wiki",
+        "it",
+        "series"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🗺"
+    },
+    {
+      "name": "hollywood-reporter-welcome-to-derry",
+      "nameShort": "derry-thr",
+      "seoTitle": "Derry Thr The Hollywood Reporter's Exclusive Dives Into.",
+      "seoDescription": "Derry Thr - The Hollywood Reporter's Exclusive Dives Into Hbo's Episode Order, Pennywise Flashbacks, And Quotes From The Producing Team About Explore Features.",
+      "seoKeywords": [
+        "derry thr",
+        "hollywood",
+        "reporter",
+        "welcome",
+        "derry",
+        "thr",
+        "hbo",
+        "news",
+        "exclusive",
+        "dives",
+        "episode",
+        "order"
+      ],
+      "iframeUrl": "https://www.hollywoodreporter.com/tv/tv-news/it-prequel-welcome-to-derry-1235436560/",
+      "bgImg": "",
+      "tags": [
+        "welcome",
+        "derry",
+        "thr",
+        "hbo",
+        "news"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🎨"
+    },
+    {
+      "name": "stephenking-fandom-welcome-to-derry",
+      "nameShort": "derry-fandom",
+      "seoTitle": "Derry Fandom The Stephen King Wiki Catalogues Canon.",
+      "seoDescription": "Derry Fandom - The Stephen King Wiki Catalogues Canon References, Known Episode Titles, And Lore Connections Fans Expect The Series To Cover Explore Features.",
+      "seoKeywords": [
+        "derry fandom",
+        "stephenking",
+        "fandom",
+        "welcome",
+        "derry",
+        "stephen-king",
+        "lore",
+        "stephen",
+        "king",
+        "wiki",
+        "catalogues",
+        "canon"
+      ],
+      "iframeUrl": "https://stephenking.fandom.com/wiki/Welcome_to_Derry",
+      "bgImg": "",
+      "tags": [
+        "welcome",
+        "derry",
+        "fandom",
+        "stephen-king",
+        "lore"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🎲"
+    },
+    {
+      "name": "variety-derry",
+      "nameShort": "variety",
+      "seoTitle": "Variety Tracks Welcome To Derry Casting And HBO Max.",
+      "seoDescription": "Variety Tracks Welcome To Derry Casting Updates, HBO Max Timeline, And How The IT Prequel Expands Pennywise Lore. Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "variety",
+        "welcome to derry",
+        "casting",
+        "hbo max",
+        "pennywise",
+        "prequel",
+        "stephen king"
+      ],
+      "iframeUrl": "https://variety.com/t/welcome-to-derry/",
+      "bgImg": "",
+      "tags": [
+        "welcome-to-derry",
+        "variety",
+        "casting",
+        "hbo-max"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🔧"
+    },
+    {
+      "name": "imdb-derry",
+      "nameShort": "imdb",
+      "seoTitle": "Imdb Lists Welcome To Derry Episodes, Cast Rumors, And.",
+      "seoDescription": "Imdb Lists Welcome To Derry Episodes, Cast Rumors, And User Interest While The Series Is In Production. Explore Features, Use Cases, Pricing, Alternatives.",
+      "seoKeywords": [
+        "imdb",
+        "welcome to derry",
+        "episodes",
+        "cast",
+        "user ratings",
+        "production",
+        "pennywise"
+      ],
+      "iframeUrl": "https://www.imdb.com/find/?q=Welcome%20to%20Derry",
+      "bgImg": "",
+      "tags": [
+        "welcome-to-derry",
+        "imdb",
+        "cast",
+        "episodes"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🔧"
+    }
+  ]
+}

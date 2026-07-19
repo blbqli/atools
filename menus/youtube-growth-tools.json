@@ -1,0 +1,178 @@
+{
+  "name": "youtube-growth-tools",
+  "nameShort": "youtube",
+  "icon": "📐",
+  "seoTitle": "Youtube Featuring Tubebuddy, Vidiq, Canva | Guides, Tips &.",
+  "seoDescription": "Youtube Directory Featuring Tubebuddy, Vidiq, Canva, Epidemic And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips.",
+  "seoKeywords": [
+    "youtube",
+    "growth",
+    "tubebuddy",
+    "seo",
+    "vidiq",
+    "channel",
+    "analytics",
+    "canva",
+    "thumbnail",
+    "maker",
+    "epidemic",
+    "sound"
+  ],
+  "children": [
+    {
+      "name": "tubebuddy-youtube-seo",
+      "nameShort": "tubebuddy",
+      "seoTitle": "Tubebuddy Is A Certified Browser Extension That Streamlines.",
+      "seoDescription": "Tubebuddy Is A Certified Browser Extension That Streamlines Keyword Research, A B Tests, And Bulk Metadata Edits For Youtube Channels Explore Features, Use.",
+      "seoKeywords": [
+        "tubebuddy",
+        "youtube",
+        "seo",
+        "tool",
+        "platform",
+        "certified",
+        "browser",
+        "extension",
+        "streamlines",
+        "keyword",
+        "research",
+        "tests"
+      ],
+      "iframeUrl": "https://www.tubebuddy.com/",
+      "bgImg": "",
+      "tags": [
+        "tubebuddy",
+        "youtube",
+        "seo",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🧰"
+    },
+    {
+      "name": "vidiq-channel-analytics",
+      "nameShort": "vidiq",
+      "seoTitle": "Vidiq Surfaces Trending Topics, SEO Scores, And AI Idea.",
+      "seoDescription": "Vidiq Surfaces Trending Topics, SEO Scores, And AI Idea Prompts So Creators Can Optimize Titles, Thumbnails, And Upload Calendars Explore Features, Use Cases.",
+      "seoKeywords": [
+        "vidiq",
+        "channel",
+        "analytics",
+        "tool",
+        "platform",
+        "surfaces",
+        "trending",
+        "topics",
+        "seo",
+        "scores",
+        "idea",
+        "prompts"
+      ],
+      "iframeUrl": "https://vidiq.com/",
+      "bgImg": "",
+      "tags": [
+        "vidiq",
+        "channel",
+        "analytics",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "📐"
+    },
+    {
+      "name": "canva-youtube-thumbnail-maker",
+      "nameShort": "canva",
+      "seoTitle": "Canva's Youtube Thumbnail Maker Ships Ready-Made Layouts.",
+      "seoDescription": "Canva's Youtube Thumbnail Maker Ships Ready-Made Layouts, Brand Kits, And AI Image Tools For Fast, On-Brand Cover Art Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "canva",
+        "youtube",
+        "thumbnail",
+        "maker",
+        "tool",
+        "ships",
+        "ready",
+        "made",
+        "layouts",
+        "brand",
+        "kits",
+        "image"
+      ],
+      "iframeUrl": "https://www.canva.com/create/youtube-thumbnails/",
+      "bgImg": "",
+      "tags": [
+        "canva",
+        "youtube",
+        "thumbnail",
+        "maker",
+        "tool"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "⭐"
+    },
+    {
+      "name": "epidemic-sound-youtube-music",
+      "nameShort": "epidemic",
+      "seoTitle": "Epidemic Sound Licenses Royalty-Free Tracks And Sound.",
+      "seoDescription": "Epidemic Sound Licenses Royalty-Free Tracks And Sound Effects Cleared For Monetized Youtube Uploads With Direct Channel Linking Explore Features, Use Cases.",
+      "seoKeywords": [
+        "epidemic",
+        "sound",
+        "youtube",
+        "music",
+        "tool",
+        "licenses",
+        "royalty",
+        "free",
+        "tracks",
+        "effects",
+        "cleared",
+        "monetized"
+      ],
+      "iframeUrl": "https://www.epidemicsound.com/",
+      "bgImg": "",
+      "tags": [
+        "epidemic",
+        "sound",
+        "youtube",
+        "music",
+        "tool"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🪐"
+    },
+    {
+      "name": "socialblade-youtube-stats",
+      "nameShort": "socialblade",
+      "seoTitle": "Socialblade Social Blade Tracks Subscriber Velocity.",
+      "seoDescription": "Socialblade - Social Blade Tracks Subscriber Velocity, Estimated Earnings, And Competitor Benchmarks For Any Public Youtube Channel Explore Features, Use.",
+      "seoKeywords": [
+        "socialblade",
+        "youtube",
+        "stats",
+        "tool",
+        "platform",
+        "social",
+        "blade",
+        "tracks",
+        "subscriber",
+        "velocity",
+        "estimated",
+        "earnings"
+      ],
+      "iframeUrl": "https://socialblade.com/youtube",
+      "bgImg": "",
+      "tags": [
+        "socialblade",
+        "youtube",
+        "stats",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🧾"
+    }
+  ]
+}

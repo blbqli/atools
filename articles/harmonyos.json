@@ -1,0 +1,19 @@
+{
+  "name": "HarmonyOS in Smart Cockpits",
+  "nameShort": "harmonyos",
+  "path": "/article/harmonyos",
+  "seoTitle": "HarmonyOS Smart Cockpit 2025 | Huawei x AITO Integration Guide.",
+  "seoDescription": "HarmonyOS 在智能座舱的落地：从车机交互、生态应用到华为 ADS2 协同。梳理与 AITO/赛力斯等合作车型的体验要点与选购建议，并附常用链接。",
+  "seoKeywords": [
+    "HarmonyOS 座舱",
+    "华为鸿蒙车机",
+    "AITO 问界",
+    "赛力斯鸿蒙",
+    "HarmonyOS 智能驾驶",
+    "ADS2",
+    "鸿蒙生态",
+    "智能汽车体验"
+  ],
+  "richText": "\n<h2>华为与鸿蒙：从手机到车机的全场景操作系统</h2>\n\n<p>华为将 HarmonyOS 定义为“面向全场景的分布式操作系统”，手机、平板、穿戴、车机、家居都在同一套系统下协同。对车主而言，最直观的价值是把熟悉的交互和账号体系搬进车里：语音唤醒保持手机水准，应用与支付直连华为账号，超级桌面让常用 App 以原生形态呈现在中控上，地图/音乐/会议可跨屏流转到车机或平板。</p>\n\n<div>\n  <img src=\"https://auto.huawei.com/marketingcloud/pep/asset/20000004/ias-auto-car/img/hm_pc_kv250420.webp\" alt=\"HarmonyOS smart cockpit\" style=\"border-radius: 4px; width:100%\" />\n  <p>统一交互 + 生态协同是鸿蒙车机的核心卖点</p>\n</div>\n\n<h2>本站收录的鸿蒙相关车型</h2>\n<p>下面这些链接来自本站 <code>/menus</code> 目录，均已适配鸿蒙座舱或与华为合作。点击可查看对应工具页介绍：</p>\n<ul>\n  <li><a href=\"https://a.toolsbox.vip/detail/seres-auto-huawei-evs/\" target=\"_blank\" rel=\"noopener noreferrer\">AITO 问界 / 赛力斯</a>：HarmonyOS Cockpit + ADS 2，全栈华为方案，适合深度鸿蒙生态用户。</li>\n  <li><a href=\"https://a.toolsbox.vip/detail/zeekr-premium-electric-vehicles/\" target=\"_blank\" rel=\"noopener noreferrer\">极氪 Zeekr</a>：重视多屏联动和高阶智驾，长途/高速体验突出。</li>\n  <li><a href=\"https://a.toolsbox.vip/detail/voyah-luxury-electric-brand/\" target=\"_blank\" rel=\"noopener noreferrer\">岚图 Voyah</a>：豪华舒适取向，影音娱乐和家庭出行体验友好。</li>\n  <li><a href=\"https://a.toolsbox.vip/detail/gwm-electric-vehicle-lineup/\" target=\"_blank\" rel=\"noopener noreferrer\">长城新能源</a>：本地化应用完善，性价比高，适合日常通勤。</li>\n  <li><a href=\"https://a.toolsbox.vip/detail/neta-auto-new-energy-vehicles/\" target=\"_blank\" rel=\"noopener noreferrer\">哪吒新能源</a>：覆盖日常刚需的智能座舱，适合作为首台电车入门。</li>\n</ul>\n\n<div>\n  <img src=\"https://auto.huawei.com/marketingcloud/pep/asset//20000004/ias-auto-car/img/fbh-yydh-pc251119.webp\" alt=\"Huawei multi-screen continuity\" style=\"border-radius: 4px; width:100%\" />\n  <p>跨屏流转：从手机导航无缝接力到车机，再投屏到副驾平板</p>\n</div>\n\n<h2>体验要点：交互、生态、智驾</h2>\n<p><strong>交互：</strong>重点测试语音连续对话（导航+音乐+空调一口气说完）、车机/手机地图接力、平板/手机投屏延迟。手势/HUD 是否实用也值得现场体验。<br />\n<strong>生态：</strong>确认常用 App（导航、音乐、视频会议、儿童内容）在车机端的适配质量、会员权益共享及账号同步。<br />\n<strong>智驾：</strong>试驾城市 NOA/高速 NGP，观察窄路会车、立交匝道、雨雾低能见度的稳定性；留意转向/制动的平顺度是否符合家人接受度。</p>\n\n<h2>选购与 OTA 建议</h2>\n<p>硬件上，关注中控 SoC/GPU、内存与存储规格，确保有足够冗余支撑后续 OTA。智驾传感器（激光雷达、毫米波雷达、摄像头数量与视场角）决定 ADS 进化空间。购买前可现场登录华为账号，体验超级桌面、车内支付、智慧语音以及车家互联（如控制家中空调/灯光）是否顺畅；查看官方更新日志和车主口碑，确认 OTA 频率与稳定性。</p>\n\n<div>\n  <img src=\"https://auto.huawei.com/marketingcloud/pep/asset/20000004/ias-auto-car/img/hmpc_bannner04_01_250115_v2.webp\" alt=\"HarmonyOS ecosystem devices\" style=\"border-radius: 4px; width:100%\" />\n  <p>生态优势在于账号一体化、支付闭环与家居协同</p>\n</div>\n\n<h2>使用小贴士</h2>\n<ul>\n  <li>绑定华为账号并开启信任设备，先完成手机-车机互信与导航接力，再配置常用路书和收藏夹。</li>\n  <li>副驾平板可作为第二屏控制音乐/空调或查看导航，车机热点可反哺平板；地库/郊区提前下载离线地图与歌曲。</li>\n  <li>OTA 前备份个性化设置（座椅、氛围灯、导航偏好），更新后复测导航、音乐、摄像头、泊车功能。</li>\n  <li>隐私安全：关闭不必要的常驻录音权限，清理测试账号；公共 Wi-Fi 环境下关闭自动下载与敏感数据同步。</li>\n</ul>\n\n<p>鸿蒙座舱的优势在于“体验一致 + 场景协同”。先体验，再决策：实际试驾你的日常路线，验证语音链路、应用流转、智驾边界表现；再结合价格、续航、充电网络与售后，做出最适合自己的选择。</p>\n"
+}
+

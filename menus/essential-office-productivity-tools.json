@@ -1,0 +1,209 @@
+{
+  "name": "essential-office-productivity-tools",
+  "nameShort": "essential",
+  "icon": "🧰",
+  "seoTitle": "Essential Featuring Microsoft, Microsoft Word, Microsoft.",
+  "seoDescription": "Essential Directory Featuring Microsoft, Microsoft Word, Microsoft Powerpoint, Microsoft Outlook And More. Explore Features, Use Cases, Pricing, Alternatives.",
+  "seoKeywords": [
+    "essential",
+    "office",
+    "productivity",
+    "microsoft",
+    "excel",
+    "data",
+    "analysis",
+    "word",
+    "document",
+    "editor",
+    "powerpoint",
+    "presentation"
+  ],
+  "children": [
+    {
+      "name": "microsoft-excel-data-analysis",
+      "nameShort": "microsoft",
+      "seoTitle": "Microsoft Excel Is Leading Spreadsheet Software For.",
+      "seoDescription": "Microsoft Excel Is Leading Spreadsheet Software For Organizing Data, Calculating With Formulas, Visualizing Insights, And Enabling Real-Time Explore Features.",
+      "seoKeywords": [
+        "microsoft",
+        "excel",
+        "data",
+        "analysis",
+        "tool",
+        "leading",
+        "spreadsheet",
+        "organizing",
+        "calculating",
+        "formulas",
+        "visualizing",
+        "insights"
+      ],
+      "iframeUrl": "https://www.microsoft.com/zh-cn/microsoft-365/excel",
+      "bgImg": "/440623-Hero-image.webp",
+      "tags": [
+        "microsoft",
+        "excel",
+        "data",
+        "analysis",
+        "tool"
+      ],
+      "updateTime": "2025-10-30",
+      "icon": "🧭"
+    },
+    {
+      "name": "microsoft-word-document-editor",
+      "nameShort": "microsoft-word",
+      "seoTitle": "Microsoft Word Is The Industry-Standard Word Processor For.",
+      "seoDescription": "Microsoft Word Is The Industry-Standard Word Processor For Formatting Documents, Checking Grammar, And Supporting Real-Time Co-Authoring For Explore Features.",
+      "seoKeywords": [
+        "microsoft word",
+        "microsoft",
+        "word",
+        "document",
+        "editor",
+        "tool",
+        "industry",
+        "standard",
+        "processor",
+        "formatting",
+        "documents",
+        "checking"
+      ],
+      "iframeUrl": "https://www.microsoft.com/zh-cn/microsoft-365/word",
+      "bgImg": "/440250_M365-hero-1680x628-opiton1.webp",
+      "tags": [
+        "microsoft",
+        "word",
+        "document",
+        "editor",
+        "tool"
+      ],
+      "updateTime": "2025-10-28",
+      "icon": "🗺"
+    },
+    {
+      "name": "microsoft-powerpoint-presentation",
+      "nameShort": "microsoft-powerpoint",
+      "seoTitle": "Microsoft Powerpoint Is A Professional Presentation Tool.",
+      "seoDescription": "Microsoft Powerpoint Is A Professional Presentation Tool For Creating Dynamic Slides, Adding Animations, And Enabling Collaborative Design For Explore.",
+      "seoKeywords": [
+        "microsoft powerpoint",
+        "microsoft",
+        "powerpoint",
+        "presentation",
+        "tool",
+        "platform",
+        "professional",
+        "creating",
+        "dynamic",
+        "slides",
+        "adding",
+        "animations"
+      ],
+      "iframeUrl": "https://www.microsoft.com/zh-cn/microsoft-365/powerpoint",
+      "bgImg": "/440700-M365-Hero-image.webp",
+      "tags": [
+        "microsoft",
+        "powerpoint",
+        "presentation",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-10-25",
+      "icon": "🎮"
+    },
+    {
+      "name": "microsoft-outlook-email-calendar",
+      "nameShort": "microsoft-outlook",
+      "seoTitle": "Microsoft Outlook Is An All-In-One Email And Calendar Tool.",
+      "seoDescription": "Microsoft Outlook Is An All-In-One Email And Calendar Tool For Managing Messages, Scheduling Meetings, And Syncing Contacts Seamlessly Across Devices Explore.",
+      "seoKeywords": [
+        "microsoft outlook",
+        "microsoft",
+        "outlook",
+        "email",
+        "calendar",
+        "tool",
+        "all",
+        "one",
+        "managing",
+        "messages",
+        "scheduling",
+        "meetings"
+      ],
+      "iframeUrl": "https://www.microsoft.com/zh-cn/microsoft-365/outlook/email-and-calendar-software-microsoft-outlook",
+      "bgImg": "/M365_FY26_Evergreen_ProductPage_Outlook_Header_Pedestal_Desktop_1600x632.webp",
+      "tags": [
+        "microsoft",
+        "outlook",
+        "email",
+        "calendar",
+        "tool"
+      ],
+      "updateTime": "2025-10-22",
+      "icon": "🧰"
+    },
+    {
+      "name": "microsoft-onenote-digital-notes",
+      "nameShort": "microsoft-onenote",
+      "seoTitle": "Microsoft Onenote Is A Digital Note-Taking Tool For.",
+      "seoDescription": "Microsoft Onenote Is A Digital Note-Taking Tool For Organizing Ideas, Syncing Across Devices, And Supporting Collaborative Editing For Personal And Explore.",
+      "seoKeywords": [
+        "microsoft onenote",
+        "microsoft",
+        "onenote",
+        "digital",
+        "notes",
+        "tool",
+        "note",
+        "taking",
+        "organizing",
+        "ideas",
+        "syncing",
+        "devices"
+      ],
+      "iframeUrl": "https://www.microsoft.com/zh-cn/microsoft-365/onenote/digital-note-taking-app",
+      "bgImg": "/h1rz79f6-1-hero-photo-568x520.webp",
+      "tags": [
+        "microsoft",
+        "onenote",
+        "digital",
+        "notes",
+        "tool"
+      ],
+      "updateTime": "2025-10-18",
+      "icon": "🏆"
+    },
+    {
+      "name": "microsoft-project-enterprise-planning",
+      "nameShort": "microsoft-project",
+      "seoTitle": "Microsoft Project Is A Project Management Tool For Planning.",
+      "seoDescription": "Microsoft Project Is A Project Management Tool For Planning Tasks, Tracking Progress, And Collaborating With Team Members Efficiently For Business Explore.",
+      "seoKeywords": [
+        "microsoft project",
+        "microsoft",
+        "project",
+        "enterprise",
+        "planning",
+        "tool",
+        "management",
+        "tasks",
+        "tracking",
+        "progress",
+        "collaborating",
+        "team"
+      ],
+      "iframeUrl": "https://www.microsoft.com/zh-cn/microsoft-365/project/project-management-software",
+      "bgImg": "/433969-microsoft-planner-hero.webp",
+      "tags": [
+        "microsoft",
+        "project",
+        "enterprise",
+        "planning",
+        "tool"
+      ],
+      "updateTime": "2025-10-05",
+      "icon": "🛒"
+    }
+  ]
+}

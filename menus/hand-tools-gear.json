@@ -1,0 +1,121 @@
+{
+  "name": "hand-tools-gear",
+  "nameShort": "hand-tools",
+  "icon": "🎵",
+  "seoTitle": "Hand Tools Brands And Catalogs | Guides, Tips & Updates.",
+  "seoDescription": "Hand Tool Collections From Leading Brands Plus Specialty Grip Solutions Like Grip Edge. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+  "seoKeywords": [
+    "hand tools",
+    "pliers",
+    "wrenches",
+    "grip edge",
+    "catalog"
+  ],
+  "children": [
+    {
+      "name": "stanley-hand-tools",
+      "nameShort": "stanley",
+      "seoTitle": "Stanley Hand Tools Catalog | Guides, Tips & Updates.",
+      "seoDescription": "Stanley Hand Tools Lineup With Tapes, Hammers, Screwdrivers, And Storage. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "stanley",
+        "hand tools",
+        "tape",
+        "hammer"
+      ],
+      "iframeUrl": "https://www.stanleytools.com/products/hand-tools",
+      "bgImg": "",
+      "tags": [
+        "stanley",
+        "hand-tools",
+        "catalog"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧰"
+    },
+    {
+      "name": "wiha-hand-tools",
+      "nameShort": "wiha",
+      "seoTitle": "Wiha Precision Hand Tools | Guides, Tips & Updates.",
+      "seoDescription": "Wiha Hand Tools Catalog Covering Insulated Drivers, Cutters, And Precision Kits. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "wiha",
+        "hand tools",
+        "insulated",
+        "precision"
+      ],
+      "iframeUrl": "https://www.wihatools.com/hand-tools",
+      "bgImg": "",
+      "tags": [
+        "wiha",
+        "hand-tools",
+        "precision"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🖼"
+    },
+    {
+      "name": "crescent-hand-tools",
+      "nameShort": "crescent",
+      "seoTitle": "Crescent Hand Tools Range | Guides, Tips & Updates.",
+      "seoDescription": "Crescent Lineup For Wrenches, Pliers, Socket Sets, And Mechanics Tool Kits. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "crescent",
+        "hand tools",
+        "wrenches",
+        "sockets"
+      ],
+      "iframeUrl": "https://www.crescenttool.com/products/hand-tools",
+      "bgImg": "",
+      "tags": [
+        "crescent",
+        "hand-tools",
+        "wrenches"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧩"
+    },
+    {
+      "name": "gedore-hand-tools",
+      "nameShort": "gedore",
+      "seoTitle": "Gedore Professional Hand Tools | Guides, Tips & Updates.",
+      "seoDescription": "Gedore Professional Hand Tools Including Torque Wrenches, Pliers, And Tool Sets. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "gedore",
+        "hand tools",
+        "torque",
+        "pliers"
+      ],
+      "iframeUrl": "https://www.gedore.com/en/hand-tools",
+      "bgImg": "",
+      "tags": [
+        "gedore",
+        "hand-tools",
+        "professional"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📡"
+    },
+    {
+      "name": "grip-edge-tools",
+      "nameShort": "grip-edge",
+      "seoTitle": "Grip Edge Bolt Removal Tools | Guides, Tips & Updates.",
+      "seoDescription": "Grip Edge Tools Official Site Showcasing Extraction Sockets And Bolt Removal Tech. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "grip edge",
+        "hand tools",
+        "sockets",
+        "extraction"
+      ],
+      "iframeUrl": "https://www.gripedgetools.com/",
+      "bgImg": "",
+      "tags": [
+        "grip-edge",
+        "hand-tools",
+        "sockets"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎯"
+    }
+  ]
+}

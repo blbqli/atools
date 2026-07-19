@@ -1,0 +1,120 @@
+{
+  "name": "dewalt-tools-brand",
+  "nameShort": "dewalt",
+  "icon": "⭐",
+  "seoTitle": "Dewalt Power And Hand Tools Resources | Guides, Tips &.",
+  "seoDescription": "Dewalt Brand Links For Power Tools, Hand Tools, And Retailer Listings. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips.",
+  "seoKeywords": [
+    "dewalt tools",
+    "power tools",
+    "hand tools",
+    "retailers"
+  ],
+  "children": [
+    {
+      "name": "dewalt-official-uk",
+      "nameShort": "official",
+      "seoTitle": "Dewalt UK Official Site | Guides, Tips & Updates Guides.",
+      "seoDescription": "Dewalt UK Homepage Featuring Promotions, Tool Platforms, And Service Info. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "dewalt",
+        "official",
+        "uk",
+        "tools"
+      ],
+      "iframeUrl": "https://www.dewalt.co.uk/",
+      "bgImg": "",
+      "tags": [
+        "dewalt",
+        "official",
+        "uk"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧪"
+    },
+    {
+      "name": "dewalt-power-tools",
+      "nameShort": "power",
+      "seoTitle": "Dewalt Power Tools Catalog | Guides, Tips & Updates.",
+      "seoDescription": "Dewalt Catalog For Drills, Drivers, Grinders, And Cordless Tool Platforms. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "dewalt",
+        "power tools",
+        "cordless",
+        "catalog"
+      ],
+      "iframeUrl": "https://www.dewalt.co.uk/products/power-tools",
+      "bgImg": "",
+      "tags": [
+        "dewalt",
+        "power-tools",
+        "catalog"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📰"
+    },
+    {
+      "name": "dewalt-hand-tools",
+      "nameShort": "hand",
+      "seoTitle": "Dewalt Hand Tools Range | Guides, Tips & Updates Guides.",
+      "seoDescription": "Dewalt Hand Tools Lineup Including Tapes, Wrenches, And Jobsite Accessories. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "dewalt",
+        "hand tools",
+        "jobsite",
+        "accessories"
+      ],
+      "iframeUrl": "https://www.dewalt.co.uk/products/hand-tools",
+      "bgImg": "",
+      "tags": [
+        "dewalt",
+        "hand-tools",
+        "catalog"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🌟"
+    },
+    {
+      "name": "dewalt-home-depot",
+      "nameShort": "home-depot",
+      "seoTitle": "Dewalt Tools At Home Depot | Guides, Tips & Updates.",
+      "seoDescription": "Home Depot Brand Page For Dewalt Tools, Battery Platforms, And Promotions. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "dewalt",
+        "home depot",
+        "power tools",
+        "batteries"
+      ],
+      "iframeUrl": "https://www.homedepot.com/b/Brand/DEWALT/N-5yc1vZ4f7",
+      "bgImg": "",
+      "tags": [
+        "dewalt",
+        "retail",
+        "home-depot"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⚡"
+    },
+    {
+      "name": "dewalt-acme-tools",
+      "nameShort": "acme",
+      "seoTitle": "Dewalt Listings On Acme Tools | Guides, Tips & Updates.",
+      "seoDescription": "Acme Tools Selection Of Dewalt Cordless Kits, Hand Tools, And Accessories. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "dewalt",
+        "acme tools",
+        "cordless",
+        "kits"
+      ],
+      "iframeUrl": "https://www.acmetools.com/brands/dewalt",
+      "bgImg": "",
+      "tags": [
+        "dewalt",
+        "retail",
+        "acme-tools"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📚"
+    }
+  ]
+}

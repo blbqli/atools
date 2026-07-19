@@ -1,0 +1,120 @@
+{
+  "name": "platform-and-cd-tools",
+  "nameShort": "platform",
+  "icon": "🧪",
+  "seoTitle": "Platform Engineering And Continuous Delivery Tools.",
+  "seoDescription": "CI/CD Platforms And Deployment Engines Like Jenkins, Gitlab, Circleci, Argo CD, And Spinnaker. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+  "seoKeywords": [
+    "platform tools",
+    "continuous delivery",
+    "ci/cd",
+    "devops"
+  ],
+  "children": [
+    {
+      "name": "jenkins-automation-server",
+      "nameShort": "jenkins",
+      "seoTitle": "Jenkins Open Source Automation Server | Guides, Tips &.",
+      "seoDescription": "Jenkins Project Site With Pipelines, Plugins, And Guides For Building CI/CD. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "jenkins",
+        "ci/cd",
+        "automation",
+        "pipelines"
+      ],
+      "iframeUrl": "https://www.jenkins.io/",
+      "bgImg": "",
+      "tags": [
+        "jenkins",
+        "automation",
+        "devops"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🌊"
+    },
+    {
+      "name": "gitlab-ci-cd",
+      "nameShort": "gitlab",
+      "seoTitle": "Gitlab CI/CD Platform Overview | Guides, Tips & Updates.",
+      "seoDescription": "Gitlab CI/CD Solution Page Highlighting Pipelines, Security Scans, And Deployments. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "gitlab",
+        "ci-cd",
+        "pipelines",
+        "security"
+      ],
+      "iframeUrl": "https://about.gitlab.com/solutions/ci-cd/",
+      "bgImg": "",
+      "tags": [
+        "gitlab",
+        "ci-cd",
+        "devops"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🏆"
+    },
+    {
+      "name": "circleci-cloud",
+      "nameShort": "circleci",
+      "seoTitle": "Circleci Cloud CI/CD Service | Guides, Tips & Updates.",
+      "seoDescription": "Circleci Platform For Automated Testing, Workflows, And Delivery Across Languages. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "circleci",
+        "ci-cd",
+        "cloud",
+        "automation"
+      ],
+      "iframeUrl": "https://circleci.com/",
+      "bgImg": "",
+      "tags": [
+        "circleci",
+        "ci-cd",
+        "automation"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📡"
+    },
+    {
+      "name": "argo-cd-docs",
+      "nameShort": "argo-cd",
+      "seoTitle": "Argo CD Gitops Delivery Documentation | Guides, Tips &.",
+      "seoDescription": "Argo CD Docs Describing Gitops Deployments, Sync Policies, And Application Health. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "argo cd",
+        "gitops",
+        "kubernetes",
+        "delivery"
+      ],
+      "iframeUrl": "https://argo-cd.readthedocs.io/en/stable/",
+      "bgImg": "",
+      "tags": [
+        "argo-cd",
+        "gitops",
+        "kubernetes"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧪"
+    },
+    {
+      "name": "spinnaker-platform",
+      "nameShort": "spinnaker",
+      "seoTitle": "Spinnaker Multi-Cloud Delivery Platform | Guides, Tips &.",
+      "seoDescription": "Spinnaker Site Covering Pipelines, Canary Analysis, And Cloud Deployment Support. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "spinnaker",
+        "continuous delivery",
+        "pipelines",
+        "cloud"
+      ],
+      "iframeUrl": "https://spinnaker.io/",
+      "bgImg": "",
+      "tags": [
+        "spinnaker",
+        "delivery",
+        "devops"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🌟"
+    }
+  ]
+}

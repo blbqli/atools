@@ -1,0 +1,35 @@
+@import "tailwindcss";
+@plugin "daisyui" {
+  themes: all;
+}
+
+img {
+  display: block !important;
+  object-fit: cover !important;
+}
+
+* {
+  box-shadow: none;
+}
+
+.hide-x-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-x-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-y-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.hide-y-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.container-rich a {
+  font-weight: bold !important;
+}

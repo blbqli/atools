@@ -1,0 +1,167 @@
+{
+  "name": "best-backend-api-frameworks",
+  "nameShort": "best",
+  "icon": "📡",
+  "seoTitle": "Best Featuring Spring, Laravel, Fastapi | Guides, Tips &.",
+  "seoDescription": "Best Directory Featuring Spring, Laravel, Fastapi, Nestjs And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To.",
+  "seoKeywords": [
+    "best",
+    "backend",
+    "api",
+    "frameworks",
+    "spring",
+    "initializr",
+    "boot",
+    "generator",
+    "laravel",
+    "elegant",
+    "php",
+    "framework"
+  ],
+  "children": [
+    {
+      "name": "spring-initializr-boot-generator",
+      "nameShort": "spring",
+      "seoTitle": "Spring Initializr Is The Official Spring Boot Project.",
+      "seoDescription": "Spring Initializr Is The Official Spring Boot Project Generator That Scaffolds Maven Or Gradle Services With The Right Starters, Metadata, And Explore.",
+      "seoKeywords": [
+        "spring",
+        "initializr",
+        "boot",
+        "generator",
+        "tool",
+        "official",
+        "project",
+        "scaffolds",
+        "maven",
+        "gradle",
+        "services",
+        "right"
+      ],
+      "iframeUrl": "https://start.spring.io/",
+      "bgImg": "",
+      "tags": [
+        "spring",
+        "initializr",
+        "boot",
+        "generator",
+        "tool"
+      ],
+      "updateTime": "2025-11-30",
+      "icon": "🧾"
+    },
+    {
+      "name": "laravel-elegant-php-framework",
+      "nameShort": "laravel",
+      "seoTitle": "Laravel Is An Elegant PHP Framework Featuring Blade.",
+      "seoDescription": "Laravel Is An Elegant PHP Framework Featuring Blade, Eloquent, Queues, And Octane-Ready Tooling For Modern Backend And Saas Workloads Explore Features, Use.",
+      "seoKeywords": [
+        "laravel",
+        "elegant",
+        "php",
+        "framework",
+        "tool",
+        "featuring",
+        "blade",
+        "eloquent",
+        "queues",
+        "octane",
+        "ready",
+        "tooling"
+      ],
+      "iframeUrl": "https://laravel.com/",
+      "bgImg": "",
+      "tags": [
+        "laravel",
+        "elegant",
+        "php",
+        "framework",
+        "tool"
+      ],
+      "updateTime": "2025-11-27",
+      "icon": "🛡"
+    },
+    {
+      "name": "fastapi-python-api-framework",
+      "nameShort": "fastapi",
+      "seoTitle": "Fastapi Is An Async-First Python Framework Powered By Type.",
+      "seoDescription": "Fastapi Is An Async-First Python Framework Powered By Type Hints, Automatic Openapi Docs, And Blazing Performance On Uvicorn Or Hypercorn Explore Features, Use.",
+      "seoKeywords": [
+        "fastapi",
+        "python",
+        "api",
+        "framework",
+        "tool",
+        "async",
+        "first",
+        "powered",
+        "type",
+        "hints",
+        "automatic",
+        "openapi"
+      ],
+      "iframeUrl": "https://fastapi.tiangolo.com/",
+      "bgImg": "",
+      "tags": [
+        "fastapi",
+        "python",
+        "api",
+        "framework",
+        "tool"
+      ],
+      "updateTime": "2025-11-26",
+      "icon": "🎲"
+    },
+    {
+      "name": "nestjs-typescript-backend-framework",
+      "nameShort": "nestjs",
+      "seoTitle": "Nestjs Is A Typescript-First Node | Guides, Tips & Updates.",
+      "seoDescription": "Nestjs Is A Typescript-First Node Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To Compare Options, Implement.",
+      "seoKeywords": [
+        "nestjs",
+        "typescript",
+        "backend",
+        "framework",
+        "tool",
+        "first",
+        "node"
+      ],
+      "iframeUrl": "https://nestjs.com/",
+      "bgImg": "",
+      "tags": [
+        "nestjs",
+        "typescript",
+        "backend",
+        "framework",
+        "tool"
+      ],
+      "updateTime": "2025-11-25",
+      "icon": "🛡"
+    },
+    {
+      "name": "expressjs-node-api-framework",
+      "nameShort": "expressjs",
+      "seoTitle": "Expressjs Express | Guides, Tips & Updates Guides, Tips &.",
+      "seoDescription": "Expressjs - Express Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To Compare Options, Implement Quickly, And Optimize.",
+      "seoKeywords": [
+        "expressjs",
+        "node",
+        "api",
+        "framework",
+        "tool",
+        "express"
+      ],
+      "iframeUrl": "https://expressjs.com/",
+      "bgImg": "",
+      "tags": [
+        "expressjs",
+        "node",
+        "api",
+        "framework",
+        "tool"
+      ],
+      "updateTime": "2025-11-24",
+      "icon": "🧳"
+    }
+  ]
+}

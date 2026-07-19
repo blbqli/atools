@@ -1,0 +1,120 @@
+{
+  "name": "payal-gaming-trending",
+  "nameShort": "payal",
+  "icon": "🧩",
+  "seoTitle": "Payal Gaming Viral Video And Creator Channels | Guides.",
+  "seoDescription": "Follow Payal Gaming Across Youtube, Instagram, And Esports Coverage For Viral Videos And Livestream Highlights. Explore Features, Use Cases, Pricing Explore.",
+  "seoKeywords": [
+    "payal gaming viral video",
+    "streamer",
+    "youtube",
+    "esports"
+  ],
+  "children": [
+    {
+      "name": "payal-gaming-youtube",
+      "nameShort": "youtube",
+      "seoTitle": "Payal Gaming Official Youtube Channel | Guides, Tips &.",
+      "seoDescription": "Payal Gaming Youtube Channel Featuring Livestreams, Shorts, And Viral Gameplay Videos. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "payal gaming",
+        "youtube",
+        "viral video",
+        "livestream"
+      ],
+      "iframeUrl": "https://www.youtube.com/@PayalGamingOfficial",
+      "bgImg": "",
+      "tags": [
+        "payal-gaming",
+        "youtube",
+        "streamer"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📐"
+    },
+    {
+      "name": "payal-gaming-instagram",
+      "nameShort": "instagram",
+      "seoTitle": "Payal Gaming Instagram Reels And Updates | Guides, Tips &.",
+      "seoDescription": "Payal Gaming Instagram Feed With Reels, Behind-The-Scenes Clips, And Creator Updates. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "payal gaming",
+        "instagram",
+        "reels",
+        "updates"
+      ],
+      "iframeUrl": "https://www.instagram.com/payalgaming/",
+      "bgImg": "",
+      "tags": [
+        "payal-gaming",
+        "instagram",
+        "reels"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📚"
+    },
+    {
+      "name": "payal-gaming-twitter",
+      "nameShort": "twitter",
+      "seoTitle": "Payal Gaming Official X (Twitter) | Guides, Tips & Updates.",
+      "seoDescription": "Payal Gaming's Official X (Twitter) Account Sharing Stream Schedules, Clips, And Community News. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "payal gaming",
+        "twitter",
+        "streams",
+        "updates"
+      ],
+      "iframeUrl": "https://twitter.com/PayalDhare",
+      "bgImg": "",
+      "tags": [
+        "payal-gaming",
+        "twitter",
+        "streams"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🏆"
+    },
+    {
+      "name": "payal-gaming-facebook",
+      "nameShort": "facebook",
+      "seoTitle": "Payal Gaming Facebook Clips | Guides, Tips & Updates.",
+      "seoDescription": "Payal Gaming Facebook Page Hosting Short Clips, Photos, And Community Posts. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "payal gaming",
+        "facebook",
+        "clips",
+        "community"
+      ],
+      "iframeUrl": "https://www.facebook.com/PayalGaming/",
+      "bgImg": "",
+      "tags": [
+        "payal-gaming",
+        "facebook",
+        "clips"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🛒"
+    },
+    {
+      "name": "payal-gaming-coverage",
+      "nameShort": "coverage",
+      "seoTitle": "Payal Gaming Esports Coverage On Sportskeeda | Guides, Tips.",
+      "seoDescription": "Sportskeeda Coverage Of Payal Gaming Featuring Interviews, Viral Moments, And Tournament Recaps. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "payal gaming",
+        "sportskeeda",
+        "esports",
+        "news"
+      ],
+      "iframeUrl": "https://www.sportskeeda.com/esports/payal-gaming",
+      "bgImg": "",
+      "tags": [
+        "payal-gaming",
+        "esports",
+        "news"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎯"
+    }
+  ]
+}

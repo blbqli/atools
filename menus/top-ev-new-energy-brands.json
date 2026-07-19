@@ -1,0 +1,178 @@
+{
+  "name": "top-ev-new-energy-brands",
+  "nameShort": "top-ev",
+  "icon": "🚀",
+  "seoTitle": "Top Ev Featuring Zeekr, Neta, Voyah | Guides, Tips &.",
+  "seoDescription": "Top Ev Directory Featuring Zeekr, Neta, Voyah, Gwm And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To Compare.",
+  "seoKeywords": [
+    "top ev",
+    "top",
+    "new",
+    "energy",
+    "brands",
+    "zeekr",
+    "premium",
+    "electric",
+    "vehicles",
+    "neta",
+    "auto",
+    "voyah"
+  ],
+  "children": [
+    {
+      "name": "zeekr-premium-electric-vehicles",
+      "nameShort": "zeekr",
+      "seoTitle": "Zeekr Is Geely's Premium EV Marque That Builds SEA-Platform.",
+      "seoDescription": "Zeekr Is Geely's Premium EV Marque That Builds SEA-Platform Fastbacks And Suvs, Shipping OTA Software Globally From Ningbo Explore Features, Use Cases.",
+      "seoKeywords": [
+        "zeekr",
+        "premium",
+        "electric",
+        "vehicles",
+        "tool",
+        "geely",
+        "marque",
+        "builds",
+        "sea",
+        "fastbacks",
+        "suvs",
+        "shipping"
+      ],
+      "iframeUrl": "https://www.zeekr.com/",
+      "bgImg": "",
+      "tags": [
+        "zeekr",
+        "premium",
+        "electric",
+        "vehicles",
+        "tool"
+      ],
+      "updateTime": "2025-11-24",
+      "icon": "🖼"
+    },
+    {
+      "name": "neta-auto-new-energy-vehicles",
+      "nameShort": "neta",
+      "seoTitle": "Neta Auto Is Hozon's EV Brand Covering A0 To B-Class.",
+      "seoDescription": "Neta Auto Is Hozon's EV Brand Covering A0 To B-Class Crossovers With In-House Chips And Assisted Driving Technology Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "neta",
+        "auto",
+        "new",
+        "energy",
+        "vehicles",
+        "hozon",
+        "brand",
+        "covering",
+        "class",
+        "crossovers",
+        "house",
+        "chips"
+      ],
+      "iframeUrl": "https://www.hozonauto.com/",
+      "bgImg": "",
+      "tags": [
+        "neta",
+        "auto",
+        "new",
+        "energy",
+        "vehicles"
+      ],
+      "updateTime": "2025-11-23",
+      "icon": "🎲"
+    },
+    {
+      "name": "voyah-luxury-electric-brand",
+      "nameShort": "voyah",
+      "seoTitle": "Voyah Is Dongfeng's Luxury EV Sub-Brand Delivering The Free.",
+      "seoDescription": "Voyah Is Dongfeng's Luxury EV Sub-Brand Delivering The Free SUV And Dreamer MPV With ESSA Architecture And Battery Swap Technology Explore Features, Use Cases.",
+      "seoKeywords": [
+        "voyah",
+        "luxury",
+        "electric",
+        "brand",
+        "tool",
+        "dongfeng",
+        "sub",
+        "delivering",
+        "free",
+        "suv",
+        "dreamer",
+        "mpv"
+      ],
+      "iframeUrl": "https://www.voyah.com/",
+      "bgImg": "",
+      "tags": [
+        "voyah",
+        "luxury",
+        "electric",
+        "brand",
+        "tool"
+      ],
+      "updateTime": "2025-11-22",
+      "icon": "🗺"
+    },
+    {
+      "name": "gwm-electric-vehicle-lineup",
+      "nameShort": "gwm",
+      "seoTitle": "GWM New Energy Is Great Wall Motor's NEV Portfolio Spanning.",
+      "seoDescription": "GWM New Energy Is Great Wall Motor's NEV Portfolio Spanning ORA City Cars To Wey Hybrids, Backed By Coffee OS And L2 Driving Stacks Explore Features, Use.",
+      "seoKeywords": [
+        "gwm",
+        "electric",
+        "vehicle",
+        "lineup",
+        "tool",
+        "new",
+        "energy",
+        "great",
+        "wall",
+        "motor",
+        "nev",
+        "portfolio"
+      ],
+      "iframeUrl": "https://www.gwm.com.cn/",
+      "bgImg": "",
+      "tags": [
+        "gwm",
+        "electric",
+        "vehicle",
+        "lineup",
+        "tool"
+      ],
+      "updateTime": "2025-11-21",
+      "icon": "🌟"
+    },
+    {
+      "name": "seres-auto-huawei-evs",
+      "nameShort": "seres",
+      "seoTitle": "Seres Auto Is A Chongqing-Based Brand Building AITO.",
+      "seoDescription": "Seres Auto Is A Chongqing-Based Brand Building AITO Co-Branded Range Extenders With Huawei's Harmonyos Cockpit And ADS 2 Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "seres",
+        "auto",
+        "huawei",
+        "evs",
+        "tool",
+        "chongqing",
+        "based",
+        "brand",
+        "building",
+        "aito",
+        "branded",
+        "range"
+      ],
+      "iframeUrl": "https://www.seres.cn/",
+      "bgImg": "",
+      "tags": [
+        "seres",
+        "auto",
+        "huawei",
+        "evs",
+        "tool"
+      ],
+      "updateTime": "2025-11-20",
+      "icon": "🛒"
+    }
+  ]
+}

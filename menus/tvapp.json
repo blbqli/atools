@@ -1,0 +1,158 @@
+{
+  "name": "tvapp",
+  "nameShort": "tvapp",
+  "icon": "🛫",
+  "seoTitle": "Tvapp Featuring Apple Tv, Youtube Tv, Plex Tv | Guides.",
+  "seoDescription": "Tvapp Directory Featuring Apple Tv, Youtube Tv, Plex Tv And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To.",
+  "seoKeywords": [
+    "tvapp",
+    "apple",
+    "youtube",
+    "plex"
+  ],
+  "children": [
+    {
+      "name": "apple-tv-app",
+      "nameShort": "apple-tv",
+      "seoTitle": "Apple's TV App Centralizes Apple TV+, MLS Season Pass, And.",
+      "seoDescription": "Apple's TV App Centralizes Apple TV , MLS Season Pass, And Channel Add-Ons With Profiles, Up Next Queues, And Device Syncing Explore Features, Use Cases.",
+      "seoKeywords": [
+        "apple tv",
+        "apple",
+        "tvapp",
+        "streaming",
+        "tv",
+        "app",
+        "centralizes",
+        "tv+",
+        "mls",
+        "season",
+        "pass",
+        "channel"
+      ],
+      "iframeUrl": "https://tv.apple.com/",
+      "bgImg": "",
+      "tags": [
+        "tvapp",
+        "apple",
+        "streaming",
+        "tv",
+        "app"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🎨"
+    },
+    {
+      "name": "youtube-tvapp",
+      "nameShort": "youtube-tv",
+      "seoTitle": "Youtube TV's Welcome Hub Outlines Channel Lineups.",
+      "seoDescription": "Youtube TV's Welcome Hub Outlines Channel Lineups, Multiview, 4K Add-Ons, And How To Run The TV App On Smart Tvs Or Chromecasts Explore Features, Use Cases.",
+      "seoKeywords": [
+        "youtube tv",
+        "youtube",
+        "tvapp",
+        "live-tv",
+        "cloud-dvr",
+        "streaming",
+        "welcome",
+        "hub",
+        "outlines",
+        "channel",
+        "lineups",
+        "multiview"
+      ],
+      "iframeUrl": "https://tv.youtube.com/welcome/",
+      "bgImg": "",
+      "tags": [
+        "tvapp",
+        "youtube",
+        "live-tv",
+        "cloud-dvr",
+        "streaming"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🍀"
+    },
+    {
+      "name": "plex-tvapp",
+      "nameShort": "plex-tv",
+      "seoTitle": "Plex's TV App Streams Free Ad-Supported Live Channels Plus.",
+      "seoDescription": "Plex Tv - Plex's TV App Streams Free Ad-Supported Live Channels Plus On-Demand Movies, And It Can Merge With Your Personal Media Server Explore Features, Use.",
+      "seoKeywords": [
+        "plex tv",
+        "plex",
+        "tvapp",
+        "fast",
+        "streaming",
+        "live-tv",
+        "streams",
+        "free",
+        "supported",
+        "live",
+        "channels",
+        "plus"
+      ],
+      "iframeUrl": "https://www.plex.tv/watch-free-tv/",
+      "bgImg": "",
+      "tags": [
+        "tvapp",
+        "plex",
+        "fast",
+        "streaming",
+        "live-tv"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🔥"
+    },
+    {
+      "name": "netflix-app",
+      "nameShort": "netflix",
+      "seoTitle": "Netflix App Streams Originals In 4K HDR With Downloads.",
+      "seoDescription": "Netflix TV App Streams Originals In 4K HDR With Downloads Across Smart Tvs, Roku, Fire TV, And Consoles. Explore Features, Use Cases, Pricing, Alternatives.",
+      "seoKeywords": [
+        "netflix app",
+        "tv streaming",
+        "4k hdr",
+        "downloads",
+        "smart tv",
+        "roku",
+        "fire tv"
+      ],
+      "iframeUrl": "https://www.netflix.com/global/watch",
+      "bgImg": "",
+      "tags": [
+        "tvapp",
+        "netflix",
+        "4k",
+        "streaming"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "💡"
+    },
+    {
+      "name": "hulu-app",
+      "nameShort": "hulu",
+      "seoTitle": "Hulu App Offers Live TV, DVR, And Disney Bundle Options.",
+      "seoDescription": "Hulu App Combines On-Demand Shows, Live TV, Cloud DVR, And Espn+ Disney+ Bundle Options With Profiles. Explore Features, Use Cases, Pricing, Alternatives.",
+      "seoKeywords": [
+        "hulu app",
+        "live tv",
+        "cloud dvr",
+        "disney bundle",
+        "espn plus",
+        "profiles",
+        "streaming"
+      ],
+      "iframeUrl": "https://www.hulu.com/welcome",
+      "bgImg": "",
+      "tags": [
+        "tvapp",
+        "hulu",
+        "live-tv",
+        "bundle"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "📚"
+    }
+  ]
+}

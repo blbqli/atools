@@ -1,0 +1,120 @@
+{
+  "name": "input-tools-keyboards",
+  "nameShort": "input",
+  "icon": "🔥",
+  "seoTitle": "Input Tools For Multilingual Typing And Keyboards | Guides.",
+  "seoDescription": "Virtual Keyboards, IME Downloads, And Language Input Helpers Including Google Input Tools. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+  "seoKeywords": [
+    "input tools",
+    "virtual keyboard",
+    "ime",
+    "google input tools"
+  ],
+  "children": [
+    {
+      "name": "google-input-tools",
+      "nameShort": "google-input",
+      "seoTitle": "Google Input Tools Download And Web Input | Guides, Tips &.",
+      "seoDescription": "Google Input Tools Page For Transliteration, Handwriting, And Keyboard Support Across Languages. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "google input tools",
+        "transliteration",
+        "keyboard",
+        "handwriting"
+      ],
+      "iframeUrl": "https://www.google.com/inputtools/",
+      "bgImg": "",
+      "tags": [
+        "google-input-tools",
+        "keyboard",
+        "ime"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "💡"
+    },
+    {
+      "name": "keyman-keyboard",
+      "nameShort": "keyman",
+      "seoTitle": "Keyman Keyboard Manager For Any Language | Guides, Tips &.",
+      "seoDescription": "Keyman Desktop And Mobile Keyboards With Thousands Of Language Layouts And Cloud Sync. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "keyman",
+        "keyboard",
+        "language",
+        "layouts"
+      ],
+      "iframeUrl": "https://www.keyman.com/",
+      "bgImg": "",
+      "tags": [
+        "keyman",
+        "keyboard",
+        "ime"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🛠"
+    },
+    {
+      "name": "inputking-online-keyboard",
+      "nameShort": "inputking",
+      "seoTitle": "Inputking Online Keyboard And IME | Guides, Tips & Updates.",
+      "seoDescription": "Inputking Browser-Based Keyboards For Chinese, Japanese, And Multilingual Typing. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "inputking",
+        "online keyboard",
+        "ime",
+        "multilingual"
+      ],
+      "iframeUrl": "https://www.inputking.com/",
+      "bgImg": "",
+      "tags": [
+        "inputking",
+        "keyboard",
+        "ime"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🖼"
+    },
+    {
+      "name": "lexilogos-virtual-keyboard",
+      "nameShort": "lexilogos",
+      "seoTitle": "Lexilogos Virtual Keyboards For World Languages | Guides.",
+      "seoDescription": "Lexilogos Keyboard Widgets Covering Arabic, Hindi, Greek, And More Scripts Online. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "lexilogos",
+        "virtual keyboard",
+        "languages",
+        "online typing"
+      ],
+      "iframeUrl": "https://www.lexilogos.com/keyboard/",
+      "bgImg": "",
+      "tags": [
+        "lexilogos",
+        "keyboard",
+        "virtual"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧭"
+    },
+    {
+      "name": "branah-virtual-keyboard",
+      "nameShort": "branah",
+      "seoTitle": "Branah Virtual Keyboard Collection | Guides, Tips & Updates.",
+      "seoDescription": "Branah Hosts Virtual Keyboards And Character Pickers For Fast Multilingual Input. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "branah",
+        "virtual keyboard",
+        "multilingual",
+        "typing"
+      ],
+      "iframeUrl": "https://www.branah.com/keyboard",
+      "bgImg": "",
+      "tags": [
+        "branah",
+        "keyboard",
+        "typing"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🍀"
+    }
+  ]
+}

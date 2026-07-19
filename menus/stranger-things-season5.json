@@ -1,0 +1,162 @@
+{
+  "name": "stranger-things-season5",
+  "nameShort": "stranger-things",
+  "icon": "🧰",
+  "seoTitle": "Stranger Things Featuring St5 Wiki, St5 Tudum, St5.",
+  "seoDescription": "Stranger Things Directory Featuring St5 Wiki, St5 Tudum, St5 Gamesradar And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+  "seoKeywords": [
+    "stranger things",
+    "stranger",
+    "things",
+    "season5",
+    "wikipedia",
+    "netflix",
+    "tudum",
+    "gamesradar"
+  ],
+  "children": [
+    {
+      "name": "stranger-things-season5-wikipedia",
+      "nameShort": "st5-wiki",
+      "seoTitle": "St5 Wiki Wikipedia Details The Final Season's Episode List.",
+      "seoDescription": "St5 Wiki - Wikipedia Details The Final Season's Episode List, Filming Schedule, And Confirmed Directors, Keeping Tabs On Production Pauses Explore Features.",
+      "seoKeywords": [
+        "st5 wiki",
+        "stranger",
+        "things",
+        "season5",
+        "wikipedia",
+        "st5",
+        "wiki",
+        "stranger-things",
+        "netflix",
+        "tv",
+        "details",
+        "final"
+      ],
+      "iframeUrl": "https://en.wikipedia.org/wiki/Stranger_Things_(season_5)",
+      "bgImg": "",
+      "tags": [
+        "stranger-things",
+        "season5",
+        "wiki",
+        "netflix",
+        "tv"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🛠"
+    },
+    {
+      "name": "netflix-tudum-stranger-things",
+      "nameShort": "st5-tudum",
+      "seoTitle": "St5 Tudum Netflix Tudum's Guide Posts Official Teasers.",
+      "seoDescription": "St5 Tudum - Netflix Tudum's Guide Posts Official Teasers, Table-Read Photos, And Quotes From The Duffer Brothers About How The Finale Is Structured Explore.",
+      "seoKeywords": [
+        "st5 tudum",
+        "netflix",
+        "tudum",
+        "stranger",
+        "things",
+        "st5",
+        "stranger-things",
+        "season5",
+        "insights",
+        "guide",
+        "posts",
+        "official"
+      ],
+      "iframeUrl": "https://www.netflix.com/tudum/articles/stranger-things-season-5-guide",
+      "bgImg": "",
+      "tags": [
+        "stranger-things",
+        "season5",
+        "netflix",
+        "tudum",
+        "insights"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🧰"
+    },
+    {
+      "name": "gamesradar-stranger-things-season5",
+      "nameShort": "st5-gamesradar",
+      "seoTitle": "St5 Gamesradar Gamesradar Aggregates Spoiler-Free Set.",
+      "seoDescription": "St5 Gamesradar - Gamesradar Aggregates Spoiler-Free Set Reports, Casting Scoops, And Timeline Predictions For The Stranger Things Finale Explore Features, Use.",
+      "seoKeywords": [
+        "st5 gamesradar",
+        "gamesradar",
+        "stranger",
+        "things",
+        "season5",
+        "st5",
+        "stranger-things",
+        "news",
+        "tv",
+        "aggregates",
+        "spoiler",
+        "free"
+      ],
+      "iframeUrl": "https://www.gamesradar.com/stranger-things-season-5/",
+      "bgImg": "",
+      "tags": [
+        "stranger-things",
+        "season5",
+        "gamesradar",
+        "news",
+        "tv"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "📈"
+    },
+    {
+      "name": "imdb-stranger5",
+      "nameShort": "imdb",
+      "seoTitle": "Imdb Lists Stranger Things 5 Cast, Episodes, And Watchlist.",
+      "seoDescription": "Imdb Tracks Stranger Things 5 Cast Updates, Episode List, And Watchlist Momentum Ahead Of The Final Season. Explore Features, Use Cases, Pricing, Alternatives.",
+      "seoKeywords": [
+        "imdb",
+        "stranger things 5",
+        "cast",
+        "episodes",
+        "watchlist",
+        "netflix",
+        "final season"
+      ],
+      "iframeUrl": "https://www.imdb.com/title/tt4574334/episodes?season=5",
+      "bgImg": "",
+      "tags": [
+        "stranger-things",
+        "imdb",
+        "episodes",
+        "cast"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🔧"
+    },
+    {
+      "name": "rt-stranger5",
+      "nameShort": "rt",
+      "seoTitle": "Rotten Tomatoes Tracks Stranger Things 5 Tomatometer And.",
+      "seoDescription": "Rotten Tomatoes Tracks Stranger Things 5 Tomatometer, Trailers, And Critic Previews For The Netflix Finale. Explore Features, Use Cases, Pricing, Alternatives.",
+      "seoKeywords": [
+        "rotten tomatoes",
+        "stranger things 5",
+        "tomatometer",
+        "trailers",
+        "critic previews",
+        "fan score",
+        "netflix"
+      ],
+      "iframeUrl": "https://www.rottentomatoes.com/tv/stranger_things/s05",
+      "bgImg": "",
+      "tags": [
+        "stranger-things",
+        "rottentomatoes",
+        "trailers",
+        "scores"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "📡"
+    }
+  ]
+}

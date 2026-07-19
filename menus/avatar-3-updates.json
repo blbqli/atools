@@ -1,0 +1,120 @@
+{
+  "name": "avatar-3-updates",
+  "nameShort": "avatar3",
+  "icon": "⚡",
+  "seoTitle": "Avatar 3 Release Updates And Trailers | Guides, Tips &.",
+  "seoDescription": "Official And Trusted Movie Sites Tracking Avatar 3 News, Cast, Trailers, And Release Schedule. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+  "seoKeywords": [
+    "avatar 3",
+    "james cameron",
+    "movie",
+    "release date"
+  ],
+  "children": [
+    {
+      "name": "avatar-official-film",
+      "nameShort": "avatar",
+      "seoTitle": "Avatar Official Film Site | Guides, Tips & Updates.",
+      "seoDescription": "Avatar Official Film Hub With Franchise News, Upcoming Avatar 3 Details, And Media Kits. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "avatar",
+        "official",
+        "movie",
+        "news"
+      ],
+      "iframeUrl": "https://www.avatar.com/films/avatar-3",
+      "bgImg": "",
+      "tags": [
+        "avatar3",
+        "official",
+        "movie"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧳"
+    },
+    {
+      "name": "imdb-avatar3",
+      "nameShort": "imdb",
+      "seoTitle": "Avatar 3 Imdb Page | Guides, Tips & Updates Guides, Tips &.",
+      "seoDescription": "Avatar 3 Imdb Listing With Cast, Crew, Release Date, And Production Notes. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "avatar 3",
+        "imdb",
+        "cast",
+        "release"
+      ],
+      "iframeUrl": "https://www.imdb.com/title/tt1757678/",
+      "bgImg": "",
+      "tags": [
+        "avatar3",
+        "imdb",
+        "cast"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🔧"
+    },
+    {
+      "name": "rottentomatoes-avatar3",
+      "nameShort": "rt",
+      "seoTitle": "Avatar 3 On Rotten Tomatoes | Guides, Tips & Updates.",
+      "seoDescription": "Rotten Tomatoes Preview Page For Avatar 3 With Synopsis, Buzz, And Related Coverage. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "avatar 3",
+        "rotten tomatoes",
+        "preview",
+        "movie"
+      ],
+      "iframeUrl": "https://www.rottentomatoes.com/m/avatar_the_seed_bearer",
+      "bgImg": "",
+      "tags": [
+        "avatar3",
+        "rottentomatoes",
+        "preview"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📡"
+    },
+    {
+      "name": "disney-d23-avatar3",
+      "nameShort": "d23",
+      "seoTitle": "Disney D23 Avatar 3 Updates | Guides, Tips & Updates.",
+      "seoDescription": "Disney D23 Hub Sharing Official Avatar 3 Announcements, Panels, And Production Info. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "avatar 3",
+        "disney",
+        "d23",
+        "news"
+      ],
+      "iframeUrl": "https://d23.com/tag/avatar/",
+      "bgImg": "",
+      "tags": [
+        "avatar3",
+        "disney",
+        "news"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⭐"
+    },
+    {
+      "name": "collider-avatar3",
+      "nameShort": "collider",
+      "seoTitle": "Avatar 3 Release Tracker On Collider | Guides, Tips &.",
+      "seoDescription": "Collider Article Tracking Avatar 3 Release Date, Plot Teases, And Trailer Expectations. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "avatar 3",
+        "collider",
+        "release date",
+        "news"
+      ],
+      "iframeUrl": "https://collider.com/avatar-3-release-date/",
+      "bgImg": "",
+      "tags": [
+        "avatar3",
+        "collider",
+        "release"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📚"
+    }
+  ]
+}

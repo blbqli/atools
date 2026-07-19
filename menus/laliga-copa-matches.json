@@ -1,0 +1,121 @@
+{
+  "name": "laliga-copa-matches",
+  "nameShort": "laliga-copa",
+  "icon": "💡",
+  "seoTitle": "Laliga Fixtures Covering Alavés, Real Madrid, Barcelona.",
+  "seoDescription": "Live Schedules And Stats For Alavés Vs Real Madrid, Barcelona Vs Osasuna, Talavera Ties, And Copa Del Rey Rounds. Explore Features, Use Cases, Pricing.",
+  "seoKeywords": [
+    "alaves real madrid",
+    "barcelona osasuna",
+    "talavera real madrid",
+    "copa del rey",
+    "laliga fixtures"
+  ],
+  "children": [
+    {
+      "name": "real-madrid-fixtures-espn",
+      "nameShort": "rm-fixtures",
+      "seoTitle": "Real Madrid Fixtures On ESPN | Guides, Tips & Updates.",
+      "seoDescription": "ESPN Fixture List For Real Madrid With Dates, Kickoff Times, And Results Across Competitions. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "real madrid",
+        "fixtures",
+        "espn",
+        "laliga"
+      ],
+      "iframeUrl": "https://www.espn.com/soccer/team/fixtures/_/id/86/real-madrid",
+      "bgImg": "",
+      "tags": [
+        "real-madrid",
+        "fixtures",
+        "espn"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📦"
+    },
+    {
+      "name": "alaves-fixtures-espn",
+      "nameShort": "alaves",
+      "seoTitle": "Deportivo Alavés Match Schedule On ESPN | Guides, Tips &.",
+      "seoDescription": "ESPN Schedule Page For Deportivo Alavés Covering Laliga Fixtures, Results, And Match Reports. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "alaves",
+        "fixtures",
+        "espn",
+        "laliga"
+      ],
+      "iframeUrl": "https://www.espn.com/soccer/team/fixtures/_/id/106/deportivo-alaves",
+      "bgImg": "",
+      "tags": [
+        "alaves",
+        "fixtures",
+        "espn"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎬"
+    },
+    {
+      "name": "laliga-official-calendar",
+      "nameShort": "laliga",
+      "seoTitle": "Laliga Official Fixture Calendar | Guides, Tips & Updates.",
+      "seoDescription": "Laliga Official Calendar Listing Upcoming Matches, Tables, And Broadcast Info For Every Round. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "laliga",
+        "fixtures",
+        "calendar",
+        "schedule"
+      ],
+      "iframeUrl": "https://www.laliga.com/en-GB/calendar",
+      "bgImg": "",
+      "tags": [
+        "laliga",
+        "fixtures",
+        "calendar"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎮"
+    },
+    {
+      "name": "copa-del-rey-rfef",
+      "nameShort": "copa-rey",
+      "seoTitle": "Copa Del Rey Official Competition Hub | Guides, Tips &.",
+      "seoDescription": "RFEF Copa Del Rey Hub With Round Draws, Fixtures, And Results Including Talavera And Laliga Clubs. Explore Features, Use Cases, Pricing, Alternatives, Faqs.",
+      "seoKeywords": [
+        "copa del rey",
+        "rfef",
+        "fixtures",
+        "results"
+      ],
+      "iframeUrl": "https://www.rfef.es/en/competition/copa-del-rey",
+      "bgImg": "",
+      "tags": [
+        "copa-del-rey",
+        "rfef",
+        "fixtures"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🔥"
+    },
+    {
+      "name": "laliga-matches-sofascore",
+      "nameShort": "sofascore",
+      "seoTitle": "Sofascore Laliga Live Scores And Stats | Guides, Tips &.",
+      "seoDescription": "Sofascore Laliga Center Delivering Live Scores, Lineups, And Stats For Barcelona, Real Madrid, And Osasuna. Explore Features, Use Cases, Pricing, Alternatives.",
+      "seoKeywords": [
+        "laliga",
+        "live scores",
+        "sofascore",
+        "barcelona"
+      ],
+      "iframeUrl": "https://www.sofascore.com/tournament/football/spain/laliga/8",
+      "bgImg": "",
+      "tags": [
+        "laliga",
+        "sofascore",
+        "scores"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🛠"
+    }
+  ]
+}

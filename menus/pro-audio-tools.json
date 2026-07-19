@@ -1,0 +1,121 @@
+{
+  "name": "pro-audio-tools",
+  "nameShort": "pro-tools",
+  "icon": "🛡",
+  "seoTitle": "Pro Tools Audio Workstation And Learning | Guides, Tips &.",
+  "seoDescription": "Resources For Avid Pro Tools Software, Tutorials, Plugins, And Hardware Bundles. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+  "seoKeywords": [
+    "pro tools",
+    "audio",
+    "daw",
+    "avid",
+    "plugins"
+  ],
+  "children": [
+    {
+      "name": "avid-pro-tools",
+      "nameShort": "avid",
+      "seoTitle": "Avid Pro Tools Official Product Page | Guides, Tips &.",
+      "seoDescription": "Avid Pro Tools Product Overview With Feature Tiers, Pricing, And Hardware Options. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "avid",
+        "pro tools",
+        "daw",
+        "pricing"
+      ],
+      "iframeUrl": "https://www.avid.com/pro-tools",
+      "bgImg": "",
+      "tags": [
+        "avid",
+        "pro-tools",
+        "audio"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🍀"
+    },
+    {
+      "name": "production-expert-pro-tools",
+      "nameShort": "expert",
+      "seoTitle": "Production Expert Pro Tools Tutorials And News | Guides.",
+      "seoDescription": "Production Expert Pro Tools Section Covering Tips, Reviews, And Workflow Guides. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "pro tools",
+        "tutorials",
+        "news",
+        "production expert"
+      ],
+      "iframeUrl": "https://www.production-expert.com/pro-tools",
+      "bgImg": "",
+      "tags": [
+        "pro-tools",
+        "tutorials",
+        "news"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎲"
+    },
+    {
+      "name": "pro-tools-learning-hub",
+      "nameShort": "learn",
+      "seoTitle": "Pro Tools Learn And Support Resources | Guides, Tips &.",
+      "seoDescription": "Avid Learn And Support Hub For Pro Tools With Downloads, Docs, And Training Videos. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "pro tools",
+        "learn",
+        "support",
+        "docs"
+      ],
+      "iframeUrl": "https://www.avid.com/learn-and-support/pro-tools",
+      "bgImg": "",
+      "tags": [
+        "pro-tools",
+        "support",
+        "training"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⚡"
+    },
+    {
+      "name": "pluginboutique-pro-tools-aax",
+      "nameShort": "plugins",
+      "seoTitle": "AAX Plugins For Pro Tools On Plugin Boutique | Guides, Tips.",
+      "seoDescription": "Plugin Boutique Catalog Filtered For AAX Plugins Compatible With Avid Pro Tools. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "pro tools",
+        "aax plugins",
+        "audio",
+        "effects"
+      ],
+      "iframeUrl": "https://www.pluginboutique.com/formats/13-Pro-Tools-AAX",
+      "bgImg": "",
+      "tags": [
+        "pro-tools",
+        "plugins",
+        "aax"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⚡"
+    },
+    {
+      "name": "sweetwater-pro-tools",
+      "nameShort": "sweetwater",
+      "seoTitle": "Sweetwater Pro Tools Software And Bundles | Guides, Tips &.",
+      "seoDescription": "Sweetwater Landing With Pro Tools Software, Hardware Bundles, And Upgrade Options. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "pro tools",
+        "sweetwater",
+        "audio",
+        "bundles"
+      ],
+      "iframeUrl": "https://www.sweetwater.com/c695--Avid--Pro_Tools_Software",
+      "bgImg": "",
+      "tags": [
+        "pro-tools",
+        "sweetwater",
+        "audio"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧾"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "name": "tools",
+  "icon": "⭐",
+  "children": [
+    {
+      "name": "json",
+      "nameShort": "json",
+      "seoTitle": "JSON Formatter & Validator Online | Pretty Print & Minify.",
+      "path": "/json/",
+      "iframeUrl": "https://json4u.cn/editor",
+      "seoDescription": "Online JSON Toolkit To Paste, Pretty-Print, Minify, And Validate Payloads. Spot Errors Fast, Convert Between Json, CSV, Yaml, And Keep API Responses Clean.",
+      "seoKeywords": [
+        "json",
+        "json formatter",
+        "json validator",
+        "json converter",
+        "json tools"
+      ],
+      "bgImg": "/graph.webp",
+      "tags": [
+        "json",
+        "formatter",
+        "validator",
+        "converter",
+        "developer tools"
+      ],
+      "updateTime": "2025-12-22",
+      "icon": "💡"
+    },
+    {
+      "name": "png-to-jpg",
+      "nameShort": "png-to-jpg",
+      "seoTitle": "PNG To JPG & JPG To PNG Converter | Fast Online Tool",
+      "path": "/png-to-jpg/",
+      "iframeUrl": "https://convert.town/png-to-jpg",
+      "seoDescription": "Upload An Image And Convert Between PNG And JPG Instantly. Drag And Drop, Pick Format, Adjust JPG Quality And Background, Then Download Without Server Uploads.",
+      "seoKeywords": [
+        "png to jpg",
+        "jpg to png",
+        "image converter",
+        "online image converter",
+        "background color fill",
+        "jpg quality slider"
+      ],
+      "bgImg": "/png-to-jpg-bg.webp",
+      "tags": [
+        "png-to-jpg",
+        "jpg-to-png",
+        "image-converter",
+        "background-fill",
+        "quality-control"
+      ],
+      "updateTime": "2025-12-26",
+      "icon": "🚀"
+    }
+  ]
+}

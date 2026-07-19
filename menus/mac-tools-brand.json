@@ -1,0 +1,120 @@
+{
+  "name": "mac-tools-brand",
+  "nameShort": "mac-tools",
+  "icon": "🗺",
+  "seoTitle": "Mac Tools Automotive Hand Tools | Guides, Tips & Updates.",
+  "seoDescription": "Mac Tools Official Pages For Tool Trucks, Products, Franchising, And Trusted Retailers. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+  "seoKeywords": [
+    "mac tools",
+    "automotive",
+    "hand tools",
+    "franchise"
+  ],
+  "children": [
+    {
+      "name": "mac-tools-official",
+      "nameShort": "official",
+      "seoTitle": "Mac Tools Official Site | Guides, Tips & Updates Guides.",
+      "seoDescription": "Mac Tools Homepage With Latest Automotive Tool Catalogs, Promotions, And Services. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "mac tools",
+        "official",
+        "automotive",
+        "catalog"
+      ],
+      "iframeUrl": "https://www.mactools.com/",
+      "bgImg": "",
+      "tags": [
+        "mac-tools",
+        "official",
+        "automotive"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧪"
+    },
+    {
+      "name": "mac-tools-products",
+      "nameShort": "products",
+      "seoTitle": "Mac Tools Product Catalog | Guides, Tips & Updates.",
+      "seoDescription": "Mac Tools Product Catalog Highlighting Hand Tools, Power Tools, And Storage. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "mac tools",
+        "catalog",
+        "hand tools",
+        "storage"
+      ],
+      "iframeUrl": "https://www.mactools.com/products",
+      "bgImg": "",
+      "tags": [
+        "mac-tools",
+        "catalog",
+        "products"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎯"
+    },
+    {
+      "name": "mac-tools-franchise",
+      "nameShort": "franchise",
+      "seoTitle": "Mac Tools Franchise Information | Guides, Tips & Updates.",
+      "seoDescription": "Mac Tools Franchising Details For Starting A Tool Truck Route And Support Resources. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "mac tools",
+        "franchise",
+        "tool truck",
+        "business"
+      ],
+      "iframeUrl": "https://www.mactools.com/franchise",
+      "bgImg": "",
+      "tags": [
+        "mac-tools",
+        "franchise",
+        "business"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🏆"
+    },
+    {
+      "name": "mac-tools-tool-truck",
+      "nameShort": "tool-truck",
+      "seoTitle": "Mac Tools Tool Truck Details | Guides, Tips & Updates.",
+      "seoDescription": "Tool Truck Overview For Mac Tools Mobile Stores, Inventory, And Routes. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips.",
+      "seoKeywords": [
+        "mac tools",
+        "tool truck",
+        "mobile store",
+        "inventory"
+      ],
+      "iframeUrl": "https://www.mactools.com/tool-truck",
+      "bgImg": "",
+      "tags": [
+        "mac-tools",
+        "tool-truck",
+        "mobile"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎯"
+    },
+    {
+      "name": "mac-tools-trustpilot",
+      "nameShort": "trustpilot",
+      "seoTitle": "Mac Tools Customer Ratings | Guides, Tips & Updates.",
+      "seoDescription": "Trustpilot Review Page For Mac Tools With Customer Ratings And Feedback. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "mac tools",
+        "reviews",
+        "trustpilot",
+        "ratings"
+      ],
+      "iframeUrl": "https://www.trustpilot.com/review/mactools.com",
+      "bgImg": "",
+      "tags": [
+        "mac-tools",
+        "reviews",
+        "ratings"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⚡"
+    }
+  ]
+}

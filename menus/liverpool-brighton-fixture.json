@@ -1,0 +1,120 @@
+{
+  "name": "liverpool-brighton-fixture",
+  "nameShort": "lfc-brighton",
+  "icon": "🧩",
+  "seoTitle": "Liverpool Vs Brighton Fixtures And Stats | Guides, Tips &.",
+  "seoDescription": "Premier League Resources Showing Liverpool Vs Brighton Schedules, Live Scores, And Match Stats From Trusted Sites. Explore Features, Use Cases, Pricing.",
+  "seoKeywords": [
+    "liverpool vs brighton",
+    "premier league",
+    "fixtures",
+    "stats"
+  ],
+  "children": [
+    {
+      "name": "liverpool-match-center",
+      "nameShort": "liverpool",
+      "seoTitle": "Liverpool FC Official Match Center | Guides, Tips & Updates.",
+      "seoDescription": "Liverpool FC Match Center With Fixtures, Results, And Live Coverage For All Competitions. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "liverpool",
+        "fixtures",
+        "match center",
+        "premier league"
+      ],
+      "iframeUrl": "https://www.liverpoolfc.com/match",
+      "bgImg": "",
+      "tags": [
+        "liverpool",
+        "fixtures",
+        "premier-league"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🔬"
+    },
+    {
+      "name": "brighton-fixtures",
+      "nameShort": "brighton",
+      "seoTitle": "Brighton Fixture List And Results | Guides, Tips & Updates.",
+      "seoDescription": "Brighton & Hove Albion Official Fixtures Page Covering Premier League And Cup Matches. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "brighton",
+        "fixtures",
+        "premier league",
+        "schedule"
+      ],
+      "iframeUrl": "https://www.brightonandhovealbion.com/matches/fixtures/men",
+      "bgImg": "",
+      "tags": [
+        "brighton",
+        "fixtures",
+        "premier-league"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📐"
+    },
+    {
+      "name": "premier-league-fixtures",
+      "nameShort": "premier-league",
+      "seoTitle": "Premier League Official Fixtures List | Guides, Tips &.",
+      "seoDescription": "Premier League Official Fixtures Including Liverpool Vs Brighton Dates, Broadcasts, And Results. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "premier league",
+        "fixtures",
+        "schedule",
+        "liverpool"
+      ],
+      "iframeUrl": "https://www.premierleague.com/fixtures",
+      "bgImg": "",
+      "tags": [
+        "premier-league",
+        "fixtures",
+        "schedule"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🔬"
+    },
+    {
+      "name": "bbc-liverpool-fixtures",
+      "nameShort": "bbc-lfc",
+      "seoTitle": "BBC Sport Liverpool Fixtures And Results | Guides, Tips &.",
+      "seoDescription": "BBC Sport Fixture List For Liverpool With Match Reports, Live Text, And Highlights. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "bbc sport",
+        "liverpool",
+        "fixtures",
+        "brighton"
+      ],
+      "iframeUrl": "https://www.bbc.com/sport/football/teams/liverpool/fixtures",
+      "bgImg": "",
+      "tags": [
+        "bbc",
+        "liverpool",
+        "fixtures"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎨"
+    },
+    {
+      "name": "sofascore-liverpool-team",
+      "nameShort": "sofa-lfc",
+      "seoTitle": "Sofascore Liverpool Live Scores | Guides, Tips & Updates.",
+      "seoDescription": "Sofascore Liverpool Team Page Providing Live Scores, Player Ratings, And Match Statistics. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "liverpool",
+        "sofascore",
+        "live scores",
+        "premier league"
+      ],
+      "iframeUrl": "https://www.sofascore.com/team/football/liverpool/8",
+      "bgImg": "",
+      "tags": [
+        "liverpool",
+        "sofascore",
+        "scores"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧾"
+    }
+  ]
+}

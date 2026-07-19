@@ -1,0 +1,121 @@
+{
+  "name": "pdf-tools-online",
+  "nameShort": "pdf",
+  "icon": "🌊",
+  "seoTitle": "PDF Tools For Merge, Convert, And Compress | Guides, Tips &.",
+  "seoDescription": "Trusted PDF Web Apps For Merging, Compressing, And Editing Without Installs. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+  "seoKeywords": [
+    "pdf tools",
+    "merge",
+    "compress",
+    "convert",
+    "edit"
+  ],
+  "children": [
+    {
+      "name": "ilovepdf-editor",
+      "nameShort": "ilovepdf",
+      "seoTitle": "Ilovepdf Online PDF Editor And Converter | Guides, Tips &.",
+      "seoDescription": "Ilovepdf Web Suite For Merging, Splitting, Converting, And Compressing Pdfs Quickly. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "ilovepdf",
+        "pdf editor",
+        "merge",
+        "compress"
+      ],
+      "iframeUrl": "https://www.ilovepdf.com/",
+      "bgImg": "",
+      "tags": [
+        "pdf",
+        "ilovepdf",
+        "converter"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎵"
+    },
+    {
+      "name": "sejda-pdf-suite",
+      "nameShort": "sejda",
+      "seoTitle": "Sejda PDF Suite In The Browser | Guides, Tips & Updates.",
+      "seoDescription": "Sejda Online PDF Toolkit With Edit, Sign, Compress, And PDF To Word Conversion. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "sejda",
+        "pdf tools",
+        "edit",
+        "compress"
+      ],
+      "iframeUrl": "https://www.sejda.com/",
+      "bgImg": "",
+      "tags": [
+        "sejda",
+        "pdf",
+        "converter"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧳"
+    },
+    {
+      "name": "pdf24-tools",
+      "nameShort": "pdf24",
+      "seoTitle": "Pdf24 Tools For Quick PDF Tasks | Guides, Tips & Updates.",
+      "seoDescription": "Pdf24 Hosts Free Browser PDF Tools For Merging, Signing, Converting, And Unlocking Files. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "pdf24",
+        "pdf tools",
+        "merge",
+        "sign"
+      ],
+      "iframeUrl": "https://www.pdf24.org/",
+      "bgImg": "",
+      "tags": [
+        "pdf24",
+        "pdf",
+        "online-tools"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📈"
+    },
+    {
+      "name": "smallpdf-online",
+      "nameShort": "smallpdf",
+      "seoTitle": "Smallpdf Web PDF Converter Collection | Guides, Tips &.",
+      "seoDescription": "Smallpdf Provides Fast PDF Conversions, Compression, And Signing From Any Device. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "smallpdf",
+        "pdf converter",
+        "compress",
+        "sign"
+      ],
+      "iframeUrl": "https://www.smallpdf.com/",
+      "bgImg": "",
+      "tags": [
+        "smallpdf",
+        "pdf",
+        "converter"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🌟"
+    },
+    {
+      "name": "pdfcandy-toolkit",
+      "nameShort": "pdfcandy",
+      "seoTitle": "PDF Candy Online Toolkit | Guides, Tips & Updates Guides.",
+      "seoDescription": "PDF Candy Browser Toolkit For PDF To Word, OCR, Page Delete, And Quick Merges. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "pdf candy",
+        "pdf tools",
+        "ocr",
+        "merge"
+      ],
+      "iframeUrl": "https://www.pdfcandy.com/",
+      "bgImg": "",
+      "tags": [
+        "pdfcandy",
+        "pdf",
+        "ocr"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⭐"
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "name": "kpop-demon-hunters",
+  "nameShort": "kpop",
+  "icon": "💡",
+  "seoTitle": "Kpop Featuring Kpop Wiki, Kpop Variety, Kpop Animationmag.",
+  "seoDescription": "Kpop Directory Featuring Kpop Wiki, Kpop Variety, Kpop Animationmag And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+  "seoKeywords": [
+    "kpop",
+    "demon",
+    "hunters",
+    "wikipedia",
+    "variety",
+    "animation",
+    "magazine"
+  ],
+  "children": [
+    {
+      "name": "kpop-demon-hunters-wikipedia",
+      "nameShort": "kpop-wiki",
+      "seoTitle": "Kpop Wiki Wikipedia Documents The K-Pop: Demon Hunters.",
+      "seoDescription": "Kpop Wiki - Wikipedia Documents The K-Pop Demon Hunters Production Timeline, Confirmed Creative Team, Voice Cast, And Plot Synopsis Straight From Explore.",
+      "seoKeywords": [
+        "kpop wiki",
+        "kpop",
+        "demon",
+        "hunters",
+        "wikipedia",
+        "wiki",
+        "disney",
+        "documents",
+        "pop",
+        "production",
+        "timeline",
+        "confirmed"
+      ],
+      "iframeUrl": "https://en.wikipedia.org/wiki/K-Pop:_Demon_Hunters",
+      "bgImg": "",
+      "tags": [
+        "kpop",
+        "demon",
+        "hunters",
+        "disney",
+        "wiki"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🚀"
+    },
+    {
+      "name": "variety-kpop-demon-hunters",
+      "nameShort": "kpop-variety",
+      "seoTitle": "Kpop Variety Variety's Annecy Coverage Recaps Interviews.",
+      "seoDescription": "Kpop Variety - Variety's Annecy Coverage Recaps Interviews With Directors Chris And Jennifer Lee, Concept Art Reveals, And Why Disney Is Leaning On Explore.",
+      "seoKeywords": [
+        "kpop variety",
+        "variety",
+        "kpop",
+        "demon",
+        "hunters",
+        "annecy",
+        "disney",
+        "film",
+        "coverage",
+        "recaps",
+        "interviews",
+        "directors"
+      ],
+      "iframeUrl": "https://variety.com/2021/film/news/k-pop-demon-hunters-1234985118/",
+      "bgImg": "",
+      "tags": [
+        "kpop",
+        "variety",
+        "annecy",
+        "disney",
+        "film"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🧾"
+    },
+    {
+      "name": "animation-magazine-kpop-demon-hunters",
+      "nameShort": "kpop-animationmag",
+      "seoTitle": "Kpop Animationmag Animation Magazine's Announcement Story.",
+      "seoDescription": "Kpop Animationmag - Animation Magazine's Announcement Story Highlights The Producing Team Behind K-Pop Demon Hunters And Links To Related Disney Explore.",
+      "seoKeywords": [
+        "kpop animationmag",
+        "animation",
+        "magazine",
+        "kpop",
+        "demon",
+        "hunters",
+        "animationmag",
+        "disney",
+        "announcement",
+        "film",
+        "story",
+        "highlights"
+      ],
+      "iframeUrl": "https://www.animationmagazine.net/2021/06/disney-announces-k-pop-demon-hunters-and-steam-bentley/",
+      "bgImg": "",
+      "tags": [
+        "kpop",
+        "animation",
+        "disney",
+        "announcement",
+        "film"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🎬"
+    },
+    {
+      "name": "deadline-kpop",
+      "nameShort": "deadline",
+      "seoTitle": "Deadline Covers K-Pop: Demon Hunters Release Chatter And.",
+      "seoDescription": "Deadline Covers K-Pop: Demon Hunters Release Chatter, Production Updates, And Interviews With The Disney Animation Team. Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "kpop demon hunters",
+        "deadline",
+        "disney animation",
+        "release date",
+        "cast news",
+        "annecy",
+        "movie"
+      ],
+      "iframeUrl": "https://deadline.com/2021/06/k-pop-demon-hunters-disney-animation-film-1234778654/",
+      "bgImg": "",
+      "tags": [
+        "kpop",
+        "deadline",
+        "disney",
+        "release",
+        "movie"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🧭"
+    },
+    {
+      "name": "imdb-kpop",
+      "nameShort": "imdb",
+      "seoTitle": "Imdb Lists K-Pop: Demon Hunters Cast Rumors And Release.",
+      "seoDescription": "Imdb Lists K-Pop: Demon Hunters Cast Rumors, Production Status, And Watchlist Momentum Ahead Of Release. Explore Features, Use Cases, Pricing, Alternatives.",
+      "seoKeywords": [
+        "kpop demon hunters",
+        "imdb",
+        "cast",
+        "release date",
+        "watchlist",
+        "disney",
+        "animated film"
+      ],
+      "iframeUrl": "https://www.imdb.com/find/?q=K-Pop%3A%20Demon%20Hunters",
+      "bgImg": "",
+      "tags": [
+        "kpop",
+        "imdb",
+        "cast",
+        "release",
+        "movie"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🔧"
+    }
+  ]
+}

@@ -1,0 +1,178 @@
+{
+  "name": "free-online-file-converters",
+  "nameShort": "free",
+  "icon": "🎮",
+  "seoTitle": "Free Featuring Aconvert, Freefileconvert, Filesconversion.",
+  "seoDescription": "Free Directory Featuring Aconvert, Freefileconvert, Filesconversion, Docspal And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+  "seoKeywords": [
+    "free",
+    "online",
+    "file",
+    "converters",
+    "aconvert",
+    "multi",
+    "format",
+    "converter",
+    "freefileconvert",
+    "filesconversion",
+    "simple",
+    "docspal"
+  ],
+  "children": [
+    {
+      "name": "aconvert-multi-format-converter",
+      "nameShort": "aconvert",
+      "seoTitle": "Aconvert Is A Utility Hub For Converting Documents, Ebooks.",
+      "seoDescription": "Aconvert Is A Utility Hub For Converting Documents, Ebooks, Audio, Archives, And Media With Queue-Based Processing Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "aconvert",
+        "multi",
+        "format",
+        "converter",
+        "tool",
+        "utility",
+        "hub",
+        "converting",
+        "documents",
+        "ebooks",
+        "audio",
+        "archives"
+      ],
+      "iframeUrl": "https://www.aconvert.com/",
+      "bgImg": "",
+      "tags": [
+        "aconvert",
+        "multi",
+        "format",
+        "converter",
+        "tool"
+      ],
+      "updateTime": "2025-11-14",
+      "icon": "🛒"
+    },
+    {
+      "name": "freefileconvert-online-converter",
+      "nameShort": "freefileconvert",
+      "seoTitle": "Freefileconvert Free File Convert Handles 8,000+ Format.",
+      "seoDescription": "Freefileconvert - Free File Convert Handles 8,000 Format Combinations With Asynchronous Jobs And Email Reminders For Finished Tasks Explore Features, Use.",
+      "seoKeywords": [
+        "freefileconvert",
+        "online",
+        "converter",
+        "tool",
+        "platform",
+        "free",
+        "file",
+        "convert",
+        "handles",
+        "000+",
+        "format",
+        "combinations"
+      ],
+      "iframeUrl": "https://www.freefileconvert.com/",
+      "bgImg": "",
+      "tags": [
+        "freefileconvert",
+        "online",
+        "converter",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-11-13",
+      "icon": "🚀"
+    },
+    {
+      "name": "filesconversion-simple-format-tool",
+      "nameShort": "filesconversion",
+      "seoTitle": "Filesconversion Files-Conversion Is A Simple Converter That.",
+      "seoDescription": "Filesconversion - Files-Conversion Is A Simple Converter That Turns Videos, Audio, Images, And Documents Into Popular Targets Without Size-Locked Explore.",
+      "seoKeywords": [
+        "filesconversion",
+        "simple",
+        "format",
+        "tool",
+        "platform",
+        "files",
+        "conversion",
+        "converter",
+        "turns",
+        "videos",
+        "audio",
+        "images"
+      ],
+      "iframeUrl": "https://www.files-conversion.com/",
+      "bgImg": "",
+      "tags": [
+        "filesconversion",
+        "simple",
+        "format",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-11-12",
+      "icon": "🖼"
+    },
+    {
+      "name": "docspal-legacy-modern-converter",
+      "nameShort": "docspal",
+      "seoTitle": "Docspal Is A Legacy-Friendly Converter That Keeps Old.",
+      "seoDescription": "Docspal Is A Legacy-Friendly Converter That Keeps Old Office, Ebook, And Archive Formats Alive With Preview And Share Links Explore Features, Use Cases.",
+      "seoKeywords": [
+        "docspal",
+        "legacy",
+        "modern",
+        "converter",
+        "tool",
+        "friendly",
+        "keeps",
+        "old",
+        "office",
+        "ebook",
+        "archive",
+        "formats"
+      ],
+      "iframeUrl": "https://www.docspal.com/",
+      "bgImg": "",
+      "tags": [
+        "docspal",
+        "legacy",
+        "modern",
+        "converter",
+        "tool"
+      ],
+      "updateTime": "2025-11-11",
+      "icon": "🧭"
+    },
+    {
+      "name": "online-utility-file-toolkit",
+      "nameShort": "online",
+      "seoTitle": "Online Utility Is A Lightweight Toolkit Converting Office.",
+      "seoDescription": "Online Utility Is A Lightweight Toolkit Converting Office Files To PDF HTML Text And Offering Checksum Plus Compression Helpers Explore Features, Use Cases.",
+      "seoKeywords": [
+        "online",
+        "utility",
+        "file",
+        "toolkit",
+        "tool",
+        "lightweight",
+        "converting",
+        "office",
+        "files",
+        "pdf",
+        "html",
+        "text"
+      ],
+      "iframeUrl": "https://www.online-utility.org/file/converter.jsp",
+      "bgImg": "",
+      "tags": [
+        "online",
+        "utility",
+        "file",
+        "toolkit",
+        "tool"
+      ],
+      "updateTime": "2025-11-10",
+      "icon": "🛠"
+    }
+  ]
+}

@@ -1,0 +1,25 @@
+{
+  "printWidth": 100,
+  "useTabs": false,
+  "tabWidth": 2,
+  "semi": true,
+  "singleQuote": false,
+  "jsxSingleQuote": true,
+  "trailingComma": "all",
+  "bracketSpacing": true,
+  "bracketSameLine": false,
+  "jsxBracketSameLine": false,
+  "arrowParens": "always",
+  "embeddedLanguageFormatting": "auto",
+  "singleAttributePerLine": true,
+  "endOfLine": "crlf",
+  "overrides": [
+    {
+      "files": ["*.json", "*.jsonc"],
+      "options": {
+        "printWidth": 40,
+        "arrayFormat": "expanded"
+      }
+    }
+  ]
+}

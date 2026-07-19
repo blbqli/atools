@@ -1,0 +1,162 @@
+{
+  "name": "ai-detection-tools",
+  "nameShort": "ai-detector",
+  "icon": "🖼",
+  "seoTitle": "AI Detector Featuring Gptzero, Zerogpt, Contentatscale.",
+  "seoDescription": "AI Detector Directory Featuring Gptzero, Zerogpt, Contentatscale And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+  "seoKeywords": [
+    "ai detector",
+    "detection",
+    "detector",
+    "gptzero",
+    "zerogpt",
+    "checker",
+    "content",
+    "scale"
+  ],
+  "children": [
+    {
+      "name": "gptzero-ai-detector",
+      "nameShort": "gptzero",
+      "seoTitle": "Gptzero Analyzes Burstiness And Perplexity To Label.",
+      "seoDescription": "Gptzero Analyzes Burstiness And Perplexity To Label AI-Generated Essays, Offering Batch Uploads And LMS Integrations Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "gptzero",
+        "detector",
+        "ai-detector",
+        "plagiarism",
+        "education",
+        "tool",
+        "analyzes",
+        "burstiness",
+        "perplexity",
+        "label",
+        "generated",
+        "essays"
+      ],
+      "iframeUrl": "https://gptzero.me/",
+      "bgImg": "",
+      "tags": [
+        "ai-detector",
+        "gptzero",
+        "plagiarism",
+        "education",
+        "tool"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🧾"
+    },
+    {
+      "name": "zerogpt-ai-checker",
+      "nameShort": "zerogpt",
+      "seoTitle": "Zerogpt Supports 50+ Languages, Highlighting Suspicious.",
+      "seoDescription": "Zerogpt Supports 50 Languages, Highlighting Suspicious Sentences And Exporting Reports Useful For Compliance Teams Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "zerogpt",
+        "checker",
+        "ai-checker",
+        "content",
+        "compliance",
+        "tool",
+        "supports",
+        "50+",
+        "languages",
+        "highlighting",
+        "suspicious",
+        "sentences"
+      ],
+      "iframeUrl": "https://www.zerogpt.com/",
+      "bgImg": "",
+      "tags": [
+        "ai-checker",
+        "zerogpt",
+        "content",
+        "compliance",
+        "tool"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🧾"
+    },
+    {
+      "name": "content-at-scale-ai-detector",
+      "nameShort": "contentatscale",
+      "seoTitle": "Contentatscale Content At Scale's Detector Scores Text.",
+      "seoDescription": "Contentatscale - Content At Scale's Detector Scores Text Against Multiple LLM Fingerprints And Provides Rewrite Suggestions To Improve Human Tone Explore.",
+      "seoKeywords": [
+        "contentatscale",
+        "content",
+        "scale",
+        "detector",
+        "ai-detector",
+        "rewrites",
+        "tool",
+        "scores",
+        "text",
+        "against",
+        "multiple",
+        "llm"
+      ],
+      "iframeUrl": "https://contentatscale.ai/ai-content-detector/",
+      "bgImg": "",
+      "tags": [
+        "ai-detector",
+        "content",
+        "scale",
+        "rewrites",
+        "tool"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "📈"
+    },
+    {
+      "name": "originality",
+      "nameShort": "originality",
+      "seoTitle": "Originality AI Detector Flags LLM Text With Probability.",
+      "seoDescription": "Originality AI Detector Flags Likely LLM Text With Probability Scores, Plagiarism Checks, And Team Workspaces For Editors. Explore Features, Use Cases.",
+      "seoKeywords": [
+        "originality ai",
+        "ai detector",
+        "plagiarism",
+        "llm content",
+        "probability score",
+        "editor workflow",
+        "2025"
+      ],
+      "iframeUrl": "https://originality.ai/ai-content-detector/",
+      "bgImg": "",
+      "tags": [
+        "ai-detector",
+        "originality",
+        "plagiarism",
+        "editor"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🛫"
+    },
+    {
+      "name": "turnitin",
+      "nameShort": "turnitin",
+      "seoTitle": "Turnitin AI Writing Detection For Academia And LMS Reports.",
+      "seoDescription": "Turnitin AI Writing Detection Highlights AI-Written Sentences With Confidence Scores For Universities And LMS Reports. Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "turnitin ai",
+        "ai detection",
+        "plagiarism",
+        "academic integrity",
+        "lms reports",
+        "sentence flags",
+        "education"
+      ],
+      "iframeUrl": "https://www.turnitin.com/solutions/ai-writing-detection",
+      "bgImg": "",
+      "tags": [
+        "ai-detector",
+        "turnitin",
+        "education",
+        "plagiarism"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🛰"
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "name": "grol-license-prep",
+  "nameShort": "grol",
+  "icon": "🎬",
+  "seoTitle": "Grol Featuring Fcc Grol, Qrz Grol, Grol Guide | Guides.",
+  "seoDescription": "Grol Directory Featuring Fcc Grol, Qrz Grol, Grol Guide And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To.",
+  "seoKeywords": [
+    "grol",
+    "license",
+    "prep",
+    "fcc",
+    "overview",
+    "qrz",
+    "practice",
+    "coastguardexams",
+    "guide"
+  ],
+  "children": [
+    {
+      "name": "fcc-grol-overview",
+      "nameShort": "fcc-grol",
+      "seoTitle": "Fcc Grol The Fcc's Commercial Operator Portal Lists General.",
+      "seoDescription": "Fcc Grol - The Fcc's Commercial Operator Portal Lists General Radiotelephone Operator License Eligibility, Element 1 3 8 Requirements, And All Explore.",
+      "seoKeywords": [
+        "fcc grol",
+        "fcc",
+        "grol",
+        "overview",
+        "license",
+        "element",
+        "guide",
+        "commercial",
+        "operator",
+        "portal",
+        "lists",
+        "general"
+      ],
+      "iframeUrl": "https://www.fcc.gov/commercial-radio-operator-license-program",
+      "bgImg": "",
+      "tags": [
+        "grol",
+        "fcc",
+        "license",
+        "element",
+        "guide"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "📐"
+    },
+    {
+      "name": "qrz-grol-practice",
+      "nameShort": "qrz-grol",
+      "seoTitle": "Qrz's Browser-Based Simulator Lets You Drill The Entire.",
+      "seoDescription": "Qrz Grol - Qrz's Browser-Based Simulator Lets You Drill The Entire Question Pool For GROL Elements 1, 3, And 8 With Instant Grading And Answer Explore.",
+      "seoKeywords": [
+        "qrz grol",
+        "qrz",
+        "grol",
+        "practice",
+        "exam",
+        "radio",
+        "browser",
+        "based",
+        "simulator",
+        "lets",
+        "you",
+        "drill"
+      ],
+      "iframeUrl": "https://www.qrz.com/hamtest/grol",
+      "bgImg": "",
+      "tags": [
+        "grol",
+        "practice",
+        "exam",
+        "qrz",
+        "radio"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "📡"
+    },
+    {
+      "name": "coastguardexams-grol-guide",
+      "nameShort": "grol-guide",
+      "seoTitle": "Grol Guide Coast Guard Exams Outlines Study Schedules.",
+      "seoDescription": "Grol Guide - Coast Guard Exams Outlines Study Schedules, Recommended Texts, And In-Person Test Center Logistics For Mariners Earning The FCC GROL Explore.",
+      "seoKeywords": [
+        "grol guide",
+        "coastguardexams",
+        "grol",
+        "guide",
+        "study",
+        "maritime",
+        "license",
+        "coast",
+        "guard",
+        "exams",
+        "outlines",
+        "schedules"
+      ],
+      "iframeUrl": "https://www.coastguardexams.com/grol-license.html",
+      "bgImg": "",
+      "tags": [
+        "grol",
+        "study",
+        "guide",
+        "maritime",
+        "license"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🧠"
+    },
+    {
+      "name": "hamstudy",
+      "nameShort": "hamstudy",
+      "seoTitle": "Hamstudy GROL Practice Pools With Instant Grading | Guides.",
+      "seoDescription": "Hamstudy Offers GROL Practice Pools For Elements 1 And 3 With Instant Grading And Flashcards. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "hamstudy grol",
+        "grol practice",
+        "element 1",
+        "element 3",
+        "instant grading",
+        "flashcards",
+        "fcc license"
+      ],
+      "iframeUrl": "https://hamstudy.org/grol",
+      "bgImg": "",
+      "tags": [
+        "grol",
+        "hamstudy",
+        "practice",
+        "exam"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🧳"
+    },
+    {
+      "name": "quizlet",
+      "nameShort": "quizlet",
+      "seoTitle": "Quizlet GROL Flashcards Cover Elements 1,3,8 With Audio.",
+      "seoDescription": "Quizlet Flashcards For GROL Cover Elements 1, 3, And 8 With Spaced Repetition And Audio Aids. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "quizlet grol",
+        "grol flashcards",
+        "element 8",
+        "spaced repetition",
+        "audio study",
+        "fcc exam",
+        "radio license"
+      ],
+      "iframeUrl": "https://quizlet.com/subject/grol/",
+      "bgImg": "",
+      "tags": [
+        "grol",
+        "quizlet",
+        "flashcards",
+        "exam"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🧭"
+    }
+  ]
+}

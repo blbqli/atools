@@ -1,0 +1,120 @@
+{
+  "name": "uvic-online-tools",
+  "nameShort": "uvic",
+  "icon": "🧳",
+  "seoTitle": "Uvic Online Tools And Student Services | Guides, Tips &.",
+  "seoDescription": "University Of Victoria Online Tools Hub Covering Systems Status, Library Access, And Registrar Resources. Explore Features, Use Cases, Pricing, Alternatives.",
+  "seoKeywords": [
+    "uvic online tools",
+    "university",
+    "library",
+    "systems"
+  ],
+  "children": [
+    {
+      "name": "uvic-tools-index",
+      "nameShort": "tools",
+      "seoTitle": "Uvic Tools Index Page | Guides, Tips & Updates Guides, Tips.",
+      "seoDescription": "Uvic Tools Index Linking To Course Sites, Email, Registration, And Campus Services. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "uvic",
+        "online tools",
+        "index",
+        "services"
+      ],
+      "iframeUrl": "https://www.uvic.ca/tools/index.php",
+      "bgImg": "",
+      "tags": [
+        "uvic",
+        "tools",
+        "services"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⭐"
+    },
+    {
+      "name": "uvic-systems",
+      "nameShort": "systems",
+      "seoTitle": "Uvic Systems And IT Services | Guides, Tips & Updates.",
+      "seoDescription": "Uvic Systems Site With IT Service Catalog, Account Help, And System Notices. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "uvic",
+        "systems",
+        "it services",
+        "support"
+      ],
+      "iframeUrl": "https://www.uvic.ca/systems/",
+      "bgImg": "",
+      "tags": [
+        "uvic",
+        "systems",
+        "it"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🪐"
+    },
+    {
+      "name": "uvic-library",
+      "nameShort": "library",
+      "seoTitle": "Uvic Library Online Resources | Guides, Tips & Updates.",
+      "seoDescription": "Uvic Library Portal For Databases, Research Help, And Digital Collections. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "uvic",
+        "library",
+        "databases",
+        "research"
+      ],
+      "iframeUrl": "https://www.uvic.ca/library/",
+      "bgImg": "",
+      "tags": [
+        "uvic",
+        "library",
+        "research"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📰"
+    },
+    {
+      "name": "uvic-search",
+      "nameShort": "search",
+      "seoTitle": "Uvic Site Search | Guides, Tips & Updates Guides, Tips &.",
+      "seoDescription": "Uvic Search Page For Quickly Finding Tools, Services, And Academic Resources. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "uvic",
+        "search",
+        "services",
+        "tools"
+      ],
+      "iframeUrl": "https://www.uvic.ca/search/",
+      "bgImg": "",
+      "tags": [
+        "uvic",
+        "search",
+        "resources"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📡"
+    },
+    {
+      "name": "uvic-registrar",
+      "nameShort": "registrar",
+      "seoTitle": "Uvic Registrar And Student Support | Guides, Tips & Updates.",
+      "seoDescription": "Uvic Registrar Site For Admissions, Records, Tuition, And Academic Calendars. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "uvic",
+        "registrar",
+        "admissions",
+        "records"
+      ],
+      "iframeUrl": "https://www.uvic.ca/registrar/",
+      "bgImg": "",
+      "tags": [
+        "uvic",
+        "registrar",
+        "students"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧾"
+    }
+  ]
+}

@@ -1,0 +1,163 @@
+{
+  "name": "notre-dame-football",
+  "nameShort": "notre-dame",
+  "icon": "🎯",
+  "seoTitle": "Notre Dame Featuring Fightingirish, Notre Dame Espn, Notre.",
+  "seoDescription": "Notre Dame Directory Featuring Fightingirish, Notre Dame Espn, Notre Dame 247 And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+  "seoKeywords": [
+    "notre dame",
+    "notre",
+    "dame",
+    "football",
+    "fighting",
+    "irish",
+    "espn",
+    "team",
+    "247sports"
+  ],
+  "children": [
+    {
+      "name": "fighting-irish-football",
+      "nameShort": "fightingirish",
+      "seoTitle": "Fightingirish Notre Dame's Official Site Posts Schedules.",
+      "seoDescription": "Fightingirish - Notre Dame's Official Site Posts Schedules, Marcus Freeman Pressers, Depth Charts, And NBC Broadcast Links Explore Features, Use Cases.",
+      "seoKeywords": [
+        "fightingirish",
+        "fighting",
+        "irish",
+        "football",
+        "notre-dame",
+        "official",
+        "schedule",
+        "news",
+        "notre",
+        "dame",
+        "site",
+        "posts"
+      ],
+      "iframeUrl": "https://fightingirish.com/sports/football/",
+      "bgImg": "",
+      "tags": [
+        "notre-dame",
+        "football",
+        "official",
+        "schedule",
+        "news"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🗺"
+    },
+    {
+      "name": "espn-notre-dame-team",
+      "nameShort": "notre-dame-espn",
+      "seoTitle": "Notre Dame Espn Espn's Team Hub Features Statistics.",
+      "seoDescription": "Notre Dame Espn - Espn's Team Hub Features Statistics, Game-By-Game Recaps, And FPI Projections For The Fighting Irish Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "notre dame espn",
+        "espn",
+        "notre",
+        "dame",
+        "team",
+        "notre-dame",
+        "stats",
+        "schedule",
+        "cfb",
+        "hub",
+        "features",
+        "statistics"
+      ],
+      "iframeUrl": "https://www.espn.com/college-football/team/_/id/87/notre-dame-fighting-irish",
+      "bgImg": "",
+      "tags": [
+        "notre-dame",
+        "espn",
+        "stats",
+        "schedule",
+        "cfb"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🧠"
+    },
+    {
+      "name": "247sports-notre-dame",
+      "nameShort": "notre-dame-247",
+      "seoTitle": "Notre Dame 247 247Sports Blends Recruiting Intel, Transfer.",
+      "seoDescription": "Notre Dame 247 - 247Sports Blends Recruiting Intel, Transfer Portal Trackers, And Premium Analysis For Notre Dame Football Fans Explore Features, Use Cases.",
+      "seoKeywords": [
+        "notre dame 247",
+        "247sports",
+        "notre",
+        "dame",
+        "247",
+        "notre-dame",
+        "recruiting",
+        "analysis",
+        "cfb",
+        "blends",
+        "intel",
+        "transfer"
+      ],
+      "iframeUrl": "https://247sports.com/college/notre-dame/",
+      "bgImg": "",
+      "tags": [
+        "notre-dame",
+        "247sports",
+        "recruiting",
+        "analysis",
+        "cfb"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "📚"
+    },
+    {
+      "name": "on3-notre-dame",
+      "nameShort": "on3",
+      "seoTitle": "On3 Tracks Notre Dame Recruiting, NIL Values, And Portal.",
+      "seoDescription": "On3 Notre Dame Hub Tracks Recruiting Classes, NIL Values, Transfer Portal Commits, And Depth Charts For The Irish. Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "on3",
+        "notre dame",
+        "recruiting",
+        "nil",
+        "transfer portal",
+        "depth chart",
+        "irish football"
+      ],
+      "iframeUrl": "https://www.on3.com/teams/notre-dame-fighting-irish/",
+      "bgImg": "",
+      "tags": [
+        "notre-dame",
+        "on3",
+        "recruiting",
+        "nil"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🪐"
+    },
+    {
+      "name": "rivals-notre-dame",
+      "nameShort": "rivals",
+      "seoTitle": "Rivals Provides Notre Dame Recruiting Scoop And Ranking.",
+      "seoDescription": "Rivals Notre Dame Provides Insider Recruiting Scoop, Camp Notes, And Rankings Movement For Fighting Irish Targets. Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "rivals",
+        "notre dame",
+        "recruiting",
+        "insider",
+        "camp notes",
+        "rankings",
+        "targets"
+      ],
+      "iframeUrl": "https://notredame.rivals.com/",
+      "bgImg": "",
+      "tags": [
+        "notre-dame",
+        "rivals",
+        "recruiting",
+        "insider"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🎵"
+    }
+  ]
+}

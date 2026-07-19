@@ -1,0 +1,121 @@
+{
+  "name": "jc-tools-concurrency",
+  "nameShort": "jc-tools",
+  "icon": "🌟",
+  "seoTitle": "Jctools Concurrency Libraries For Java | Guides, Tips &.",
+  "seoDescription": "Jctools Resources With Docs, Github Source, Wiki Notes, And API References For Java Concurrency Utilities. Explore Features, Use Cases, Pricing, Alternatives.",
+  "seoKeywords": [
+    "jc tools",
+    "jctools",
+    "java",
+    "concurrency",
+    "library"
+  ],
+  "children": [
+    {
+      "name": "jctools-docs",
+      "nameShort": "docs",
+      "seoTitle": "Jctools Official Documentation | Guides, Tips & Updates.",
+      "seoDescription": "Jctools Github Pages Site With Guides, Benchmarks, And Usage Examples. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips.",
+      "seoKeywords": [
+        "jctools",
+        "documentation",
+        "java",
+        "concurrency"
+      ],
+      "iframeUrl": "https://jctools.github.io/JCTools/",
+      "bgImg": "",
+      "tags": [
+        "jctools",
+        "docs",
+        "java"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🖼"
+    },
+    {
+      "name": "jctools-github",
+      "nameShort": "github",
+      "seoTitle": "Jctools Github Repository | Guides, Tips & Updates.",
+      "seoDescription": "Jctools Github Source Code With Issue Tracker, Releases, And Examples. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips.",
+      "seoKeywords": [
+        "jctools",
+        "github",
+        "source code",
+        "java"
+      ],
+      "iframeUrl": "https://github.com/JCTools/JCTools",
+      "bgImg": "",
+      "tags": [
+        "jctools",
+        "github",
+        "source"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🚀"
+    },
+    {
+      "name": "jctools-wiki",
+      "nameShort": "wiki",
+      "seoTitle": "Jctools Project Wiki | Guides, Tips & Updates Guides, Tips.",
+      "seoDescription": "Jctools Wiki With Design Notes, FAQ, And Tips For Choosing The Right Queue. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "jctools",
+        "wiki",
+        "concurrency",
+        "queues"
+      ],
+      "iframeUrl": "https://github.com/JCTools/JCTools/wiki",
+      "bgImg": "",
+      "tags": [
+        "jctools",
+        "wiki",
+        "concurrency"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎬"
+    },
+    {
+      "name": "jctools-api",
+      "nameShort": "api",
+      "seoTitle": "Jctools API Reference | Guides, Tips & Updates Guides, Tips.",
+      "seoDescription": "Javadoc Site For Jctools Core Library Classes And Interfaces. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To.",
+      "seoKeywords": [
+        "jctools",
+        "javadoc",
+        "api",
+        "java"
+      ],
+      "iframeUrl": "https://www.javadoc.io/doc/org.jctools/jctools-core/latest/index.html",
+      "bgImg": "",
+      "tags": [
+        "jctools",
+        "api",
+        "javadoc"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🌊"
+    },
+    {
+      "name": "jctools-central",
+      "nameShort": "central",
+      "seoTitle": "Jctools Artifact On Maven Central | Guides, Tips & Updates.",
+      "seoDescription": "Maven Central Page For The Jctools-Core Artifact With Versions And Coordinates. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "jctools",
+        "maven",
+        "artifact",
+        "java"
+      ],
+      "iframeUrl": "https://central.sonatype.com/artifact/org.jctools/jctools-core",
+      "bgImg": "",
+      "tags": [
+        "jctools",
+        "maven",
+        "artifact"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🖼"
+    }
+  ]
+}

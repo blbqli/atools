@@ -1,0 +1,121 @@
+{
+  "name": "psg-international-matches",
+  "nameShort": "psg",
+  "icon": "⚡",
+  "seoTitle": "PSG Fixtures And Friendlies Including Flamengo Clash.",
+  "seoDescription": "Trusted Pages For PSG Fixtures, Results, And Friendlies Such As Flamengo Vs PSG With Live Scores And Team News. Explore Features, Use Cases, Pricing Explore.",
+  "seoKeywords": [
+    "psg",
+    "flamengo x psg",
+    "ligue 1",
+    "friendlies",
+    "fixtures"
+  ],
+  "children": [
+    {
+      "name": "psg-official-calendar",
+      "nameShort": "psg-calendar",
+      "seoTitle": "PSG Official Fixture Calendar And Results | Guides, Tips &.",
+      "seoDescription": "Paris Saint-Germain Official Fixture Calendar Listing Ligue 1, Champions League, And Friendly Dates. Explore Features, Use Cases, Pricing, Alternatives, Faqs.",
+      "seoKeywords": [
+        "psg",
+        "calendar",
+        "fixtures",
+        "official"
+      ],
+      "iframeUrl": "https://en.psg.fr/teams/first-team/calendar",
+      "bgImg": "",
+      "tags": [
+        "psg",
+        "calendar",
+        "fixtures"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⭐"
+    },
+    {
+      "name": "psg-ligue1-profile",
+      "nameShort": "ligue1",
+      "seoTitle": "PSG Team Profile On Ligue 1 | Guides, Tips & Updates.",
+      "seoDescription": "Ligue 1 Official Team Page For PSG With Standings, Fixtures, Lineups, And Highlights. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "psg",
+        "ligue 1",
+        "fixtures",
+        "standings"
+      ],
+      "iframeUrl": "https://www.ligue1.com/clubs/Paris%20Saint-Germain",
+      "bgImg": "",
+      "tags": [
+        "psg",
+        "ligue1",
+        "fixtures"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🛡"
+    },
+    {
+      "name": "psg-fixtures-espn",
+      "nameShort": "psg-espn",
+      "seoTitle": "PSG Fixtures And Results On ESPN | Guides, Tips & Updates.",
+      "seoDescription": "ESPN PSG Fixture Hub With Match Previews, Results, And Statistics For Ligue 1 And Europe. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "psg",
+        "fixtures",
+        "espn",
+        "results"
+      ],
+      "iframeUrl": "https://www.espn.com/soccer/team/fixtures/_/id/160/paris-saint-germain",
+      "bgImg": "",
+      "tags": [
+        "psg",
+        "fixtures",
+        "espn"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🛰"
+    },
+    {
+      "name": "psg-sofascore",
+      "nameShort": "psg-sofa",
+      "seoTitle": "PSG Live Scores On Sofascore | Guides, Tips & Updates.",
+      "seoDescription": "Sofascore PSG Team Page With Live Scores, Player Ratings, And Match Stats For Ligue 1 And Friendlies. Explore Features, Use Cases, Pricing, Alternatives, Faqs.",
+      "seoKeywords": [
+        "psg",
+        "live scores",
+        "sofascore",
+        "stats"
+      ],
+      "iframeUrl": "https://www.sofascore.com/team/football/paris-saint-germain/1649",
+      "bgImg": "",
+      "tags": [
+        "psg",
+        "sofascore",
+        "scores"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🔥"
+    },
+    {
+      "name": "flamengo-team-page",
+      "nameShort": "flamengo",
+      "seoTitle": "Flamengo Official Site And Fixtures | Guides, Tips &.",
+      "seoDescription": "Clube De Regatas Do Flamengo Official Site Featuring News, Fixtures, And Highlights For Brazilian Champions. Explore Features, Use Cases, Pricing, Alternatives.",
+      "seoKeywords": [
+        "flamengo",
+        "fixtures",
+        "psg friendly",
+        "brazil"
+      ],
+      "iframeUrl": "https://www.flamengo.com.br/",
+      "bgImg": "",
+      "tags": [
+        "flamengo",
+        "fixtures",
+        "psg"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⭐"
+    }
+  ]
+}

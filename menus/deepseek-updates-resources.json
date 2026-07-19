@@ -1,0 +1,146 @@
+{
+  "name": "deepseek-updates-resources",
+  "nameShort": "deepseek-updates",
+  "icon": "⭐",
+  "seoTitle": "Deepseek Updates Featuring Deepseek Official, Deepseek.",
+  "seoDescription": "Deepseek Updates Directory Featuring Deepseek Official, Deepseek Github, Deepseek Huggingface, Deepseek Research And More. Explore Features, Use Cases.",
+  "seoKeywords": [
+    "deepseek updates",
+    "deepseek",
+    "updates",
+    "resources",
+    "official",
+    "github",
+    "models",
+    "huggingface",
+    "hub",
+    "research",
+    "papers"
+  ],
+  "children": [
+    {
+      "name": "deepseek-official-updates",
+      "nameShort": "deepseek-official",
+      "seoTitle": "Deepseek's Official Site Shares Release Notes, Pricing, And.",
+      "seoDescription": "Deepseek Official - Deepseek's Official Site Shares Release Notes, Pricing, And Access To The Grok-Inspired Deepseek-V3 Assistant Explore Features, Use Cases.",
+      "seoKeywords": [
+        "deepseek official",
+        "deepseek",
+        "official",
+        "updates",
+        "tool",
+        "platform",
+        "site",
+        "shares",
+        "release",
+        "notes",
+        "pricing",
+        "access"
+      ],
+      "iframeUrl": "https://www.deepseek.com/",
+      "bgImg": "",
+      "tags": [
+        "deepseek",
+        "official",
+        "updates",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🪐"
+    },
+    {
+      "name": "deepseek-github-models",
+      "nameShort": "deepseek-github",
+      "seoTitle": "Deepseek Github The Deepseek Github Organization Hosts.",
+      "seoDescription": "The Deepseek Github Organization Hosts Mixtral-Based Checkpoints, Fine-Tuning Scripts, And Inference Examples Explore Features, Use Cases, Pricing, Alternative.",
+      "seoKeywords": [
+        "deepseek github",
+        "deepseek",
+        "github",
+        "models",
+        "tool",
+        "platform",
+        "organization",
+        "hosts",
+        "mixtral",
+        "based",
+        "checkpoints",
+        "fine"
+      ],
+      "iframeUrl": "https://github.com/deepseek-ai",
+      "bgImg": "",
+      "tags": [
+        "deepseek",
+        "github",
+        "models",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "📚"
+    },
+    {
+      "name": "deepseek-huggingface-hub",
+      "nameShort": "deepseek-huggingface",
+      "seoTitle": "Deepseek's Hugging Face Hub Provides Quantized Weights.",
+      "seoDescription": "Deepseek Huggingface - Deepseek's Hugging Face Hub Provides Quantized Weights, Tokenizer Files, And Evaluation Cards For Community Downloads Explore Features.",
+      "seoKeywords": [
+        "deepseek huggingface",
+        "deepseek",
+        "huggingface",
+        "hub",
+        "tool",
+        "platform",
+        "hugging",
+        "face",
+        "provides",
+        "quantized",
+        "weights",
+        "tokenizer"
+      ],
+      "iframeUrl": "https://huggingface.co/deepseek-ai",
+      "bgImg": "",
+      "tags": [
+        "deepseek",
+        "huggingface",
+        "hub",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🏆"
+    },
+    {
+      "name": "deepseek-research-papers",
+      "nameShort": "deepseek-research",
+      "seoTitle": "Deepseek Research The Deepseek Research Paper Outlines.",
+      "seoDescription": "The Deepseek Research Paper Outlines Architecture Innovations, Training Data, And Benchmark Results For V2 And Beyond Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "deepseek research",
+        "deepseek",
+        "research",
+        "papers",
+        "tool",
+        "platform",
+        "paper",
+        "outlines",
+        "architecture",
+        "innovations",
+        "training",
+        "data"
+      ],
+      "iframeUrl": "https://arxiv.org/abs/2402.03300",
+      "bgImg": "",
+      "tags": [
+        "deepseek",
+        "research",
+        "papers",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🧰"
+    }
+  ]
+}

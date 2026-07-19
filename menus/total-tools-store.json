@@ -1,0 +1,120 @@
+{
+  "name": "total-tools-store",
+  "nameShort": "total",
+  "icon": "🔬",
+  "seoTitle": "Total Tools Official Store Deals And Catalogues | Guides.",
+  "seoDescription": "Total Tools Retailer Links For Power Tools, Hand Tools, Clearance, And Store Catalogue Pages. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+  "seoKeywords": [
+    "total tools",
+    "power tools",
+    "hand tools",
+    "catalogue"
+  ],
+  "children": [
+    {
+      "name": "total-tools-home",
+      "nameShort": "home",
+      "seoTitle": "Total Tools Official Website | Guides, Tips & Updates.",
+      "seoDescription": "Total Tools Homepage With Latest Promotions, Featured Tool Brands, And Account Access. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "total tools",
+        "retailer",
+        "promotions",
+        "brands"
+      ],
+      "iframeUrl": "https://www.totaltools.com.au/",
+      "bgImg": "",
+      "tags": [
+        "total-tools",
+        "retail",
+        "promotions"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🖼"
+    },
+    {
+      "name": "total-tools-power",
+      "nameShort": "power",
+      "seoTitle": "Total Tools Power Tools Category | Guides, Tips & Updates.",
+      "seoDescription": "Total Tools Power Tool Range With Cordless Kits, Grinders, And Saws. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To.",
+      "seoKeywords": [
+        "total tools",
+        "power tools",
+        "cordless",
+        "saws"
+      ],
+      "iframeUrl": "https://www.totaltools.com.au/power-tools",
+      "bgImg": "",
+      "tags": [
+        "total-tools",
+        "power-tools",
+        "retail"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📰"
+    },
+    {
+      "name": "total-tools-hand",
+      "nameShort": "hand",
+      "seoTitle": "Total Tools Hand Tools Selection | Guides, Tips & Updates.",
+      "seoDescription": "Total Tools Hand Tools Including Sockets, Spanners, And Measurement Gear. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "total tools",
+        "hand tools",
+        "sockets",
+        "measurement"
+      ],
+      "iframeUrl": "https://www.totaltools.com.au/hand-tools",
+      "bgImg": "",
+      "tags": [
+        "total-tools",
+        "hand-tools",
+        "retail"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🌟"
+    },
+    {
+      "name": "total-tools-clearance",
+      "nameShort": "clearance",
+      "seoTitle": "Total Tools Clearance Specials | Guides, Tips & Updates.",
+      "seoDescription": "Clearance And Catalogue Specials From Total Tools With Limited Stock Discounts. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "total tools",
+        "clearance",
+        "deals",
+        "catalogue"
+      ],
+      "iframeUrl": "https://www.totaltools.com.au/clearance",
+      "bgImg": "",
+      "tags": [
+        "total-tools",
+        "deals",
+        "clearance"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📚"
+    },
+    {
+      "name": "total-tools-locator",
+      "nameShort": "locator",
+      "seoTitle": "Total Tools Store Locator | Guides, Tips & Updates.",
+      "seoDescription": "Find Nearby Total Tools Locations, Trading Hours, And Click-And-Collect Options. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "total tools",
+        "store locator",
+        "hours",
+        "locations"
+      ],
+      "iframeUrl": "https://www.totaltools.com.au/store-locator",
+      "bgImg": "",
+      "tags": [
+        "total-tools",
+        "locator",
+        "stores"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎬"
+    }
+  ]
+}

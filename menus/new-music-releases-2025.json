@@ -1,0 +1,120 @@
+{
+  "name": "new-music-releases-2025",
+  "nameShort": "music-2025",
+  "icon": "🗺",
+  "seoTitle": "New Music Releases 2025 Trackers | Guides, Tips & Updates.",
+  "seoDescription": "Upcoming 2025 Album And Single Release Trackers From Trusted Music News Outlets. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+  "seoKeywords": [
+    "new music releases 2025",
+    "albums",
+    "singles",
+    "news"
+  ],
+  "children": [
+    {
+      "name": "albumoftheyear-2025",
+      "nameShort": "aoty",
+      "seoTitle": "Album Of The Year 2025 Releases | Guides, Tips & Updates.",
+      "seoDescription": "Album Of The Year Calendar Listing 2025 Album Releases With Ratings And Reviews. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "album of the year",
+        "2025 releases",
+        "albums",
+        "ratings"
+      ],
+      "iframeUrl": "https://www.albumoftheyear.org/2025/releases/",
+      "bgImg": "",
+      "tags": [
+        "music",
+        "releases",
+        "2025"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🛠"
+    },
+    {
+      "name": "metacritic-2025-music",
+      "nameShort": "metacritic",
+      "seoTitle": "Metacritic 2025 Music Releases | Guides, Tips & Updates.",
+      "seoDescription": "Metacritic Upcoming 2025 Music Releases With Critic Highlights And Scores. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "metacritic",
+        "2025 music",
+        "albums",
+        "scores"
+      ],
+      "iframeUrl": "https://www.metacritic.com/music/2025",
+      "bgImg": "",
+      "tags": [
+        "metacritic",
+        "music",
+        "2025"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📐"
+    },
+    {
+      "name": "billboard-new-releases",
+      "nameShort": "billboard",
+      "seoTitle": "Billboard New Music Releases Feed | Guides, Tips & Updates.",
+      "seoDescription": "Billboard's New Music Releases Feed With Weekly Single And Album Highlights. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "billboard",
+        "new music",
+        "releases",
+        "singles"
+      ],
+      "iframeUrl": "https://www.billboard.com/new-releases/",
+      "bgImg": "",
+      "tags": [
+        "billboard",
+        "music",
+        "releases"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧾"
+    },
+    {
+      "name": "rolling-stone-music-news",
+      "nameShort": "rolling-stone",
+      "seoTitle": "Rolling Stone Music News For 2025 | Guides, Tips & Updates.",
+      "seoDescription": "Rolling Stone Music News Section Covering Album Announcements And Release Dates. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "rolling stone",
+        "music news",
+        "albums",
+        "2025"
+      ],
+      "iframeUrl": "https://www.rollingstone.com/music/music-news/",
+      "bgImg": "",
+      "tags": [
+        "rolling-stone",
+        "music",
+        "news"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📰"
+    },
+    {
+      "name": "pitchfork-new-music",
+      "nameShort": "pitchfork",
+      "seoTitle": "Pitchfork New Music And Announcements | Guides, Tips &.",
+      "seoDescription": "Pitchfork News Stream With Album Announcements, Singles, And Festival Updates For 2025. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "pitchfork",
+        "new music",
+        "albums",
+        "2025"
+      ],
+      "iframeUrl": "https://pitchfork.com/news/",
+      "bgImg": "",
+      "tags": [
+        "pitchfork",
+        "music",
+        "news"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⚡"
+    }
+  ]
+}

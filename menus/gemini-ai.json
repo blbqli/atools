@@ -1,0 +1,173 @@
+{
+  "name": "gemini-ai",
+  "nameShort": "gemini-ai",
+  "icon": "🔥",
+  "seoTitle": "Gemini AI Featuring Gemini Advanced, Gemini API, Gemini App.",
+  "seoDescription": "Gemini AI Directory Featuring Gemini Advanced, Gemini API, Gemini App, Gemini Workspace And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs.",
+  "seoKeywords": [
+    "gemini ai",
+    "gemini",
+    "advanced",
+    "multimodal",
+    "api",
+    "developer",
+    "integrations",
+    "workspace",
+    "integration"
+  ],
+  "children": [
+    {
+      "name": "gemini-advanced-multimodal",
+      "nameShort": "gemini-advanced",
+      "seoTitle": "Gemini Advanced Is Google's Premium AI Assistant With Ultra.",
+      "seoDescription": "Gemini Advanced Is Google's Premium AI Assistant With Ultra 1 Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To.",
+      "seoKeywords": [
+        "gemini advanced",
+        "gemini",
+        "advanced",
+        "multimodal",
+        "tool",
+        "platform",
+        "google",
+        "premium",
+        "assistant",
+        "ultra"
+      ],
+      "iframeUrl": "https://gemini.google.com/advanced",
+      "bgImg": "",
+      "tags": [
+        "gemini",
+        "advanced",
+        "multimodal",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🍀"
+    },
+    {
+      "name": "gemini-api-developer-platform",
+      "nameShort": "gemini-api",
+      "seoTitle": "Gemini API Google Gemini API Provides Developers With.",
+      "seoDescription": "Google Gemini API Provides Developers With Access To Gemini Models For Building Custom AI Applications, Including Text Generation, Image Analysis, And.",
+      "seoKeywords": [
+        "gemini api",
+        "gemini",
+        "api",
+        "developer",
+        "platform",
+        "tool",
+        "google",
+        "provides",
+        "developers",
+        "access",
+        "models",
+        "building"
+      ],
+      "iframeUrl": "https://ai.google.dev/gemini-api",
+      "bgImg": "",
+      "tags": [
+        "gemini",
+        "api",
+        "developer",
+        "platform",
+        "tool"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🪐"
+    },
+    {
+      "name": "gemini-app-integrations",
+      "nameShort": "gemini-app",
+      "seoTitle": "Gemini App For Android Integrates Google's AI Into Mobile.",
+      "seoDescription": "Gemini App For Android Integrates Google's AI Into Mobile Workflows, Offering On-Device Processing, Real-Time Translation, And Context-Aware Explore Features.",
+      "seoKeywords": [
+        "gemini app",
+        "gemini",
+        "integrations",
+        "app",
+        "tool",
+        "platform",
+        "android",
+        "integrates",
+        "google",
+        "mobile",
+        "workflows",
+        "offering"
+      ],
+      "iframeUrl": "https://play.google.com/store/apps/details?id=com.google.android.apps.gemini",
+      "bgImg": "",
+      "tags": [
+        "gemini",
+        "app",
+        "integrations",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🧳"
+    },
+    {
+      "name": "gemini-workspace-integration",
+      "nameShort": "gemini-workspace",
+      "seoTitle": "Gemini For Google Workspace Enhances Docs, Sheets, Slides.",
+      "seoDescription": "Gemini Workspace - Gemini For Google Workspace Enhances Docs, Sheets, Slides, And Meet With AI-Powered Content Creation, Data Analysis, And Meeting Explore.",
+      "seoKeywords": [
+        "gemini workspace",
+        "gemini",
+        "workspace",
+        "integration",
+        "tool",
+        "platform",
+        "google",
+        "enhances",
+        "docs",
+        "sheets",
+        "slides",
+        "meet"
+      ],
+      "iframeUrl": "https://workspace.google.com/products/gemini/",
+      "bgImg": "",
+      "tags": [
+        "gemini",
+        "workspace",
+        "integration",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🛰"
+    },
+    {
+      "name": "gemini-education-tools",
+      "nameShort": "gemini-education",
+      "seoTitle": "Gemini Education Suite Offers AI-Powered Tutoring, Lesson.",
+      "seoDescription": "Gemini Education Suite Offers AI-Powered Tutoring, Lesson Planning, And Student Assessment Tools Tailored For K-12 And Higher Education Institutions Explore.",
+      "seoKeywords": [
+        "gemini education",
+        "gemini",
+        "education",
+        "tools",
+        "tool",
+        "platform",
+        "suite",
+        "offers",
+        "powered",
+        "tutoring",
+        "lesson",
+        "planning"
+      ],
+      "iframeUrl": "https://edu.google.com/products/ai/gemini/",
+      "bgImg": "",
+      "tags": [
+        "gemini",
+        "education",
+        "tools",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🌊"
+    }
+  ]
+}

@@ -1,0 +1,121 @@
+{
+  "name": "footwear-and-sneakers",
+  "nameShort": "footwear",
+  "icon": "🗺",
+  "seoTitle": "Shoes, Nike, Adidas, Jordan And Boots Deals | Guides, Tips.",
+  "seoDescription": "Top Footwear Destinations Covering Nike, Adidas, Jordan Drops, And Durable Boots With Fast-Loading Shop Pages. Explore Features, Use Cases, Pricing, Alternativ.",
+  "seoKeywords": [
+    "shoes",
+    "nike",
+    "adidas",
+    "boots",
+    "jordan"
+  ],
+  "children": [
+    {
+      "name": "nike-official-store",
+      "nameShort": "nike",
+      "seoTitle": "Nike Official Store And Snkrs Drops | Guides, Tips &.",
+      "seoDescription": "Nike Store Featuring Latest Footwear, Snkrs Launch Calendar, And Member Exclusives. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "nike",
+        "sneakers",
+        "snkrs",
+        "footwear"
+      ],
+      "iframeUrl": "https://www.nike.com/",
+      "bgImg": "",
+      "tags": [
+        "nike",
+        "sneakers",
+        "footwear"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🛡"
+    },
+    {
+      "name": "adidas-official-store",
+      "nameShort": "adidas",
+      "seoTitle": "Adidas Originals And Performance Footwear | Guides, Tips &.",
+      "seoDescription": "Adidas Official Store Highlighting Originals, Performance Footwear, And Confirmed Drops. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User.",
+      "seoKeywords": [
+        "adidas",
+        "footwear",
+        "confirmed",
+        "sneakers"
+      ],
+      "iframeUrl": "https://www.adidas.com/",
+      "bgImg": "",
+      "tags": [
+        "adidas",
+        "sneakers",
+        "footwear"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🪄"
+    },
+    {
+      "name": "jordan-brand-store",
+      "nameShort": "jordan",
+      "seoTitle": "Jordan Brand Retro And Performance Sneakers | Guides, Tips.",
+      "seoDescription": "Nike Jordan Brand Hub For Retro Drops, Performance Basketball Shoes, And Apparel. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "jordan",
+        "retro",
+        "sneakers",
+        "nike"
+      ],
+      "iframeUrl": "https://www.nike.com/jordan",
+      "bgImg": "",
+      "tags": [
+        "jordan",
+        "sneakers",
+        "retro"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📦"
+    },
+    {
+      "name": "timberland-boots",
+      "nameShort": "timberland",
+      "seoTitle": "Timberland Boots And Workwear | Guides, Tips & Updates.",
+      "seoDescription": "Timberland Official Boots Collection Featuring Waterproof, Work, And Hike-Ready Styles. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "boots",
+        "timberland",
+        "footwear",
+        "workwear"
+      ],
+      "iframeUrl": "https://www.timberland.com/shop/mens-boots",
+      "bgImg": "",
+      "tags": [
+        "boots",
+        "timberland",
+        "footwear"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎮"
+    },
+    {
+      "name": "stockx-sneakers",
+      "nameShort": "stockx",
+      "seoTitle": "Stockx Sneaker Marketplace For Drops | Guides, Tips &.",
+      "seoDescription": "Stockx Marketplace For Authentic Sneakers, Including Nike, Adidas, And Jordan Releases. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+      "seoKeywords": [
+        "stockx",
+        "sneakers",
+        "nike",
+        "adidas"
+      ],
+      "iframeUrl": "https://stockx.com/sneakers",
+      "bgImg": "",
+      "tags": [
+        "sneakers",
+        "stockx",
+        "marketplace"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🔬"
+    }
+  ]
+}

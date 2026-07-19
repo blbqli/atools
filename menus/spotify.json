@@ -1,0 +1,174 @@
+{
+  "name": "spotify",
+  "nameShort": "spotify",
+  "icon": "🧭",
+  "seoTitle": "Spotify Featuring Spotify Premium, Spotify For, Spotify.",
+  "seoDescription": "Spotify Directory Featuring Spotify Premium, Spotify For, Spotify Podcasts, Spotify Wrapped And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs.",
+  "seoKeywords": [
+    "spotify",
+    "premium",
+    "subscription",
+    "artists",
+    "podcasts",
+    "studio",
+    "wrapped",
+    "2025"
+  ],
+  "children": [
+    {
+      "name": "spotify-premium-subscription",
+      "nameShort": "spotify-premium",
+      "seoTitle": "Spotify Premium Offers Ad-Free Music Streaming, Offline.",
+      "seoDescription": "Spotify Premium Offers Ad-Free Music Streaming, Offline Downloads, High-Quality Audio, And Unlimited Skips Across All Devices For A Monthly Fee Explore.",
+      "seoKeywords": [
+        "spotify premium",
+        "spotify",
+        "premium",
+        "subscription",
+        "tool",
+        "platform",
+        "offers",
+        "free",
+        "music",
+        "streaming",
+        "offline",
+        "downloads"
+      ],
+      "iframeUrl": "https://www.spotify.com/us/premium/",
+      "bgImg": "",
+      "tags": [
+        "spotify",
+        "premium",
+        "subscription",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🌊"
+    },
+    {
+      "name": "spotify-for-artists",
+      "nameShort": "spotify-for",
+      "seoTitle": "Spotify For Artists Provides Musicians With Analytics.",
+      "seoDescription": "Spotify For Artists Provides Musicians With Analytics, Audience Insights, And Tools To Promote Their Music And Grow Their Fan Base On The Platform Explore.",
+      "seoKeywords": [
+        "spotify for",
+        "spotify",
+        "artists",
+        "for",
+        "tool",
+        "platform",
+        "provides",
+        "musicians",
+        "analytics",
+        "audience",
+        "insights",
+        "promote"
+      ],
+      "iframeUrl": "https://artists.spotify.com/",
+      "bgImg": "",
+      "tags": [
+        "spotify",
+        "for",
+        "artists",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🌊"
+    },
+    {
+      "name": "spotify-podcasts-studio",
+      "nameShort": "spotify-podcasts",
+      "seoTitle": "Spotify For Podcasters (Anchor) Offers Free Hosting.",
+      "seoDescription": "Spotify Podcasts - Spotify For Podcasters Anchor Offers Free Hosting, Distribution, And Monetization Tools For Podcast Creators With Access To Explore.",
+      "seoKeywords": [
+        "spotify podcasts",
+        "spotify",
+        "podcasts",
+        "studio",
+        "tool",
+        "platform",
+        "podcasters",
+        "anchor",
+        "offers",
+        "free",
+        "hosting",
+        "distribution"
+      ],
+      "iframeUrl": "https://podcasters.spotify.com/",
+      "bgImg": "",
+      "tags": [
+        "spotify",
+        "podcasts",
+        "studio",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🔧"
+    },
+    {
+      "name": "spotify-wrapped-2025",
+      "nameShort": "spotify-wrapped",
+      "seoTitle": "Spotify Wrapped 2025 Is An Annual Personalized Recap Of.",
+      "seoDescription": "Spotify Wrapped 2025 Is An Annual Personalized Recap Of Users' Listening Habits, Including Top Artists, Songs, Genres, And Total Listening Time Explore.",
+      "seoKeywords": [
+        "spotify wrapped",
+        "spotify",
+        "wrapped",
+        "2025",
+        "tool",
+        "platform",
+        "service",
+        "annual",
+        "personalized",
+        "recap",
+        "users",
+        "listening"
+      ],
+      "iframeUrl": "https://spotify.com/wrapped",
+      "bgImg": "",
+      "tags": [
+        "spotify",
+        "wrapped",
+        "tool",
+        "platform",
+        "service"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🧭"
+    },
+    {
+      "name": "spotify-car-thing",
+      "nameShort": "spotify-car",
+      "seoTitle": "Spotify Car Thing Is A Voice-Controlled Smart Device For.",
+      "seoDescription": "Spotify Car Thing Is A Voice-Controlled Smart Device For In-Car Music Playback, Integrating With Spotify Premium To Offer Hands-Free Control Of Explore.",
+      "seoKeywords": [
+        "spotify car",
+        "spotify",
+        "car",
+        "thing",
+        "tool",
+        "platform",
+        "voice",
+        "controlled",
+        "smart",
+        "device",
+        "music",
+        "playback"
+      ],
+      "iframeUrl": "https://www.spotify.com/us/carthing/",
+      "bgImg": "",
+      "tags": [
+        "spotify",
+        "car",
+        "thing",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🎵"
+    }
+  ]
+}

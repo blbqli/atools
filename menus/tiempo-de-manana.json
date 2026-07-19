@@ -1,0 +1,149 @@
+{
+  "name": "tiempo-de-manana",
+  "nameShort": "tiempo",
+  "icon": "🪄",
+  "seoTitle": "Tiempo Featuring Accuweather Es, Eltiempo, Meteored.",
+  "seoDescription": "Tiempo Directory Featuring Accuweather Es, Eltiempo, Meteored And More. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips.",
+  "seoKeywords": [
+    "tiempo",
+    "manana",
+    "accuweather",
+    "espanol",
+    "eltiempo",
+    "meteored",
+    "global"
+  ],
+  "children": [
+    {
+      "name": "accuweather-espanol",
+      "nameShort": "accuweather-es",
+      "seoTitle": "Accuweather En Espanol Ofrece Pronosticos Por Hora Y.",
+      "seoDescription": "Accuweather Es - Accuweather En Espanol Ofrece Pronosticos Por Hora Y Alertas De Lluvia Para Manana Con Radar Interactivo Configurable Por Ciudad Explore.",
+      "seoKeywords": [
+        "accuweather es",
+        "accuweather",
+        "espanol",
+        "tiempo",
+        "manana",
+        "pronostico",
+        "clima",
+        "espa",
+        "ofrece",
+        "pron",
+        "sticos",
+        "por"
+      ],
+      "iframeUrl": "https://www.accuweather.com/es",
+      "bgImg": "",
+      "tags": [
+        "tiempo",
+        "manana",
+        "accuweather",
+        "pronostico",
+        "clima"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🖼"
+    },
+    {
+      "name": "eltiempo-es",
+      "nameShort": "eltiempo",
+      "seoTitle": "Eltiempo | Guides, Tips & Updates Guides, Tips & Updates.",
+      "seoDescription": "Eltiempo Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To Compare Options, Implement Quickly, And Optimize Results.",
+      "seoKeywords": [
+        "eltiempo",
+        "tiempo",
+        "pronostico",
+        "espana",
+        "manana",
+        "clima"
+      ],
+      "iframeUrl": "https://www.eltiempo.es/",
+      "bgImg": "",
+      "tags": [
+        "tiempo",
+        "pronostico",
+        "espana",
+        "manana",
+        "clima"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🛡"
+    },
+    {
+      "name": "meteored-global",
+      "nameShort": "meteored",
+      "seoTitle": "Meteored (Tiempo | Guides, Tips & Updates Guides, Tips &.",
+      "seoDescription": "Meteored Tiempo Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To Compare Options, Implement Quickly, And Optimize.",
+      "seoKeywords": [
+        "meteored",
+        "global",
+        "tiempo",
+        "manana",
+        "clima",
+        "alertas"
+      ],
+      "iframeUrl": "https://www.meteored.com/",
+      "bgImg": "",
+      "tags": [
+        "tiempo",
+        "meteored",
+        "manana",
+        "clima",
+        "alertas"
+      ],
+      "updateTime": "2025-12-08",
+      "icon": "🛰"
+    },
+    {
+      "name": "weathercom",
+      "nameShort": "weather",
+      "seoTitle": "Weather.com En Espanol Pronostico De Manana Con Radar Y UV.",
+      "seoDescription": "Weather.com En Espanol Muestra Pronostico De Manana, Radar Interactivo, Indice UV Y Alertas Por Ciudad. Explore Features, Use Cases, Pricing, Alternatives.",
+      "seoKeywords": [
+        "weather.com espanol",
+        "pronostico manana",
+        "radar",
+        "indice uv",
+        "alertas",
+        "clima hoy",
+        "2025"
+      ],
+      "iframeUrl": "https://weather.com/es-ES/",
+      "bgImg": "",
+      "tags": [
+        "tiempo",
+        "weather",
+        "radar",
+        "alertas"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🪐"
+    },
+    {
+      "name": "windy",
+      "nameShort": "windy",
+      "seoTitle": "Windy Mapas De Viento Y Lluvia Para El Tiempo De Manana.",
+      "seoDescription": "Windy En Espanol Ofrece Mapas De Viento, Lluvia Y Radar Con Modelos Ecmwf Y GFS Para Planificar El Tiempo De Manana. Explore Features, Use Cases, Pricing.",
+      "seoKeywords": [
+        "windy espanol",
+        "mapa de viento",
+        "lluvia",
+        "radar",
+        "ecmwf",
+        "gfs",
+        "pronostico manana"
+      ],
+      "iframeUrl": "https://www.windy.com/?lang=es",
+      "bgImg": "",
+      "tags": [
+        "tiempo",
+        "windy",
+        "viento",
+        "radar"
+      ],
+      "updateTime": "2025-12-21",
+      "icon": "🛫"
+    }
+  ]
+}

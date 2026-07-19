@@ -1,0 +1,122 @@
+{
+  "name": "google-tools-suite",
+  "nameShort": "google",
+  "icon": "📰",
+  "seoTitle": "Google Tools For Workspace, Docs, Drive, Calendar | Guides.",
+  "seoDescription": "Google Productivity Tools Overview Covering Workspace, Docs, Drive, Keep, And Calendar Quick Links. Explore Features, Use Cases, Pricing, Alternatives, Faqs.",
+  "seoKeywords": [
+    "google tools",
+    "workspace",
+    "docs",
+    "drive",
+    "calendar"
+  ],
+  "children": [
+    {
+      "name": "google-workspace",
+      "nameShort": "workspace",
+      "seoTitle": "Google Workspace Overview For Productivity | Guides, Tips &.",
+      "seoDescription": "Workspace Product Hub With Gmail, Drive, Docs, Meet, And Admin Plans. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips.",
+      "seoKeywords": [
+        "google workspace",
+        "productivity",
+        "docs",
+        "drive",
+        "gmail"
+      ],
+      "iframeUrl": "https://workspace.google.com/",
+      "bgImg": "",
+      "tags": [
+        "google",
+        "workspace",
+        "productivity"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧩"
+    },
+    {
+      "name": "google-docs-about",
+      "nameShort": "docs",
+      "seoTitle": "Google Docs Online Word Processor Overview | Guides, Tips &.",
+      "seoDescription": "Docs About Page Detailing Online Editing, Templates, And Collaboration For Teams. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "google docs",
+        "word processor",
+        "online",
+        "collaboration"
+      ],
+      "iframeUrl": "https://www.google.com/docs/about/",
+      "bgImg": "",
+      "tags": [
+        "google",
+        "docs",
+        "collaboration"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🖼"
+    },
+    {
+      "name": "google-drive-cloud",
+      "nameShort": "drive",
+      "seoTitle": "Google Drive Cloud Storage Product Page | Guides, Tips &.",
+      "seoDescription": "Drive Landing For Secure Cloud Storage, Sharing, And File Backup. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To.",
+      "seoKeywords": [
+        "google drive",
+        "cloud storage",
+        "sharing",
+        "backup"
+      ],
+      "iframeUrl": "https://www.google.com/drive/",
+      "bgImg": "",
+      "tags": [
+        "google",
+        "drive",
+        "storage"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🎮"
+    },
+    {
+      "name": "google-calendar-schedule",
+      "nameShort": "calendar",
+      "seoTitle": "Google Calendar Product Tour And Features | Guides, Tips &.",
+      "seoDescription": "Calendar Product Page Highlighting Scheduling, Reminders, And Meet Integration. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "google calendar",
+        "scheduling",
+        "reminders",
+        "meet"
+      ],
+      "iframeUrl": "https://workspace.google.com/products/calendar/",
+      "bgImg": "",
+      "tags": [
+        "google",
+        "calendar",
+        "scheduling"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🛒"
+    },
+    {
+      "name": "google-keep-notes",
+      "nameShort": "keep",
+      "seoTitle": "Google Keep Notes And Lists In Workspace | Guides, Tips &.",
+      "seoDescription": "Keep Product Page For Fast Notes, Lists, And Reminders Across Devices. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips.",
+      "seoKeywords": [
+        "google keep",
+        "notes",
+        "lists",
+        "reminders"
+      ],
+      "iframeUrl": "https://workspace.google.com/products/keep/",
+      "bgImg": "",
+      "tags": [
+        "google",
+        "keep",
+        "notes"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📐"
+    }
+  ]
+}

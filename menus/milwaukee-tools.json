@@ -1,0 +1,120 @@
+{
+  "name": "milwaukee-tools",
+  "nameShort": "milwaukee",
+  "icon": "🎯",
+  "seoTitle": "Milwaukee Tools Brand And Retail Pages | Guides, Tips &.",
+  "seoDescription": "Milwaukee Power And Hand Tool Resources Including Official Pages And Trusted Retailers. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews.",
+  "seoKeywords": [
+    "milwaukee tools",
+    "power tools",
+    "hand tools",
+    "retailers"
+  ],
+  "children": [
+    {
+      "name": "milwaukee-official",
+      "nameShort": "official",
+      "seoTitle": "Milwaukee Tool Official Site | Guides, Tips & Updates.",
+      "seoDescription": "Milwaukee Tool Homepage With Latest Launches, Promotions, And Tool Registration. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "milwaukee",
+        "power tools",
+        "promotions",
+        "warranty"
+      ],
+      "iframeUrl": "https://www.milwaukeetool.com/",
+      "bgImg": "",
+      "tags": [
+        "milwaukee",
+        "power-tools",
+        "official"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🧪"
+    },
+    {
+      "name": "milwaukee-power-tools",
+      "nameShort": "power",
+      "seoTitle": "Milwaukee Power Tools Catalog | Guides, Tips & Updates.",
+      "seoDescription": "Milwaukee Product Catalog For Drills, Impacts, Saws, And Cordless Systems. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert.",
+      "seoKeywords": [
+        "milwaukee",
+        "power tools",
+        "cordless",
+        "catalog"
+      ],
+      "iframeUrl": "https://www.milwaukeetool.com/Products/Power-Tools",
+      "bgImg": "",
+      "tags": [
+        "milwaukee",
+        "power-tools",
+        "catalog"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📰"
+    },
+    {
+      "name": "milwaukee-hand-tools",
+      "nameShort": "hand",
+      "seoTitle": "Milwaukee Hand Tools Range | Guides, Tips & Updates.",
+      "seoDescription": "Milwaukee Hand Tools Lineup Including Pliers, Wrenches, And Measurement Tools. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "milwaukee",
+        "hand tools",
+        "pliers",
+        "wrenches"
+      ],
+      "iframeUrl": "https://www.milwaukeetool.com/Products/Hand-Tools",
+      "bgImg": "",
+      "tags": [
+        "milwaukee",
+        "hand-tools",
+        "catalog"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "🌟"
+    },
+    {
+      "name": "milwaukee-home-depot",
+      "nameShort": "home-depot",
+      "seoTitle": "Milwaukee Tools At Home Depot | Guides, Tips & Updates.",
+      "seoDescription": "Home Depot Brand Page For Milwaukee Tools, Combo Kits, And Accessories. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips.",
+      "seoKeywords": [
+        "milwaukee",
+        "home depot",
+        "power tools",
+        "kits"
+      ],
+      "iframeUrl": "https://www.homedepot.com/b/Brand/Milwaukee/N-5yc1vZ25ecod",
+      "bgImg": "",
+      "tags": [
+        "milwaukee",
+        "retail",
+        "home-depot"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "⚡"
+    },
+    {
+      "name": "milwaukee-acme-tools",
+      "nameShort": "acme",
+      "seoTitle": "Milwaukee Tools On Acme Tools | Guides, Tips & Updates.",
+      "seoDescription": "Acme Tools Landing Featuring Milwaukee Cordless Tools, Storage, And Accessories. Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And.",
+      "seoKeywords": [
+        "milwaukee",
+        "acme tools",
+        "cordless",
+        "accessories"
+      ],
+      "iframeUrl": "https://www.acmetools.com/brands/milwaukee",
+      "bgImg": "",
+      "tags": [
+        "milwaukee",
+        "retail",
+        "acme-tools"
+      ],
+      "updateTime": "2025-12-19",
+      "icon": "📚"
+    }
+  ]
+}

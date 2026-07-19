@@ -1,0 +1,174 @@
+{
+  "name": "chatgpt",
+  "nameShort": "chatgpt-hub",
+  "icon": "🗺",
+  "seoTitle": "Chatgpt Hub Featuring Chatgpt Plus, Chatgpt Enterprise.",
+  "seoDescription": "Chatgpt Hub Directory Featuring Chatgpt Plus, Chatgpt Enterprise, Chatgpt API, Chatgpt Plugins And More. Explore Features, Use Cases, Pricing, Alternatives.",
+  "seoKeywords": [
+    "chatgpt hub",
+    "chatgpt",
+    "hub",
+    "plus",
+    "subscription",
+    "enterprise",
+    "api",
+    "integration",
+    "plugins",
+    "marketplace"
+  ],
+  "children": [
+    {
+      "name": "chatgpt-plus-subscription",
+      "nameShort": "chatgpt-plus",
+      "seoTitle": "Chatgpt Plus ($20/Month) Unlocks GPT-4O Access, Faster.",
+      "seoDescription": "Chatgpt Plus 20 Month Unlocks GPT-4O Access, Faster Response Times, Browsing Capabilities, DALL E 3 Integration, And Priority Support From Openai Explore.",
+      "seoKeywords": [
+        "chatgpt plus",
+        "chatgpt",
+        "plus",
+        "subscription",
+        "tool",
+        "platform",
+        "month",
+        "unlocks",
+        "gpt",
+        "access",
+        "faster",
+        "response"
+      ],
+      "iframeUrl": "https://openai.com/pricing",
+      "bgImg": "",
+      "tags": [
+        "chatgpt",
+        "plus",
+        "subscription",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🎯"
+    },
+    {
+      "name": "chatgpt-enterprise-solution",
+      "nameShort": "chatgpt-enterprise",
+      "seoTitle": "Chatgpt Enterprise Offers Enterprise-Grade Security.",
+      "seoDescription": "Chatgpt Enterprise Offers Enterprise-Grade Security, Unlimited GPT-4 Access, Advanced Data Analysis, Custom Models, And SLA Guarantees For Businesses Explore.",
+      "seoKeywords": [
+        "chatgpt enterprise",
+        "chatgpt",
+        "enterprise",
+        "solution",
+        "tool",
+        "platform",
+        "offers",
+        "grade",
+        "security",
+        "unlimited",
+        "gpt",
+        "access"
+      ],
+      "iframeUrl": "https://openai.com/enterprise",
+      "bgImg": "",
+      "tags": [
+        "chatgpt",
+        "enterprise",
+        "solution",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "⭐"
+    },
+    {
+      "name": "chatgpt-api-integration",
+      "nameShort": "chatgpt-api",
+      "seoTitle": "Chatgpt API Allows Developers To Integrate GPT-3 | Guides.",
+      "seoDescription": "Chatgpt API Allows Developers To Integrate GPT-3 Explore Features, Use Cases, Pricing, Alternatives, Faqs, User Reviews, And Expert Tips To Compare Options.",
+      "seoKeywords": [
+        "chatgpt api",
+        "chatgpt",
+        "api",
+        "integration",
+        "tool",
+        "platform",
+        "allows",
+        "developers",
+        "integrate",
+        "gpt"
+      ],
+      "iframeUrl": "https://platform.openai.com/docs/guides/gpt",
+      "bgImg": "",
+      "tags": [
+        "chatgpt",
+        "api",
+        "integration",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🛒"
+    },
+    {
+      "name": "chatgpt-plugins-marketplace",
+      "nameShort": "chatgpt-plugins",
+      "seoTitle": "Chatgpt Plugins Marketplace Offers 1000+ Third-Party.",
+      "seoDescription": "Chatgpt Plugins Marketplace Offers 1000 Third-Party Integrations Including Travel Booking, Code Execution, Data Analysis, And Productivity Tools To Explore.",
+      "seoKeywords": [
+        "chatgpt plugins",
+        "chatgpt",
+        "plugins",
+        "marketplace",
+        "tool",
+        "platform",
+        "offers",
+        "1000+",
+        "third",
+        "party",
+        "integrations",
+        "including"
+      ],
+      "iframeUrl": "https://openai.com/blog/chatgpt-plugins",
+      "bgImg": "",
+      "tags": [
+        "chatgpt",
+        "plugins",
+        "marketplace",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "💡"
+    },
+    {
+      "name": "chatgpt-mobile-app",
+      "nameShort": "chatgpt-mobile",
+      "seoTitle": "Chatgpt Mobile App For IOS And Android Provides On-The-Go.",
+      "seoDescription": "Chatgpt Mobile App For IOS And Android Provides On-The-Go Access To GPT-4, Voice Input, Offline Mode, And Sync Across All Devices With Plus Explore Features.",
+      "seoKeywords": [
+        "chatgpt mobile",
+        "chatgpt",
+        "mobile",
+        "app",
+        "tool",
+        "platform",
+        "ios",
+        "android",
+        "provides",
+        "access",
+        "gpt",
+        "voice"
+      ],
+      "iframeUrl": "https://apps.apple.com/us/app/chatgpt/id6448311069",
+      "bgImg": "",
+      "tags": [
+        "chatgpt",
+        "mobile",
+        "app",
+        "tool",
+        "platform"
+      ],
+      "updateTime": "2025-12-03",
+      "icon": "🎲"
+    }
+  ]
+}

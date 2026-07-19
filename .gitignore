@@ -1,68 +1,24 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+# Nuxt dev/build outputs
+.output
+.data
+.nuxt
+.nitro
+.cache
+dist
 
-# dependencies
-/node_modules
-extension/node_modules/
-/.pnp
-.pnp.*
-.yarn/*
-!.yarn/patches
-!.yarn/plugins
-!.yarn/releases
-!.yarn/versions
+# Node dependencies
+node_modules
+pnpm-lock.yaml
+.history
 
-# testing
-/coverage
+# Logs
+logs
+*.log
 
-# next.js
-/.next/
-/out/
-.wrangler/
-/public/tools/*/manifest.webmanifest
-/public/tools/*/tool.json
-/public/tools/*/tool.*.json
-/public/zh-cn/tools/*/manifest.webmanifest
-/public/zh-cn/tools/*/tool.json
-/public/zh-cn/tools/tools-meta.json
-/public/en-us/tools/*/manifest.webmanifest
-/public/en-us/tools/*/tool.json
-/public/en-us/tools/tools-meta.json
-/public/vendor/ffmpeg/**
-/public/vendor/realcugan/**
-/public/sw.js
-
-# generated tool nav data
-/src/app/tools/tools-meta*.json
-
-# production
-/build
-extension/dist/
-extension/.vite/
-extension/tools-meta*.json
-
-# misc
+# Misc
 .DS_Store
-*.pem
+.fleet
+.idea
 
-# debug
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-.pnpm-debug.log*
-
-# env files (can opt-in for committing if needed)
-.env*
-
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-public/sw.js
-extension/dist.zip
-docs/features/
-legionmind/
-.claude/
-.serena/
-.archived/
+web-game-yiv.config.cjs
+web-game-yiv-amara047k.config.cjs
