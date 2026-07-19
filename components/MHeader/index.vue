@@ -24,6 +24,8 @@
 </template>
 
 <script lang="ts" setup>
+import { LEGAL_HEADER_TITLES } from "~/utils/legal";
+
 const { path } = useRoute();
 const { h1Title } = useAppConfig();
 
@@ -37,6 +39,12 @@ const sencondText = computed(() => {
   }
   if (path.startsWith("/privacy")) {
     return "privacy-policy";
+  }
+  if (path.startsWith("/cookies")) {
+    return LEGAL_HEADER_TITLES.cookies;
+  }
+  if (path.startsWith("/terms")) {
+    return LEGAL_HEADER_TITLES.terms;
   }
   if (path.startsWith("/json/")) {
     return "json";

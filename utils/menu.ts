@@ -145,19 +145,28 @@ export const headerMenu: Menu[] = [
 
 export const footerMenu: Menu[] = [
   {
-    name: "privacy-policy-user-rights",
-    path: "/privacy",
-    icon: "🔒",
+    name: "About",
+    path: "/about",
+    icon: "ℹ️",
   },
   {
-    name: "contact-team-support",
+    name: "Contact",
     path: "/contact",
     icon: "✉️",
   },
   {
-    name: "about-tool-directory",
-    path: "/about",
-    icon: "ℹ️",
+    name: "Privacy Policy",
+    path: "/privacy",
+    icon: "🔒",
+  },
+  {
+    name: "Cookie Policy",
+    path: "/cookies",
+    icon: "🍪",
+  },
+  {
+    name: "Terms of Use",
+    path: "/terms",
+    icon: "📄",
   },
 ];
-

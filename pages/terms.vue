@@ -1,5 +1,5 @@
 <template>
-  <MLegalPage :content="legalContent.about" />
+  <MLegalPage :content="legalContent.terms" />
 </template>
 
 <script setup lang="ts">
@@ -8,5 +8,5 @@ import { createLegalContent, LEGAL_PAGE_SEO } from "~/utils/legal";
 const { h1Title } = useAppConfig();
 const legalContent = createLegalContent(h1Title);
 
-usePageSeo(LEGAL_PAGE_SEO.about);
+usePageSeo(LEGAL_PAGE_SEO.terms);
 </script>

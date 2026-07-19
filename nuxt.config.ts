@@ -64,6 +64,8 @@ export default defineNuxtConfig({
           about: 0.6,
           contact: 0.6,
           privacy: 0.6,
+          cookies: 0.6,
+          terms: 0.6,
         };
         const sitemaps = sitemapUrls.map((uri: string) => {
           const priority = uriObj[uri.split("/")[1] as keyof typeof uriObj] || 0.9;
@@ -203,42 +205,6 @@ export default defineNuxtConfig({
           tagPriority: "critical", // 最高优先级加载
           tagPosition: "head", // 插入到head标签内
         },
-        process.env.NODE_ENV === "development"
-          ? {}
-          : {
-              src: "https://5gvci.com/act/files/tag.min.js?z=11346657",
-              "data-cfasync": "false",
-              async: true,
-              type: "text/javascript",
-              tagPosition: "bodyClose",
-            },
-        process.env.NODE_ENV === "development"
-          ? {}
-          : {
-              innerHTML: `(function(s){s.dataset.zone='11346659',s.src='https://nap5k.com/tag.min.js'})([document.documentElement, document.body].filter(Boolean).pop().appendChild(document.createElement('script')))`,
-              type: "text/javascript",
-              tagPosition: "bodyClose",
-            },
-        process.env.NODE_ENV === "development"
-          ? {}
-          : {
-              src: `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-6584635184413581`,
-              crossorigin: "anonymous",
-              defer: true,
-              type: "text/javascript",
-            },
-        process.env.NODE_ENV === "development"
-          ? {}
-          : {
-              innerHTML: `
-                (function(c,l,a,r,i,t,y){
-                    c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
-                    t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
-                    y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
-                })(window, document, "clarity", "script", "uh9pi3oif4");`,
-              defer: true,
-              type: "text/javascript",
-            },
       ],
     },
   },

@@ -8,6 +8,7 @@
       <NuxtPage />
     </main>
     <MFooter class="mt-auto" />
+    <MCookieConsent />
     <MBackTop />
   </div>
 </template>
@@ -15,4 +16,3 @@
 <script setup lang="ts"></script>
 
 <style></style>
-
